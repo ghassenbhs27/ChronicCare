@@ -1,0 +1,1009 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+
+      <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+        <!-- Uncomment the line below if you also wish to use an image logo -->
+        <!-- <img src="{{ asset('assets/img/logo.webp') }}" alt=""> -->
+        <svg class="my-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g id="bgCarrier" stroke-width="0"></g>
+          <g id="tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+          <g id="iconCarrier">
+            <path d="M22 22L2 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M17 22V6C17 4.11438 17 3.17157 16.4142 2.58579C15.8284 2 14.8856 2 13 2H11C9.11438 2 8.17157 2 7.58579 2.58579C7 3.17157 7 4.11438 7 6V22" stroke="currentColor" stroke-width="1.5"></path>
+            <path opacity="0.5" d="M21 22V8.5C21 7.09554 21 6.39331 20.6629 5.88886C20.517 5.67048 20.3295 5.48298 20.1111 5.33706C19.6067 5 18.9045 5 17.5 5" stroke="currentColor" stroke-width="1.5"></path>
+            <path opacity="0.5" d="M3 22V8.5C3 7.09554 3 6.39331 3.33706 5.88886C3.48298 5.67048 3.67048 5.48298 3.88886 5.33706C4.39331 5 5.09554 5 6.5 5" stroke="currentColor" stroke-width="1.5"></path>
+            <path d="M12 22V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M10 12H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 11H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 14H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 11H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 14H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 8H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 8H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M10 15H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M12 9V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M14 7L10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          </g>
+        </svg>
+
+        <h1 class="sitename">Chronic Care</h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{{ path('index') }}" class="active">Accueil</a></li>
+          <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
+          <li><a href="{{ path('coachs') }}">Coachs</a></li>
+          <li><a href="{{ path('boutique') }}">Boutique</a></li>
+          <li><a href="{{ path('contact') }}">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+      <div class="d-flex gap-2 align-items-center">
+        <a class="btn-getstarted" href="{{ path('connexion') }}">Se connecter</a>
+        <a class="btn-getstarted" href="{{ path('inscription') }}">S'inscrire</a>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero section dark-background">
+      <div class="container-fluid p-0">
+        <div class="hero-wrapper">
+          <div class="hero-image">
+            <img src="{{ asset('assets/img/health/showcase-1.webp') }}" alt="Advanced Healthcare" class="img-fluid">
+          </div>
+
+          <div class="hero-content">
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-7 col-md-10" data-aos="fade-right" data-aos-delay="100">
+                  <div class="content-box">
+                    <span class="badge-accent" data-aos="fade-up" data-aos-delay="150">Plateforme d'accompagnement pour maladies chroniques</span>
+                    <h1 data-aos="fade-up" data-aos-delay="200">Chronic Care — Accompagnement quotidien pour patients chroniques</h1>
+                    <p data-aos="fade-up" data-aos-delay="250">Chronic Care aide les patients à suivre leurs paramètres de santé, à mieux comprendre leurs résultats et à maintenir leurs habitudes de vie grâce à un accompagnement humain soutenu par des outils technologiques sécurisés.</p>
+
+                    <div class="cta-group" data-aos="fade-up" data-aos-delay="300">
+                      <a href="{{ path('inscription') }}" class="btn btn-primary">S'inscrire</a>
+                      <a href="#features" class="btn btn-outline">Découvrir la plateforme</a>
+                    </div>
+
+                    <div class="info-badges" data-aos="fade-up" data-aos-delay="350">
+                      <div class="badge-item">
+                        <i class="bi bi-shield-check"></i>
+                        <div class="badge-content">
+                          <span>Sécurité des données</span>
+                          <strong>Conforme RGPD</strong>
+                        </div>
+                      </div>
+                      <div class="badge-item">
+                        <i class="bi bi-headset"></i>
+                        <div class="badge-content">
+                          <span>Accompagnement humain</span>
+                          <strong>Support disponible</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="features-wrapper">
+                <div class="row gy-4">
+
+                  <div class="col-lg-4">
+                    <div class="feature-item" data-aos="fade-up" data-aos-delay="450">
+                      <div class="feature-icon">
+                        <i class="bi bi-heart-pulse-fill"></i>
+                      </div>
+                          <div class="feature-text">
+                            <h3>Suivi santé</h3>
+                            <p>Consignez et visualisez vos paramètres quotidiens (glycémie, tension, activité, poids) pour mieux piloter votre prise en charge.</p>
+                          </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-4">
+                    <div class="feature-item" data-aos="fade-up" data-aos-delay="500">
+                      <div class="feature-icon">
+                        <i class="bi bi-lungs-fill"></i>
+                      </div>
+                      <div class="feature-text">
+                        <h3>Nutrition</h3>
+                        <p>Plans alimentaires et conseils pratiques fournis par des nutritionnistes pour équilibrer votre alimentation selon votre pathologie.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-4">
+                    <div class="feature-item" data-aos="fade-up" data-aos-delay="550">
+                      <div class="feature-icon">
+                        <i class="bi bi-capsule"></i>
+                      </div>
+                      <div class="feature-text">
+                        <h3>Coaching</h3>
+                        <p>Accompagnement par des coachs professionnels — les outils d'IA servent d'aide à la décision, le suivi reste humain.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section><!-- /Hero Section -->
+
+    <!-- Home About Section -->
+    <section id="home-about" class="home-about section">
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row gy-5 align-items-center">
+          <div class="col-lg-6" data-aos="fade-right" data-aos-delay="200">
+            <div class="about-image">
+              <img src="{{ asset('assets/img/health/facilities-1.webp') }}" alt="Modern Healthcare Facility" class="img-fluid rounded-3 mb-4">
+              <div class="experience-badge">
+                <span class="years">25+</span>
+                <span class="text">Years of Excellence</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6" data-aos="fade-left" data-aos-delay="300">
+            <div class="about-content">
+              <h2>Une plateforme d'accompagnement dédiée aux maladies chroniques</h2>
+              <p class="lead">Chronic Care combine un suivi structuré, des professionnels de santé et des outils numériques pour un accompagnement continu et sécurisé.</p>
+
+              <p>Nos fonctionnalités interconnectés vous aident à suivre vos paramètres, comprendre les tendances, respecter vos traitements et rester accompagné par des professionnels (coachs, nutritionnistes, médecins) tout au long de votre parcours.</p>
+
+              <div class="row g-4 mt-4">
+                <div class="col-md-6" data-aos="fade-up" data-aos-delay="400">
+                  <div class="feature-item">
+                    <div class="icon">
+                      <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h4>Sécurité & confidentialité</h4>
+                    <p>Stockage chiffré et contrôle d'accès strict pour garantir la confidentialité de vos données de santé.</p>
+                  </div>
+                </div>
+
+                <div class="col-md-6" data-aos="fade-up" data-aos-delay="500">
+                  <div class="feature-item">
+                    <div class="icon">
+                      <i class="bi bi-lightning"></i>
+                    </div>
+                    <h4>Innovation technologique</h4>
+                    <p>Outils d'analyse et d'aide au diagnostic destinés à soutenir les professionnels — pas à se substituer à eux.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cta-wrapper mt-4">
+                <a href="{{ path('contenu-educatif') }}" class="btn btn-primary">Découvrir nos Services</a>
+                <a href="{{ path('contact') }}" class="btn btn-outline">Nous Contacter</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-5 pt-4 certifications-row" data-aos="fade-up" data-aos-delay="600">
+          <div class="col-12 text-center mb-4">
+            <h4 class="certification-title">Nos Accréditations</h4>
+          </div>
+          <div class="col-12">
+            <div class="certifications">
+              <div class="certification-item" data-aos="zoom-in" data-aos-delay="700">
+                <img src="{{ asset('assets/img/clients/clients-1.webp') }}" alt="Certification">
+              </div>
+              <div class="certification-item" data-aos="zoom-in" data-aos-delay="800">
+                <img src="{{ asset('assets/img/clients/clients-2.webp') }}" alt="Certification">
+              </div>
+              <div class="certification-item" data-aos="zoom-in" data-aos-delay="900">
+                <img src="{{ asset('assets/img/clients/clients-3.webp') }}" alt="Certification">
+              </div>
+              <div class="certification-item" data-aos="zoom-in" data-aos-delay="1000">
+                <img src="{{ asset('assets/img/clients/clients-4.webp') }}" alt="Certification">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section><!-- /Home About Section -->
+
+    <!-- Featured Departments Section -->
+    <section id="featured-departments" class="featured-departments section">
+
+      <!-- Section Title -->
+      <div class="container section-title" data-aos="fade-up">
+        <h2>Nos Services</h2>
+        <p>Parcourir les fonctionnalités de Chronic Care conçus pour structurer et sécuriser le suivi des patients atteints de maladies chroniques</p>
+      </div><!-- End Section Title -->
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row gy-4">
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+            <div class="department-card">
+              <div class="department-image">
+                <img src="{{ asset('assets/img/health/cardiology-3.webp') }}" alt="Module Authentification" class="img-fluid">
+              </div>
+              <div class="department-content">
+                <div class="department-icon">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Suivi santé</h3>
+                <p>Visualisez vos données (tension, glycémie, activité, sommeil) via des graphiques et historiques clairs pour faciliter la discussion avec votre équipe de soin.</p>
+                <a href="{{ path('connexion') }}" class="btn-learn-more">
+                  <span>En savoir plus</span>
+                  <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div><!-- End Module Card -->
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+            <div class="department-card">
+              <div class="department-image">
+                <img src="{{ asset('assets/img/health/neurology-2.webp') }}" alt="Module Suivi Santé" class="img-fluid">
+              </div>
+              <div class="department-content">
+                <div class="department-icon">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Suivi continu</h3>
+                <p>Monitoring en continu, alertes configurables et historiques détaillés permettant de repérer les écarts et d'intervenir rapidement.</p>
+                <a href="{{ path('connexion') }}" class="btn-learn-more">
+                  <span>En savoir plus</span>
+                  <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div><!-- End Module Card -->
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+            <div class="department-card">
+              <div class="department-image">
+                <img src="{{ asset('assets/img/health/orthopedics-4.webp') }}" alt="Module Coach IA" class="img-fluid">
+              </div>
+              <div class="department-content">
+                <div class="department-icon">
+                  <i class="bi bi-people"></i>
+                </div>
+                <h3>Coaching</h3>
+                <p>Accompagnement par un coach professionnel qui utilise des outils d'analyse pour construire des programmes personnalisés et suivre votre progression.</p>
+                <a href="{{ path('connexion') }}" class="btn-learn-more">
+                  <span>En savoir plus</span>
+                  <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div><!-- End Module Card -->
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+            <div class="department-card">
+              <div class="department-image">
+                <img src="{{ asset('assets/img/health/pediatrics-3.webp') }}" alt="Module Boutique" class="img-fluid">
+              </div>
+              <div class="department-content">
+                <div class="department-icon">
+                  <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3>Boutique</h3>
+                <p>Accédez à une sélection d'équipements et compléments validés pour le suivi des maladies chroniques, choisis par des experts de la santé.</p>
+                <a href="{{ path('connexion') }}" class="btn-learn-more">
+                  <span>En savoir plus</span>
+                  <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div><!-- End Module Card -->
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+            <div class="department-card">
+              <div class="department-image">
+                <img src="{{ asset('assets/img/health/oncology-4.webp') }}" alt="Module Rendez-vous" class="img-fluid">
+              </div>
+              <div class="department-content">
+                <div class="department-icon">
+                  <i class="fas fa-calendar-check"></i>
+                </div>
+                <h3>Rendez-vous</h3>
+                <p>Planifiez des consultations en présentiel ou en téléconsultation avec des professionnels (nutritionnistes, coachs, médecins) et recevez des rappels automatiques.</p>
+                <a href="{{ path('connexion') }}" class="btn-learn-more">
+                  <span>En savoir plus</span>
+                  <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div><!-- End Module Card -->
+
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+            <div class="department-card">
+              <div class="department-image">
+                <img src="{{ asset('assets/img/health/emergency-2.webp') }}" alt="Emergency Department" class="img-fluid">
+              </div>
+              <div class="department-content">
+                <div class="department-icon">
+                  <i class="fas fa-ambulance"></i>
+                </div>
+                <h3>Prévention</h3>
+                <p>Programmes de prévention et d'éducation pour réduire les risques, améliorer l'adhérence et prévenir les complications à long terme.</p>
+                <a href="{{ path('connexion') }}" class="btn-learn-more">
+                  <span>En savoir plus</span>
+                  <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div><!-- End Department Card -->
+
+        </div>
+
+      </div>
+
+    </section><!-- /Featured Departments Section -->
+
+    <!-- Featured Services Section -->
+    <section id="featured-services" class="featured-services section light-background">
+
+      <!-- Section Title -->
+      <div class="container section-title" data-aos="fade-up">
+        <h2>Fonctionnalités clés</h2>
+        <p>Fonctionnalités conçues pour un suivi sécurisé, compréhensible et coordonné entre le patient et les professionnels.</p>
+      </div><!-- End Section Title -->
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row gy-4">
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+            <div class="service-card">
+              <div class="service-icon">
+                <i class="fas fa-heartbeat"></i>
+              </div>
+              <div class="service-content">
+              <h3>Suivi cardiovasculaire</h3>
+              <p>Suivi spécialisé pour maladies cardiovasculaires avec visualisations, recommandations et alertes partagées avec votre équipe soignante.</p>
+              <ul class="service-features">
+                <li><i class="fas fa-check-circle"></i>Suivi Santé Avancé</li>
+                <li><i class="fas fa-check-circle"></i>Accompagnement 24/7</li>
+                <li><i class="fas fa-check-circle"></i>Dépistages Préventifs</li>
+              </ul>
+              <a href="{{ path('connexion') }}" class="service-btn">
+                En savoir plus
+                <i class="fas fa-arrow-right"></i>
+              </a>
+              </div>
+            </div>
+          </div><!-- End Service Card -->
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+            <div class="service-card">
+              <div class="service-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="service-content">
+                <h3>Monitoring en temps réel</h3>
+                <p>Surveillance continue des paramètres clés, alertes personnalisables et rapports destinés au patient et au professionnel référent.</p>
+                <ul class="service-features">
+                  <li><i class="fas fa-check-circle"></i>Monitoring continu</li>
+                  <li><i class="fas fa-check-circle"></i>Alertes personnalisées</li>
+                  <li><i class="fas fa-check-circle"></i>Historique complet</li>
+                </ul>
+                <a href="{{ path('connexion') }}" class="service-btn">
+                  En savoir plus
+                  <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div><!-- End Service Card -->
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="400">
+            <div class="service-card">
+              <div class="service-icon">
+                <i class="fas fa-bone"></i>
+              </div>
+              <div class="service-content">
+              <h3>Accompagnement orthopédique</h3>
+              <p>Programmes d'exercices adaptés, suivi des progrès et conseils pour réduire la douleur et améliorer la mobilité.</p>
+              <ul class="service-features">
+                <li><i class="fas fa-check-circle"></i>Exercices Adaptés</li>
+                <li><i class="fas fa-check-circle"></i>Médecine Préventive</li>
+                <li><i class="fas fa-check-circle"></i>Approches Non Invasives</li>
+              </ul>
+              <a href="{{ path('connexion') }}" class="service-btn">
+                En savoir plus
+                <i class="fas fa-arrow-right"></i>
+              </a>
+              </div>
+            </div>
+          </div><!-- End Service Card -->
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="500">
+            <div class="service-card">
+              <div class="service-icon">
+                <i class="fas fa-headset"></i>
+              </div>
+              <div class="service-content">
+                <h3>Support patient</h3>
+                <p>Assistance pour l'utilisation de la plateforme et coordination avec les professionnels; réponse aux questions pratiques et techniques.</p>
+                <ul class="service-features">
+                  <li><i class="fas fa-check-circle"></i>Support technique</li>
+                  <li><i class="fas fa-check-circle"></i>Conseils santé</li>
+                  <li><i class="fas fa-check-circle"></i>Réponse rapide</li>
+                </ul>
+                <a href="{{ path('connexion') }}" class="service-btn">
+                  Nous contacter
+                  <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div><!-- End Service Card -->
+
+        </div>
+
+      </div>
+
+    </section><!-- /Featured Services Section -->
+
+    <!-- Find A Doctor Section -->
+    <section id="find-a-doctor" class="find-a-doctor section">
+
+      <!-- Section Title -->
+      <div class="container section-title" data-aos="fade-up">
+        <h2>Trouver un professionnel</h2>
+        <p>Recherchez des coachs, des nutritionnistes et d'autres professionnels formés pour accompagner les patients atteints de maladies chroniques.</p>
+      </div><!-- End Section Title -->
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row justify-content-center" data-aos="fade-up" data-aos-delay="200">
+          <div class="col-lg-12">
+            <div class="search-container">
+              <form class="search-form" action="forms/doctor-search.php" method="get">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                  <input type="text" class="form-control" name="professional_name" placeholder="Nom, spécialité ou mot-clé (ex. coach, nutritionniste)">
+                  </div>
+                  <div class="col-md-4">
+                    <select class="form-select" name="specialty" id="specialty-select">
+                      <option value="">Sélectionner une spécialité</option>
+                      <option value="nutritionniste">Nutritionniste</option>
+                      <option value="coach">Coach professionnel</option>
+                      <option value="cardiologue">Cardiologue</option>
+                      <option value="neurologue">Neurologue</option>
+                      <option value="orthopediste">Orthopédiste</option>
+                      <option value="endocrinologue">Endocrinologue</option>
+                      <option value="dermatologue">Dermatologue</option>
+                      <option value="oncologue">Oncologue</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                      <i class="bi bi-search me-2"></i>Rechercher
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" data-aos="fade-up" data-aos-delay="400">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="doctor-card">
+              <div class="doctor-image">
+                <img src="{{ asset('assets/img/health/staff-3.webp') }}" alt="Dr. Sarah Mitchell" class="img-fluid">
+                <div class="availability-badge online">Disponible</div>
+              </div>
+              <div class="doctor-info">
+                <h5>Marie Dupont</h5>
+                <p class="specialty">Nutritionniste</p>
+                <p class="experience">15+ ans d'expérience</p>
+                <div class="rating">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <span class="rating-text">(4.9)</span>
+                </div>
+                <div class="appointment-actions">
+                  <a href="#" class="btn btn-outline-primary btn-sm">Voir le profil</a>
+                  <a href="#" class="btn btn-primary btn-sm">Prendre RDV</a>
+                </div>
+              </div>
+            </div>
+          </div><!-- End Doctor Card -->
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="doctor-card">
+              <div class="doctor-image">
+                <img src="{{ asset('assets/img/health/staff-7.webp') }}" alt="Dr. Michael Rodriguez" class="img-fluid">
+                <div class="availability-badge busy">En consultation</div>
+              </div>
+              <div class="doctor-info">
+                <h5>Dr. Michaël Rodriguez</h5>
+                <p class="specialty">Neurologue</p>
+                <p class="experience">12+ ans d'expérience</p>
+                <div class="rating">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-half"></i>
+                  <span class="rating-text">(4.7)</span>
+                </div>
+                <div class="appointment-actions">
+                  <a href="#" class="btn btn-outline-primary btn-sm">Voir le profil</a>
+                  <a href="#" class="btn btn-primary btn-sm">Prendre RDV</a>
+                </div>
+              </div>
+            </div>
+          </div><!-- End Doctor Card -->
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="doctor-card">
+              <div class="doctor-image">
+                <img src="{{ asset('assets/img/health/staff-1.webp') }}" alt="Dr. Emily Chen" class="img-fluid">
+                <div class="availability-badge online">Disponible</div>
+              </div>
+              <div class="doctor-info">
+                <h5>Sophie Leroy</h5>
+                <p class="specialty">Coach prévention</p>
+                <p class="experience">8+ ans d'expérience</p>
+                <div class="rating">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <span class="rating-text">(5.0)</span>
+                </div>
+                <div class="appointment-actions">
+                  <a href="#" class="btn btn-outline-primary btn-sm">Voir le profil</a>
+                  <a href="#" class="btn btn-primary btn-sm">Prendre RDV</a>
+                </div>
+              </div>
+            </div>
+          </div><!-- End Doctor Card -->
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="doctor-card">
+              <div class="doctor-image">
+                <img src="{{ asset('assets/img/health/staff-9.webp') }}" alt="Dr. James Thompson" class="img-fluid">
+                <div class="availability-badge offline">Prochain: demain 9h</div>
+              </div>
+              <div class="doctor-info">
+                <h5>Dr. James Thompson</h5>
+                <p class="specialty">Orthopédie</p>
+                <p class="experience">20+ ans d'expérience</p>
+                <div class="rating">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-half"></i>
+                  <span class="rating-text">(4.8)</span>
+                </div>
+                <div class="appointment-actions">
+                  <a href="#" class="btn btn-outline-primary btn-sm">Voir le profil</a>
+                  <a href="#" class="btn btn-primary btn-sm">Prendre RDV</a>
+                </div>
+              </div>
+            </div>
+          </div><!-- End Doctor Card -->
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="doctor-card">
+              <div class="doctor-image">
+                <img src="{{ asset('assets/img/health/staff-5.webp') }}" alt="Dr. Lisa Anderson" class="img-fluid">
+                <div class="availability-badge online">Disponible</div>
+              </div>
+              <div class="doctor-info">
+                <h5>Dr. Lisa Anderson</h5>
+                <p class="specialty">Dermatologie</p>
+                <p class="experience">10+ ans d'expérience</p>
+                <div class="rating">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star"></i>
+                  <span class="rating-text">(4.6)</span>
+                </div>
+                <div class="appointment-actions">
+                  <a href="#" class="btn btn-outline-primary btn-sm">Voir le profil</a>
+                  <a href="#" class="btn btn-primary btn-sm">Prendre RDV</a>
+                </div>
+              </div>
+            </div>
+          </div><!-- End Doctor Card -->
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="doctor-card">
+              <div class="doctor-image">
+                <img src="{{ asset('assets/img/health/staff-12.webp') }}" alt="Dr. Robert Kim" class="img-fluid">
+                <div class="availability-badge online">Disponible</div>
+              </div>
+              <div class="doctor-info">
+                <h5>Dr. Robert Kim</h5>
+                <p class="specialty">Oncologie</p>
+                <p class="experience">18+ ans d'expérience</p>
+                <div class="rating">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <span class="rating-text">(4.9)</span>
+                </div>
+                <div class="appointment-actions">
+                  <a href="#" class="btn btn-outline-primary btn-sm">Voir le profil</a>
+                  <a href="#" class="btn btn-primary btn-sm">Prendre RDV</a>
+                </div>
+              </div>
+            </div>
+          </div><!-- End Doctor Card -->
+
+        </div>
+
+      </div>
+
+    </section><!-- /Find A Doctor Section -->
+
+    <!-- Call To Action Section -->
+    <section id="call-to-action" class="call-to-action section">
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row justify-content-center">
+          <div class="col-lg-8 text-center">
+            <h2 data-aos="fade-up" data-aos-delay="200">La santé au cœur de nos priorités</h2>
+            <p data-aos="fade-up" data-aos-delay="250">Nous accompagnons les patients atteints de maladies chroniques grâce à des parcours personnalisés, un suivi régulier et l'appui de professionnels formés.</p>
+
+            <div class="cta-buttons" data-aos="fade-up" data-aos-delay="300"></div>
+          </div>
+        </div>
+
+        <div class="row features-row" data-aos="fade-up" data-aos-delay="400">
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="feature-card">
+              <div class="icon-wrapper">
+                <i class="bi bi-person-bounding-box"></i>
+              </div>
+              <h5>Coaching professionnel</h5>
+              <p>Coachs certifiés accompagnent les patients; des outils d'analyse apportent un support d'information, le suivi reste assuré par un professionnel.</p>
+              <a href="{{ path('connexion') }}" class="feature-link">
+                <span>En savoir plus</span>
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="feature-card">
+              <div class="icon-wrapper">
+                <i class="bi bi-calendar-check"></i>
+              </div>
+              <h5>Rendez-vous simplifié</h5>
+              <p>Planifiez et gérez vos consultations en quelques clics, avec rappels et options de téléconsultation.</p>
+              <a href="{{ path('connexion') }}" class="feature-link">
+                <span>Réserver</span>
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="feature-card">
+              <div class="icon-wrapper">
+                <i class="bi bi-shield-check"></i>
+              </div>
+              <h5>Sécurité garantie</h5>
+              <p>Protection des données conforme aux standards en vigueur, avec contrôle d'accès et confidentialité des échanges.</p>
+              <a href="{{ path('connexion') }}" class="feature-link">
+                <span>En savoir plus</span>
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="emergency-alert" data-aos="zoom-in" data-aos-delay="500">
+          <div class="row align-items-center">
+            <div class="col-lg-8">
+              <div class="emergency-content">
+                <div class="emergency-icon">
+                  <i class="bi bi-telephone-fill"></i>
+                </div>
+                <div class="emergency-text">
+                  <h4>Urgence médicale ?</h4>
+                  <p>Appelez notre numéro d'urgence pour une assistance immédiate.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 text-end">
+              <a href="tel:5551234567" class="emergency-btn">
+                <i class="bi bi-telephone-fill"></i>
+                Appeler (555) 123-4567
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section><!-- /Call To Action Section -->
+
+    <!-- Emergency Info Section -->
+    <section id="emergency-info" class="emergency-info section">
+      <!-- Section Title -->
+      <div class="container section-title" data-aos="fade-up">
+        <h2>Informations d'urgence</h2>
+        <p>Ressources et contacts pour les situations urgentess et le support patient.</p>
+      </div><!-- End Section Title -->
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row">
+          <div class="col-lg-8 col-md-10 mx-auto">
+
+            <!-- Support Alert Banner -->
+            <div class="emergency-alert" data-aos="zoom-in" data-aos-delay="100">
+              <div class="alert-icon">
+                <i class="bi bi-headset"></i>
+              </div>
+              <div class="alert-content">
+                <h3>Besoin d'aide ?</h3>
+                <p>Notre équipe support accompagne les patients pour l'accès à la plateforme, la navigation et la coordination avec les professionnels de santé.</p>
+              </div>
+              <div class="alert-action">
+                <a href="{{ path('contact') }}" class="btn btn-emergency">
+                  <i class="bi bi-chat-dots"></i>
+                  Nous contacter
+                </a>
+              </div>
+            </div><!-- End Support Alert -->
+
+            <!-- Emergency Contact Grid -->
+            <div class="row emergency-contacts" data-aos="fade-up" data-aos-delay="200">
+
+              <div class="col-md-6 mb-4">
+                <div class="contact-card urgent">
+                  <div class="card-icon">
+                    <i class="bi bi-hospital"></i>
+                  </div>
+                  <div class="card-content">
+                    <h4>Service d'urgence</h4>
+                    <p class="contact-info">
+                      <i class="bi bi-telephone"></i>
+                      <span>+1 (555) 123-4567</span>
+                    </p>
+                    <p class="address">
+                      <i class="bi bi-geo-alt"></i>
+                      Contactez les services d'urgence locaux en cas de détresse.
+                    </p>
+                    <p class="hours">Disponible 24/7</p>
+                  </div>
+                  <div class="card-action">
+                    <a href="tel:+15551234567" class="btn btn-contact">Call Now</a>
+                  </div>
+                </div>
+              </div><!-- End Emergency Room Card -->
+
+              <div class="col-md-6 mb-4">
+                <div class="contact-card">
+                  <div class="card-icon">
+                    <i class="bi bi-chat-dots"></i>
+                  </div>
+                  <div class="card-content">
+                    <h4>Chat en Ligne</h4>
+                    <p class="contact-info">
+                      <i class="bi bi-chat"></i>
+                      <span>Chat instantané</span>
+                    </p>
+                    <p class="address">
+                      <i class="bi bi-clock"></i>
+                      Assistance immédiate
+                    </p>
+                    <p class="hours">Lun-Dim: 8h00 - 22h00</p>
+                  </div>
+                  <div class="card-action">
+                    <a href="#" class="btn btn-contact">Démarrer le chat</a>
+                  </div>
+                </div>
+              </div><!-- End Chat Card -->
+
+              <div class="col-md-6 mb-4">
+                <div class="contact-card">
+                  <div class="card-icon">
+                    <i class="bi bi-headset"></i>
+                  </div>
+                  <div class="card-content">
+                    <h4>Ligne d'infirmières</h4>
+                    <p class="contact-info">
+                      <i class="bi bi-telephone"></i>
+                      <span>+1 (555) 456-7890</span>
+                    </p>
+                    <p class="description">Conseils infirmiers pour orienter et rassurer les patients</p>
+                    <p class="hours">Disponible 24/7</p>
+                  </div>
+                  <div class="card-action">
+                    <a href="tel:+15554567890" class="btn btn-contact">Call Now</a>
+                  </div>
+                </div>
+              </div><!-- End Nurse Helpline Card -->
+
+              <div class="col-md-6 mb-4">
+                <div class="contact-card">
+                  <div class="card-icon">
+                    <i class="bi bi-book"></i>
+                  </div>
+                  <div class="card-content">
+                    <h4>Documentation</h4>
+                    <p class="contact-info">
+                      <i class="bi bi-file-text"></i>
+                      <span>Guides & tutoriels</span>
+                    </p>
+                    <p class="description">Apprenez à utiliser pleinement notre plateforme</p>
+                    <p class="hours">Mises à jour régulières</p>
+                  </div>
+                  <div class="card-action">
+                    <a href="{{ path('contenu-educatif') }}" class="btn btn-contact">Voir la doc</a>
+                  </div>
+                </div>
+              </div><!-- End Documentation Card -->
+
+            </div><!-- End Emergency Contacts -->
+
+            <!-- Quick Actions -->
+            <div class="quick-actions" data-aos="fade-up" data-aos-delay="300">
+              <h4>Actions rapides</h4>
+              <div class="row">
+                <div class="col-sm-6 col-lg-3">
+                  <a href="#" class="action-link">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <span>Itinéraire</span>
+                  </a>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <a href="#" class="action-link">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>Prendre rendez-vous</span>
+                  </a>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <a href="#" class="action-link">
+                    <i class="bi bi-person-badge"></i>
+                    <span>Trouver un professionnel</span>
+                  </a>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <a href="#" class="action-link">
+                    <i class="bi bi-chat-dots"></i>
+                    <span>Chat en direct</span>
+                  </a>
+                </div>
+              </div>
+            </div><!-- End Quick Actions -->
+
+            <!-- Useful Tips -->
+            <div class="emergency-tips" data-aos="fade-up" data-aos-delay="400">
+              <h4>Conseils pour une meilleure santé</h4>
+              <div class="row">
+                <div class="col-md-6">
+                  <ul class="emergency-list">
+                    <li><i class="bi bi-check-circle"></i> Suivez régulièrement vos paramètres de santé</li>
+                    <li><i class="bi bi-check-circle"></i> Consultez régulièrement votre coach professionnel ou votre nutritionniste</li>
+                    <li><i class="bi bi-check-circle"></i> Prenez vos rendez-vous médicaux à temps</li>
+                    <li><i class="bi bi-check-circle"></i> Utilisez notre contenu éducatif pour mieux comprendre vos mesures</li>
+                  </ul>
+                </div>
+                <div class="col-md-6">
+                  <ul class="emergency-list">
+                    <li><i class="bi bi-check-circle"></i> Maintenez une alimentation équilibrée</li>
+                    <li><i class="bi bi-check-circle"></i> Pratiquez une activité physique régulière</li>
+                    <li><i class="bi bi-check-circle"></i> Respectez vos traitements</li>
+                    <li><i class="bi bi-check-circle"></i> Participez à nos programmes de prévention</li>
+                  </ul>
+                </div>
+              </div>
+            </div><!-- End Useful Tips -->
+
+          </div>
+        </div>
+
+      </div>
+
+    </section><!-- /Emergency Info Section -->
+
+  </main>
+
+  <footer id="footer" class="footer position-relative light-background">
+
+    <div class="container footer-top">
+      <div class="row gy-4">
+        <div class="col-lg-4 col-md-6 footer-about">
+          <a href="{{ path('index') }}" class="logo d-flex align-items-center">
+            <span class="sitename">Chronic Care</span>
+          </a>
+          <div class="footer-contact pt-3">
+            <p>1, Pôle Technologique</p>
+            <p>2 Rue André Ampère, Ariana 2083</p>
+            <p class="mt-3"><strong>Téléphone :</strong> <span>+33 1 23 45 67 89</span></p>
+            <p><strong>Email :</strong> <span>contact@chroniccare.org</span></p>
+          </div>
+          <div class="social-links d-flex mt-4">
+            <a href=""><i class="bi bi-twitter-x"></i></a>
+            <a href=""><i class="bi bi-facebook"></i></a>
+            <a href=""><i class="bi bi-instagram"></i></a>
+            <a href=""><i class="bi bi-linkedin"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Liens utiles</h4>
+          <ul>
+            <li><a href="{{ path('index') }}">Accueil</a></li>
+            <li><a href="{{ path('about') }}">À propos</a></li>
+            <li><a href="{{ path('privacy') }}">Politique de confidentialité</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Nos fonctionnalités</h4>
+          <ul>
+            <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
+            <li><a href="{{ path('coachs') }}">Coachs</a></li>
+            <li><a href="{{ path('boutique') }}">Boutique</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Ressources</h4>
+          <ul>
+            <li><a href="{{ path('forum') }}">Forum santé</a></li>
+            <li><a href="{{ path('contenu-educatif') }}">Contenu éducatif</a></li>
+            <li><a href="{{ path('faq') }}">FAQ patients</a></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="container copyright text-center mt-4">
+    <p>© <span>Copyright</span> <strong class="px-1 sitename">Chronic Care</strong> <span>Tous droits réservés</span></p>
+      <div class="credits">
+        <!-- All the links in the footer should remain intact. -->
+        <!-- You can delete the links only if you've purchased the pro version. -->
+        <!-- Licensing information: https://bootstrapmade.com/license/ -->
+        <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
+        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a> | <a href="https://bootstrapmade.com/tools/">DevTools</a>
+      </div>
+    </div>
+
+  </footer>
+
+  <!-- Scroll Top -->
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Preloader -->
+  <div id="preloader"></div>
+
+
+{% endblock %}

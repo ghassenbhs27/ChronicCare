@@ -1,0 +1,292 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Politique de confidentialité - Chronic Care{% endblock %}
+
+{% block body_class %}privacy-page{% endblock %}
+
+{% block stylesheets %}
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta name="description" content="Chronic Care — Politique de confidentialité : comment nous collectons, utilisons et protégeons vos données de santé.">
+  <meta name="keywords" content="confidentialité, RGPD, données de santé, Chronic Care, vie privée">
+
+  <!-- Favicons -->
+  <link href="{{ asset('assets/img/favicon.png') }}" rel="icon">
+  <link href="{{ asset('assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+<!-- =======================================================
+  * Template Name: MediTrust
+  * Template URL: https://bootstrapmade.com/meditrust-bootstrap-hospital-website-template/
+  * Updated: Jul 04 2025 with Bootstrap v5.3.7
+  * Author: BootstrapMade.com
+  * License: https://bootstrapmade.com/license/
+  ======================================================== -->
+{% endblock %}
+
+{% block body %}
+<header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+
+      <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+        <!-- Uncomment the line below if you also wish to use an image logo -->
+        <!-- <img src="{{ asset('assets/img/logo.webp') }}" alt=""> -->
+        <svg class="my-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g id="bgCarrier" stroke-width="0"></g>
+          <g id="tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+          <g id="iconCarrier">
+            <path d="M22 22L2 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M17 22V6C17 4.11438 17 3.17157 16.4142 2.58579C15.8284 2 14.8856 2 13 2H11C9.11438 2 8.17157 2 7.58579 2.58579C7 3.17157 7 4.11438 7 6V22" stroke="currentColor" stroke-width="1.5"></path>
+            <path opacity="0.5" d="M21 22V8.5C21 7.09554 21 6.39331 20.6629 5.88886C20.517 5.67048 20.3295 5.48298 20.1111 5.33706C19.6067 5 18.9045 5 17.5 5" stroke="currentColor" stroke-width="1.5"></path>
+            <path opacity="0.5" d="M3 22V8.5C3 7.09554 3 6.39331 3.33706 5.88886C3.48298 5.67048 3.67048 5.48298 3.88886 5.33706C4.39331 5 5.09554 5 6.5 5" stroke="currentColor" stroke-width="1.5"></path>
+            <path d="M12 22V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M10 12H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 11H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 14H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 11H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 14H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 8H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 8H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M10 15H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M12 9V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M14 7L10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          </g>
+        </svg>
+
+        <h1 class="sitename">Chronic Care</h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{{ path('index') }}">Accueil</a></li>
+          <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
+          <li><a href="{{ path('coachs') }}">Coachs</a></li>
+          <li><a href="{{ path('boutique') }}">Boutique</a></li>
+          <li><a href="{{ path('contact') }}">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+      <div class="d-flex gap-2 align-items-center">
+        <a class="btn-getstarted" href="{{ path('connexion') }}">Se connecter</a>
+        <a class="btn-getstarted" href="{{ path('inscription') }}">S'inscrire</a>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- Page Title -->
+    <div class="page-title">
+      <div class="breadcrumbs">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('index') }}"><i class="bi bi-house"></i> Accueil</a></li>
+            <li class="breadcrumb-item active current">Politique de confidentialité</li>
+          </ol>
+        </nav>
+      </div>
+
+      <div class="title-wrapper">
+        <h1>Politique de confidentialité</h1>
+        <p>Cette politique décrit comment Chronic Care collecte, utilise et protège vos informations personnelles.</p>
+      </div>
+    </div><!-- End Page Title -->
+
+    <!-- Privacy Section -->
+    <section id="privacy" class="privacy section">
+
+      <div class="container" data-aos="fade-up">
+        <!-- Header -->
+        <div class="privacy-header" data-aos="fade-up">
+          <div class="header-content">
+            <div class="last-updated">Date d'entrée en vigueur : 27 février 2025</div>
+            <p class="intro-text">Cette politique explique comment nous collectons, utilisons, traitons et divulguons vos informations, y compris les données personnelles, lors de votre accès et de l'utilisation de nos services.</p>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="privacy-content" data-aos="fade-up">
+          <!-- Introduction -->
+          <div class="content-section">
+            <h2>1. Introduction</h2>
+            <p>Lorsque vous utilisez nos services, vous nous confiez vos informations. Nous comprenons la responsabilité que cela implique et nous nous engageons à protéger vos données tout en vous donnant le contrôle.</p>
+            <p>Cette politique vise à vous aider à comprendre quelles informations nous collectons, pourquoi nous les collectons, et comment vous pouvez les mettre à jour, les gérer, les exporter ou les supprimer.</p>
+          </div>
+
+          <!-- Information Collection -->
+          <div class="content-section">
+            <h2>2. Informations que nous collectons</h2>
+            <p>Nous collectons des informations afin de fournir de meilleurs services à nos utilisateurs. Les types d'informations que nous collectons comprennent :</p>
+
+            <h3>2.1 Informations que vous fournissez</h3>
+            <p>Lorsque vous créez un compte ou utilisez nos services, vous nous fournissez des informations personnelles telles que :</p>
+            <ul>
+              <li>Votre nom et vos coordonnées</li>
+              <li>Identifiants de compte</li>
+              <li>Informations de paiement lorsque nécessaire</li>
+              <li>Préférences de communication</li>
+            </ul>
+
+            <h3>2.2 Informations collectées automatiquement</h3>
+            <p>Nous recueillons automatiquement certaines informations lorsque vous utilisez nos services :</p>
+            <ul>
+              <li>Informations sur l'appareil et identifiants</li>
+              <li>Informations de journal et statistiques d'utilisation</li>
+              <li>Informations de localisation si elles sont activées</li>
+              <li>Type et paramètres du navigateur</li>
+            </ul>
+          </div>
+
+          <!-- Use of Information -->
+          <div class="content-section">
+            <h2>3. Comment nous utilisons vos informations</h2>
+            <p>Nous utilisons les informations collectées pour fournir, maintenir et améliorer nos services. Plus précisément, nous utilisons vos informations pour :</p>
+            <ul>
+              <li>Fournir et personnaliser nos services</li>
+              <li>Traiter les transactions et envoyer les informations associées</li>
+              <li>Envoyer des notifications et des mises à jour concernant nos services</li>
+              <li>Maintenir la sécurité et vérifier l'identité</li>
+              <li>Analyser et améliorer nos services</li>
+            </ul>
+          </div>
+
+          <!-- Information Sharing -->
+          <div class="content-section">
+            <h2>4. Partage et divulgation des informations</h2>
+            <p>Nous ne partageons pas d'informations personnelles avec des entreprises, organisations ou individus extérieurs à notre société, sauf dans les cas suivants :</p>
+
+            <h3>4.1 Avec votre consentement</h3>
+            <p>Nous partagerons des informations personnelles avec des tiers lorsque nous avons obtenu votre consentement explicite.</p>
+
+            <h3>4.2 Pour des raisons légales</h3>
+            <p>Nous pouvons divulguer des informations personnelles si nous estimons de bonne foi que l'accès, l'utilisation, la conservation ou la divulgation est raisonnablement nécessaire pour :</p>
+            <ul>
+              <li>Respecter une loi, une réglementation, une procédure légale ou une demande gouvernementale exécutoire</li>
+              <li>Faire appliquer les conditions d'utilisation applicables</li>
+              <li>Détecter, prévenir ou traiter la fraude, les problèmes de sécurité ou techniques</li>
+              <li>Protéger les droits, les biens ou la sécurité de nos utilisateurs</li>
+            </ul>
+          </div>
+
+          <!-- Data Security -->
+          <div class="content-section">
+            <h2>5. Sécurité des données</h2>
+            <p>Nous nous efforçons de protéger nos utilisateurs contre l'accès non autorisé, l'altération, la divulgation ou la destruction des informations que nous détenons. En particulier :</p>
+            <ul>
+              <li>Nous chiffrons les communications via TLS/SSL</li>
+              <li>Nous révisons régulièrement nos pratiques de collecte, de stockage et de traitement des données</li>
+              <li>Nous limitons l'accès aux informations personnelles aux employés qui en ont besoin</li>
+            </ul>
+          </div>
+
+          <!-- Your Rights -->
+          <div class="content-section">
+            <h2>6. Vos droits et choix</h2>
+            <p>Vous disposez de droits concernant vos informations personnelles, notamment :</p>
+            <ul>
+              <li>Le droit d'accéder à vos informations personnelles</li>
+              <li>Le droit de corriger des informations inexactes</li>
+              <li>Le droit de demander la suppression de vos données</li>
+              <li>Le droit de restreindre ou de vous opposer au traitement de vos informations</li>
+            </ul>
+          </div>
+
+          <!-- Policy Updates -->
+          <div class="content-section">
+            <h2>7. Modifications de la présente politique</h2>
+            <p>Nous pouvons mettre à jour cette politique de confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle politique sur cette page et en mettant à jour la date d'entrée en vigueur en haut.</p>
+            <p>Votre utilisation continue de nos services après toute modification de cette politique vaut acceptation de ces changements.</p>
+          </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="privacy-contact" data-aos="fade-up">
+          <h2>Nous contacter</h2>
+          <p>Si vous avez des questions concernant cette politique de confidentialité ou nos pratiques, veuillez nous contacter :</p>
+          <div class="contact-details">
+            <p><strong>Email :</strong> contact@chroniccare.org</p>
+            <p><strong>Adresse :</strong> 123 Rue de la Santé, 75000 Paris, France</p>
+          </div>
+        </div>
+
+      </div>
+
+    </section><!-- /Privacy Section -->
+
+  </main>
+
+  <footer id="footer" class="footer position-relative light-background">
+
+    <div class="container footer-top">
+      <div class="row gy-4">
+        <div class="col-lg-4 col-md-6 footer-about">
+          <a href="{{ path('index') }}" class="logo d-flex align-items-center">
+            <span class="sitename">Chronic Care</span>
+          </a>
+          <div class="footer-contact pt-3">
+            <p>1, Pôle Technologique</p>
+            <p>2 Rue André Ampère، Ariana 2083</p>
+            <p class="mt-3"><strong>Téléphone :</strong> <span>+33 1 23 45 67 89</span></p>
+            <p><strong>Email :</strong> <span>contact@chroniccare.org</span></p>
+          </div>
+          <div class="social-links d-flex mt-4">
+            <a href=""><i class="bi bi-twitter-x"></i></a>
+            <a href=""><i class="bi bi-facebook"></i></a>
+            <a href=""><i class="bi bi-instagram"></i></a>
+            <a href=""><i class="bi bi-linkedin"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Liens utiles</h4>
+          <ul>
+            <li><a href="{{ path('index') }}">Accueil</a></li>
+            <li><a href="{{ path('about') }}">À propos</a></li>
+            <li><a href="{{ path('privacy') }}">Politique de confidentialité</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Nos fonctionnalités</h4>
+          <ul>
+            <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
+            <li><a href="{{ path('coachs') }}">Coachs</a></li>
+            <li><a href="{{ path('boutique') }}">Boutique</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Ressources</h4>
+          <ul>
+            <li><a href="{{ path('forum') }}">Forum santé</a></li>
+            <li><a href="{{ path('contenu-educatif') }}">Contenu éducatif</a></li>
+            <li><a href="{{ path('faq') }}">FAQ patients</a></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="container copyright text-center mt-4">
+    <p>© <span>Copyright</span> <strong class="px-1 sitename">Chronic Care</strong> <span>Tous droits réservés</span></p>
+      <div class="credits">
+        <!-- All the links in the footer should remain intact. -->
+        <!-- You can delete the links only if you've purchased the pro version. -->
+        <!-- Licensing information: https://bootstrapmade.com/license/ -->
+        <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
+        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a> | <a href="https://bootstrapmade.com/tools/">DevTools</a>
+      </div>
+    </div>
+
+  </footer>
+
+  <!-- Scroll Top -->
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Preloader -->
+  <div id="preloader"></div>
+{% endblock %}

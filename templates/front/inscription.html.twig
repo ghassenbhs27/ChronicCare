@@ -1,0 +1,353 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}S'inscrire - Chronic Care{% endblock %}
+
+{% block body_class %}appointment-page{% endblock %}
+
+{% block stylesheets %}
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta name="description" content="Créez un compte Chronic Care pour commencer à suivre votre santé et être accompagné par des professionnels.">
+  <meta name="keywords" content="inscription, compte patient, suivi santé, chronic care">
+
+  <!-- Favicons -->
+  <link href="{{ asset('assets/img/favicon.png') }}" rel="icon">
+  <link href="{{ asset('assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+<!-- =======================================================
+  * Template Name: MediTrust
+  * Template URL: https://bootstrapmade.com/meditrust-bootstrap-hospital-website-template/
+  * Updated: Jul 04 2025 with Bootstrap v5.3.7
+  * Author: BootstrapMade.com
+  * License: https://bootstrapmade.com/license/
+  ======================================================== -->
+{% endblock %}
+
+{% block body %}
+<header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+
+      <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+        <!-- Uncomment the line below if you also wish to use an image logo -->
+        <!-- <img src="{{ asset('assets/img/logo.webp') }}" alt=""> -->
+        <svg class="my-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g id="bgCarrier" stroke-width="0"></g>
+          <g id="tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+          <g id="iconCarrier">
+            <path d="M22 22L2 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M17 22V6C17 4.11438 17 3.17157 16.4142 2.58579C15.8284 2 14.8856 2 13 2H11C9.11438 2 8.17157 2 7.58579 2.58579C7 3.17157 7 4.11438 7 6V22" stroke="currentColor" stroke-width="1.5"></path>
+            <path opacity="0.5" d="M21 22V8.5C21 7.09554 21 6.39331 20.6629 5.88886C20.517 5.67048 20.3295 5.48298 20.1111 5.33706C19.6067 5 18.9045 5 17.5 5" stroke="currentColor" stroke-width="1.5"></path>
+            <path opacity="0.5" d="M3 22V8.5C3 7.09554 3 6.39331 3.33706 5.88886C3.48298 5.67048 3.67048 5.48298 3.88886 5.33706C4.39331 5 5.09554 5 6.5 5" stroke="currentColor" stroke-width="1.5"></path>
+            <path d="M12 22V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M10 12H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 11H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 14H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 11H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 14H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 8H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 8H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M10 15H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M12 9V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M14 7L10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          </g>
+        </svg>
+
+        <h1 class="sitename">Chronic Care</h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{{ path('index') }}">Accueil</a></li>
+          <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
+          <li><a href="{{ path('coachs') }}">Coachs</a></li>
+          <li><a href="{{ path('boutique') }}">Boutique</a></li>
+          <li><a href="{{ path('contact') }}">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+      <div class="d-flex gap-2 align-items-center">
+        <a class="btn-getstarted" href="{{ path('connexion') }}">Se connecter</a>
+        <a class="btn-getstarted" href="{{ path('inscription') }}">S'inscrire</a>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- Page Title -->
+    <div class="page-title">
+      <div class="breadcrumbs">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('index') }}"><i class="bi bi-house"></i> Accueil</a></li>
+            <li class="breadcrumb-item active current">S'inscrire</li>
+          </ol>
+        </nav>
+      </div>
+
+      <div class="title-wrapper">
+        <h1>Créer un compte</h1>
+        <p>Rejoignez Chronic Care et commencez votre parcours de suivi de santé personnalisé. L'inscription prend moins de 5 minutes.</p>
+      </div>
+    </div><!-- End Page Title -->
+
+    <!-- Inscription Section -->
+    <section id="appointmnet" class="appointmnet section">
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row gy-4">
+
+          <!-- Inscription Info -->
+          <div class="col-lg-6">
+            <div class="appointment-info">
+              <h3>Inscription simple et sécurisée</h3>
+              <p class="mb-4">Créez votre compte en quelques minutes pour accéder à tous les modules de suivi de Chronic Care. Vos données de santé sont protégées par les normes les plus strictes.</p>
+
+              <div class="info-items">
+                <div class="info-item d-flex align-items-center mb-3" data-aos="fade-up" data-aos-delay="200">
+                  <div class="icon-wrapper me-3">
+                    <i class="bi bi-shield-check"></i>
+                  </div>
+                  <div>
+                    <h5>Données sécurisées</h5>
+                    <p class="mb-0">Conformité RGPD et chiffrement de bout en bout pour protéger vos informations</p>
+                  </div>
+                </div><!-- End Info Item -->
+
+                <div class="info-item d-flex align-items-center mb-3" data-aos="fade-up" data-aos-delay="250">
+                  <div class="icon-wrapper me-3">
+                    <i class="bi bi-lightning"></i>
+                  </div>
+                  <div>
+                    <h5>Accès immédiat</h5>
+                    <p class="mb-0">Commencez à utiliser Chronic Care dès que vous êtes inscrit</p>
+                  </div>
+                </div><!-- End Info Item -->
+
+                <div class="info-item d-flex align-items-center mb-3" data-aos="fade-up" data-aos-delay="300">
+                  <div class="icon-wrapper me-3">
+                    <i class="bi bi-headset"></i>
+                  </div>
+                  <div>
+                    <h5>Support disponible</h5>
+                    <p class="mb-0">Notre équipe est là pour vous aider à configurer votre profil</p>
+                  </div>
+                </div><!-- End Info Item -->
+              </div>
+
+              <div class="emergency-contact mt-4" data-aos="fade-up" data-aos-delay="350">
+                <div class="emergency-card p-3">
+                  <h6 class="mb-2"><i class="bi bi-telephone-fill me-2"></i>Besoin d'aide ?</h6>
+                  <p class="mb-0">Contactez-nous au <strong>+33 1 23 45 67 89</strong> ou via le chat</p>
+                </div>
+              </div>
+
+            </div>
+          </div><!-- End Inscription Info -->
+
+          <!-- Inscription Form -->
+          <div class="col-lg-6">
+            <div class="appointment-form-wrapper" data-aos="fade-up" data-aos-delay="200">
+              <form action="forms/inscription.php" method="post" class="appointment-form php-email-form">
+                <div class="row gy-3">
+
+                  <div class="col-md-6">
+                    <input type="text" name="firstname" class="form-control" placeholder="Prénom" required="">
+                  </div>
+
+                  <div class="col-md-6">
+                    <input type="text" name="lastname" class="form-control" placeholder="Nom" required="">
+                  </div>
+
+                  <div class="col-md-12">
+                    <input type="email" name="email" class="form-control" placeholder="Adresse email" required="">
+                  </div>
+
+                  <div class="col-md-12">
+                    <input type="tel" name="phone" class="form-control" placeholder="Numéro de téléphone (optionnel)">
+                  </div>
+
+                  <div class="col-md-6">
+                    <input type="date" name="birthdate" class="form-control" placeholder="Date de naissance" required="">
+                  </div>
+
+                  <div class="col-md-6">
+                    <select name="gender" class="form-select" required="">
+                      <option value="">Sexe</option>
+                      <option value="male">Homme</option>
+                      <option value="female">Femme</option>
+                      <option value="other">Autre</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-12">
+                    <input type="password" name="password" class="form-control" placeholder="Mot de passe" required="">
+                  </div>
+
+                  <div class="col-md-12">
+                    <input type="password" name="password_confirm" class="form-control" placeholder="Confirmer le mot de passe" required="">
+                  </div>
+
+                  <div class="col-12">
+                    <textarea class="form-control" name="medical_conditions" rows="4" placeholder="Indiquez vos maladies chroniques ou conditions de santé (optionnel)"></textarea>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="terms" name="terms" required="">
+                      <label class="form-check-label" for="terms">
+                        J'accepte les <a href="{{ path('terms') }}">conditions d'utilisation</a> et la <a href="{{ path('privacy') }}">politique de confidentialité</a>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="loading">Chargement...</div>
+                    <div class="error-message"></div>
+                    <div class="sent-message">Votre compte a été créé avec succès ! Veuillez vérifier votre email pour confirmer votre inscription.</div>
+
+                    <button type="submit" class="btn btn-appointment w-100">
+                      <i class="bi bi-person-plus me-2"></i>Créer mon compte
+                    </button>
+                  </div>
+
+                </div>
+              </form>
+            </div>
+          </div><!-- End Inscription Form -->
+
+        </div>
+
+        <!-- Process Steps -->
+        <div class="process-steps mt-5" data-aos="fade-up" data-aos-delay="300">
+          <div class="row text-center gy-4">
+            <div class="col-lg-3 col-md-6">
+              <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-icon">
+                  <i class="bi bi-pencil-square"></i>
+                </div>
+                <h5>Remplir le formulaire</h5>
+                <p>Entrez vos informations personnelles et créez un mot de passe sécurisé</p>
+              </div>
+            </div><!-- End Step -->
+
+            <div class="col-lg-3 col-md-6">
+              <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-icon">
+                  <i class="bi bi-envelope-check"></i>
+                </div>
+                <h5>Confirmer email</h5>
+                <p>Vérifiez votre adresse email en cliquant sur le lien de confirmation</p>
+              </div>
+            </div><!-- End Step -->
+
+            <div class="col-lg-3 col-md-6">
+              <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-icon">
+                  <i class="bi bi-graph-up"></i>
+                </div>
+                <h5>Configurer le profil</h5>
+                <p>Ajoutez vos données de santé et indiquez vos conditions chroniques</p>
+              </div>
+            </div><!-- End Step -->
+
+            <div class="col-lg-3 col-md-6">
+              <div class="step-item">
+                <div class="step-number">4</div>
+                <div class="step-icon">
+                  <i class="bi bi-check-circle"></i>
+                </div>
+                <h5>Commencer</h5>
+                <p>Explorez tous les modules et connectez-vous avec des professionnels</p>
+              </div>
+            </div><!-- End Step -->
+
+          </div>
+        </div><!-- End Process Steps -->
+
+      </div>
+
+    </section><!-- /Appointmnet Section -->
+
+  </main>
+
+  <footer id="footer" class="footer position-relative light-background">
+
+    <div class="container footer-top">
+      <div class="row gy-4">
+        <div class="col-lg-4 col-md-6 footer-about">
+          <a href="{{ path('index') }}" class="logo d-flex align-items-center">
+            <span class="sitename">Chronic Care</span>
+          </a>
+          <div class="footer-contact pt-3">
+            <p>1, Pôle Technologique</p>
+            <p>2 Rue André Ampère، Ariana 2083</p>
+            <p class="mt-3"><strong>Téléphone :</strong> <span>+33 1 23 45 67 89</span></p>
+            <p><strong>Email :</strong> <span>contact@chroniccare.org</span></p>
+          </div>
+          <div class="social-links d-flex mt-4">
+            <a href=""><i class="bi bi-twitter-x"></i></a>
+            <a href=""><i class="bi bi-facebook"></i></a>
+            <a href=""><i class="bi bi-instagram"></i></a>
+            <a href=""><i class="bi bi-linkedin"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Liens utiles</h4>
+          <ul>
+            <li><a href="{{ path('index') }}">Accueil</a></li>
+            <li><a href="{{ path('about') }}">À propos</a></li>
+            <li><a href="{{ path('privacy') }}">Politique de confidentialité</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Nos fonctionnalités</h4>
+          <ul>
+            <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
+            <li><a href="{{ path('coachs') }}">Coachs</a></li>
+            <li><a href="{{ path('boutique') }}">Boutique</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Ressources</h4>
+          <ul>
+            <li><a href="{{ path('forum') }}">Forum santé</a></li>
+            <li><a href="{{ path('contenu-educatif') }}">Contenu éducatif</a></li>
+            <li><a href="{{ path('faq') }}">FAQ patients</a></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="container copyright text-center mt-4">
+    <p>© <span>Copyright</span> <strong class="px-1 sitename">Chronic Care</strong> <span>Tous droits réservés</span></p>
+      <div class="credits">
+        <!-- All the links in the footer should remain intact. -->
+        <!-- You can delete the links only if you've purchased the pro version. -->
+        <!-- Licensing information: https://bootstrapmade.com/license/ -->
+        <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
+        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a> | <a href="https://bootstrapmade.com/tools/">DevTools</a>
+      </div>
+    </div>
+
+  </footer>
+
+  <!-- Scroll Top -->
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Preloader -->
+  <div id="preloader"></div>
+{% endblock %}

@@ -1,0 +1,260 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}FAQ - Chronic Care{% endblock %}
+
+{% block body_class %}faq-page{% endblock %}
+
+{% block stylesheets %}
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta name="description" content="">
+  <meta name="keywords" content="">
+
+  <!-- Favicons -->
+  <link href="{{ asset('assets/img/favicon.png') }}" rel="icon">
+  <link href="{{ asset('assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+<!-- =======================================================
+  * Template Name: MediTrust
+  * Template URL: https://bootstrapmade.com/meditrust-bootstrap-hospital-website-template/
+  * Updated: Jul 04 2025 with Bootstrap v5.3.7
+  * Author: BootstrapMade.com
+  * License: https://bootstrapmade.com/license/
+  ======================================================== -->
+{% endblock %}
+
+{% block body %}
+<header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+
+      <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+        <!-- Uncomment the line below if you also wish to use an image logo -->
+        <!-- <img src="{{ asset('assets/img/logo.webp') }}" alt=""> -->
+        <svg class="my-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g id="bgCarrier" stroke-width="0"></g>
+          <g id="tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+          <g id="iconCarrier">
+            <path d="M22 22L2 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M17 22V6C17 4.11438 17 3.17157 16.4142 2.58579C15.8284 2 14.8856 2 13 2H11C9.11438 2 8.17157 2 7.58579 2.58579C7 3.17157 7 4.11438 7 6V22" stroke="currentColor" stroke-width="1.5"></path>
+            <path opacity="0.5" d="M21 22V8.5C21 7.09554 21 6.39331 20.6629 5.88886C20.517 5.67048 20.3295 5.48298 20.1111 5.33706C19.6067 5 18.9045 5 17.5 5" stroke="currentColor" stroke-width="1.5"></path>
+            <path opacity="0.5" d="M3 22V8.5C3 7.09554 3 6.39331 3.33706 5.88886C3.48298 5.67048 3.67048 5.48298 3.88886 5.33706C4.39331 5 5.09554 5 6.5 5" stroke="currentColor" stroke-width="1.5"></path>
+            <path d="M12 22V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M10 12H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 11H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 14H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 11H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 14H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M5.5 8H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M17 8H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path opacity="0.5" d="M10 15H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            <path d="M12 9V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M14 7L10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          </g>
+        </svg>
+
+        <h1 class="sitename">Chronic Care</h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{{ path('index') }}">Accueil</a></li>
+          <li><a href="{{ path('nutritionnistes') }}" class="active">Nutritionnistes</a></li>
+          <li><a href="{{ path('coachs') }}">Coachs</a></li>
+          <li><a href="{{ path('boutique') }}">Boutique</a></li>
+          <li><a href="{{ path('contact') }}">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+      <div class="d-flex gap-2 align-items-center">
+        <a class="btn-getstarted" href="{{ path('connexion') }}">Se connecter</a>
+        <a class="btn-getstarted" href="{{ path('inscription') }}">S'inscrire</a>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- Page Title -->
+    <div class="page-title position-relative">
+      <div class="breadcrumbs">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('index') }}"><i class="bi bi-house"></i> Accueil</a></li>
+            <li class="breadcrumb-item active current">FAQ</li>
+          </ol>
+        </nav>
+      </div>
+
+      <div class="title-wrapper">
+        <h1>Foire aux questions (FAQ)</h1>
+        <p>Questions fréquentes sur l'utilisation de Chronic Care, la confidentialité des données et le suivi des patients chroniques.</p>
+      </div>
+    </div><!-- End Page Title -->
+
+    <!-- Faq Section -->
+    <section id="faq" class="faq section">
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row gy-5">
+          <div class="col-lg-6" data-aos="zoom-out" data-aos-delay="200">
+            <div class="faq-contact-card">
+              <div class="card-icon">
+                <i class="bi bi-question-circle"></i>
+              </div>
+              <div class="card-content">
+                <h3>Besoin d'aide ?</h3>
+                <p>Si vous avez des questions sur l'utilisation de Chronic Care, la protection des données ou le suivi personnalisé, notre équipe est là pour vous aider.</p>
+                <div class="contact-options">
+                  <a href="mailto:contact@chroniccare.org" class="contact-option">
+                    <i class="bi bi-envelope"></i>
+                    <span>Support par email</span>
+                  </a>
+                  <a href="#" class="contact-option">
+                    <i class="bi bi-chat-dots"></i>
+                    <span>Chat en direct</span>
+                  </a>
+                  <a href="tel:+33123456789" class="contact-option">
+                    <i class="bi bi-telephone"></i>
+                    <span>Appeler +33 1 23 45 67 89</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+            <div class="faq-accordion">
+              <div class="faq-item faq-active">
+                <div class="faq-header">
+                  <h3>Comment Chronic Care protège-t-il mes données de santé ?</h3>
+                  <i class="bi bi-chevron-down faq-toggle"></i>
+                </div>
+                <div class="faq-content">
+                  <p>
+                    Nous chiffrons les données en transit et au repos, limitons l'accès aux équipes autorisées, et respectons la réglementation européenne (RGPD). Les données sont stockées de manière sécurisée et utilisées uniquement pour améliorer le suivi médical.
+                  </p>
+                </div>
+              </div><!-- End FAQ Item-->
+
+              <div class="faq-item" data-aos="zoom-in" data-aos-delay="200">
+                <div class="faq-header">
+                  <h3>Puis-je partager mes rapports avec mon médecin traitant ?</h3>
+                  <i class="bi bi-chevron-down faq-toggle"></i>
+                </div>
+                <div class="faq-content">
+                  <p>
+                    Oui — vous pouvez exporter vos rapports ou inviter votre médecin à accéder à certaines données via un lien sécurisé, selon les permissions que vous définissez dans votre compte.
+                  </p>
+                </div>
+              </div><!-- End FAQ Item-->
+
+              <div class="faq-item">
+                <div class="faq-header">
+                  <h3>Comment fonctionnent les programmes de coaching et nutrition ?</h3>
+                  <i class="bi bi-chevron-down faq-toggle"></i>
+                </div>
+                <div class="faq-content">
+                  <p>
+                    Nos programmes sont personnalisés en fonction de votre profil médical et vos objectifs. Un suivi régulier, des recommandations alimentaires et des sessions avec un coach sont proposés pour améliorer la prise en charge des maladies chroniques.
+                  </p>
+                </div>
+              </div><!-- End FAQ Item-->
+
+              <div class="faq-item">
+                <div class="faq-header">
+                  <h3>Quels dispositifs sont compatibles avec Chronic Care ?</h3>
+                  <i class="bi bi-chevron-down faq-toggle"></i>
+                </div>
+                <div class="faq-content">
+                  <p>
+                    Nous prenons en charge la plupart des dispositifs de suivi courants (glycémie, tension, balance connectée). Consultez la page Boutique pour la liste complète et les instructions d'appairage.
+                  </p>
+                </div>
+              </div><!-- End FAQ Item-->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section><!-- /Faq Section -->
+
+  </main>
+
+  <footer id="footer" class="footer position-relative light-background">
+
+    <div class="container footer-top">
+      <div class="row gy-4">
+        <div class="col-lg-4 col-md-6 footer-about">
+          <a href="{{ path('index') }}" class="logo d-flex align-items-center">
+            <span class="sitename">Chronic Care</span>
+          </a>
+          <div class="footer-contact pt-3">
+            <p>1, Pôle Technologique</p>
+            <p>2 Rue André Ampère، Ariana 2083</p>
+            <p class="mt-3"><strong>Téléphone :</strong> <span>+33 1 23 45 67 89</span></p>
+            <p><strong>Email :</strong> <span>contact@chroniccare.org</span></p>
+          </div>
+          <div class="social-links d-flex mt-4">
+            <a href=""><i class="bi bi-twitter-x"></i></a>
+            <a href=""><i class="bi bi-facebook"></i></a>
+            <a href=""><i class="bi bi-instagram"></i></a>
+            <a href=""><i class="bi bi-linkedin"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Liens utiles</h4>
+          <ul>
+            <li><a href="{{ path('index') }}">Accueil</a></li>
+            <li><a href="{{ path('about') }}">À propos</a></li>
+            <li><a href="{{ path('privacy') }}">Politique de confidentialité</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Nos fonctionnalités</h4>
+          <ul>
+            <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
+            <li><a href="{{ path('coachs') }}">Coachs</a></li>
+            <li><a href="{{ path('boutique') }}">Boutique</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Ressources</h4>
+          <ul>
+            <li><a href="{{ path('forum') }}">Forum santé</a></li>
+            <li><a href="{{ path('contenu-educatif') }}">Contenu éducatif</a></li>
+            <li><a href="{{ path('faq') }}">FAQ patients</a></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="container copyright text-center mt-4">
+    <p>© <span>Copyright</span> <strong class="px-1 sitename">Chronic Care</strong> <span>Tous droits réservés</span></p>
+      <div class="credits">
+        <!-- All the links in the footer should remain intact. -->
+        <!-- You can delete the links only if you've purchased the pro version. -->
+        <!-- Licensing information: https://bootstrapmade.com/license/ -->
+        <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
+        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a> | <a href="https://bootstrapmade.com/tools/">DevTools</a>
+      </div>
+    </div>
+
+  </footer>
+
+  <!-- Scroll Top -->
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Preloader -->
+  <div id="preloader"></div>
+{% endblock %}

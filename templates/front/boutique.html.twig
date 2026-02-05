@@ -1,0 +1,767 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Boutique - Chronic Care{% endblock %}
+
+{% block body_class %}products-page{% endblock %}
+
+{% block stylesheets %}
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta name="description" content="Découvrez les produits de la boutique Chronic Care : suppléments nutrition, équipements de monitoring et produits pour le bien-être.">
+    <meta name="keywords" content="boutique, produits santé, suppléments, monitoring, maladies chroniques">
+
+    <!-- Favicons -->
+    <link href="{{ asset('assets/img/favicon.png') }}" rel="icon">
+    <link href="{{ asset('assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+<style>
+      /* Harmonisation des cartes produits pour coller au style de la page */
+      .service-item {
+        display:flex;
+        gap:1rem;
+        align-items:flex-start;
+        padding:16px;
+        border-radius:12px;
+        background:#ffffff;
+        border:1px solid rgba(22,28,37,0.04);
+        box-shadow:0 1px 2px rgba(16,24,40,0.02);
+        transition:transform .12s ease, box-shadow .12s ease;
+      }
+      .service-item:hover{ transform:translateY(-4px); box-shadow:0 8px 24px rgba(16,24,40,0.06);} 
+
+      .service-image{
+        flex:0 0 72px;
+        width:72px;
+        height:72px;
+        border-radius:50%;
+        overflow:hidden;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:#f6f8fb;
+        border:1px solid rgba(16,24,40,0.04);
+      }
+      .service-image img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+      .service-item .service-details{ flex:1; }
+      .service-details h5{ margin:0 0 6px 0; font-weight:700; }
+      .service-benefits li{ margin-bottom:6px; color:#6b7280; }
+
+      .boutique-tabs .nav-link,
+      .boutique-tabs .nav-link i {
+        color: var(--accent-color);
+      }
+
+      .boutique-tabs .nav-link.active,
+      .boutique-tabs .nav-link.active i {
+        color: var(--accent-color);
+        border-color: var(--accent-color);
+      }
+
+      @media (max-width:768px){
+        .service-item{ padding:12px; }
+        .service-image{ flex:0 0 56px; width:56px; height:56px; }
+      }
+    </style>
+
+    <!-- =======================================================
+    * Template Name: MediTrust
+    * Template URL: https://bootstrapmade.com/meditrust-bootstrap-hospital-website-template/
+    * Updated: Jul 04 2025 with Bootstrap v5.3.7
+    * Author: BootstrapMade.com
+    * License: https://bootstrapmade.com/license/
+    ======================================================== -->
+{% endblock %}
+
+{% block body %}
+<header id="header" class="header d-flex align-items-center fixed-top">
+      <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+
+        <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+          <!-- Uncomment the line below if you also wish to use an image logo -->
+          <!-- <img src="{{ asset('assets/img/logo.webp') }}" alt=""> -->
+          <svg class="my-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g id="bgCarrier" stroke-width="0"></g>
+            <g id="tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="iconCarrier">
+              <path d="M22 22L2 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path d="M17 22V6C17 4.11438 17 3.17157 16.4142 2.58579C15.8284 2 14.8856 2 13 2H11C9.11438 2 8.17157 2 7.58579 2.58579C7 3.17157 7 4.11438 7 6V22" stroke="currentColor" stroke-width="1.5"></path>
+              <path opacity="0.5" d="M21 22V8.5C21 7.09554 21 6.39331 20.6629 5.88886C20.517 5.67048 20.3295 5.48298 20.1111 5.33706C19.6067 5 18.9045 5 17.5 5" stroke="currentColor" stroke-width="1.5"></path>
+              <path opacity="0.5" d="M3 22V8.5C3 7.09554 3 6.39331 3.33706 5.88886C3.48298 5.67048 3.67048 5.48298 3.88886 5.33706C4.39331 5 5.09554 5 6.5 5" stroke="currentColor" stroke-width="1.5"></path>
+              <path d="M12 22V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path opacity="0.5" d="M10 12H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path opacity="0.5" d="M5.5 11H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path opacity="0.5" d="M5.5 14H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path opacity="0.5" d="M17 11H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path opacity="0.5" d="M17 14H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path opacity="0.5" d="M5.5 8H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path opacity="0.5" d="M17 8H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path opacity="0.5" d="M10 15H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+              <path d="M12 9V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M14 7L10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </g>
+          </svg>
+
+          <h1 class="sitename">Chronic Care</h1>
+        </a>
+
+        <nav id="navmenu" class="navmenu">
+          <ul>
+            <li><a href="{{ path('index') }}">Accueil</a></li>
+            <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
+            <li><a href="{{ path('coachs') }}">Coachs</a></li>
+            <li><a href="{{ path('boutique') }}" class="active">Boutique</a></li>
+            <li><a href="{{ path('contact') }}">Contact</a></li>
+          </ul>
+          <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+        </nav>
+
+        <div class="d-flex gap-2 align-items-center">
+          <a class="btn-getstarted" href="{{ path('connexion') }}">Se connecter</a>
+          <a class="btn-getstarted" href="{{ path('inscription') }}">S'inscrire</a>
+        </div>
+
+      </div>
+    </header>
+
+    <main class="main">
+
+      <!-- Page Title -->
+      <div class="page-title">
+        <div class="breadcrumbs">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="{{ path('index') }}"><i class="bi bi-house"></i> Accueil</a></li>
+              <li class="breadcrumb-item active current">Boutique</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="container">
+          <h1>Notre boutique</h1>
+          <p>Découvrez notre sélection de produits pour la santé et le bien-être : suppléments nutritionnels, équipements de monitoring, et bien plus encore.</p>
+        </div>
+      </div><!-- End Page Title -->
+
+      <!-- Services Section -->
+      <section id="services" class="services section light-background">
+
+        <div class="container">
+          <div class="row gy-4">
+
+            <div class="col-lg-12 d-flex align-items-center" data-aos="fade-up" data-aos-delay="200">
+              <ul class="nav nav-tabs boutique-tabs flex-column flex-lg-row flex-wrap ms-auto w-100 p-0 mb-5 mb-lg-0" data-bs-toggle="tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link d-flex align-items-center active" href="#services-primary" data-bs-toggle="tab" role="tab" aria-selected="true">
+                    <i class="fa fa-heartbeat"></i>
+                    <span>Suppléments nutritionnels</span>
+                  </a>
+                </li>
+
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link d-flex align-items-center" href="#services-specialty" data-bs-toggle="tab" role="tab">
+                    <i class="fa fa-heart-pulse"></i>
+                    <span>Équipements de monitoring</span>
+                  </a>
+                </li>
+
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link d-flex align-items-center" href="#services-diagnostics" data-bs-toggle="tab" role="tab">
+                    <i class="fa fa-spa"></i>
+                    <span>Bien-être et accessoires</span>
+                  </a>
+                </li>
+
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link d-flex align-items-center" href="#services-emergency" data-bs-toggle="tab" role="tab">
+                    <i class="fa fa-pills"></i>
+                    <span>Produits spécialisés</span>
+                  </a>
+                </li>
+
+              </ul>
+            </div>
+
+            <div class="col-lg-12" data-aos="fade-up" data-aos-delay="300">
+
+              <div class="tab-content">
+
+                <div class="tab-pane fade active show" id="services-primary" role="tabpanel">
+                  <div class="row g-4">
+                    <div class="col-lg-6">
+                      <div class="service-item featured">
+                          <div class="service-image">
+                            <img src="{{ asset('assets/img/products/omega3.jpg') }}" alt="Oméga-3 Premium">
+                          </div>
+                          <div class="service-icon-wrapper d-none">
+                            <i class="fa fa-leaf"></i>
+                          </div>
+                          <div class="service-details">
+                          <h5>Oméga-3 Premium</h5>
+                          <p>Complément à base d'huile de poisson riche en EPA et DHA. 60 capsules molles, dosage optimal.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Santé cardiovasculaire</li>
+                            <li><i class="fa fa-check-circle"></i>Pureté garantie</li>
+                            <li><i class="fa fa-check-circle"></i>Certifié IFOS</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                      <div class="service-image">
+                        <img src="{{ asset('assets/img/products/magnesium.jpg') }}" alt="Magnésium Liposomal">
+                      </div>
+                      <div class="service-icon-wrapper d-none">
+                        <i class="fa fa-pills"></i>
+                      </div>
+                      <div class="service-details">
+                          <h5>Magnésium Liposomal</h5>
+                          <p>Magnésium de haute biodisponibilité pour meilleure absorption. 90 capsules pour 3 mois.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Réduit stress et fatigue</li>
+                            <li><i class="fa fa-check-circle"></i>Sommeil amélioré</li>
+                            <li><i class="fa fa-check-circle"></i>Soutient les muscles</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                      <div class="service-image">
+                        <img src="{{ asset('assets/img/products/vitd3.jpg') }}" alt="Vitamine D3 2000 UI">
+                      </div>
+                      <div class="service-icon-wrapper d-none">
+                        <i class="fa fa-sun"></i>
+                      </div>
+                      <div class="service-details">
+                          <h5>Vitamine D3 2000 UI</h5>
+                          <p>Vitamine D3 naturelle pour os et immunité. 120 capsules, forme biodisponible.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Renforce les os</li>
+                            <li><i class="fa fa-check-circle"></i>Immunité renforcée</li>
+                            <li><i class="fa fa-check-circle"></i>Absence de OGM</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                      <div class="service-image">
+                        <img src="{{ asset('assets/img/products/curcumin.jpg') }}" alt="Curcumine Bioactive">
+                      </div>
+                      <div class="service-icon-wrapper d-none">
+                        <i class="fa fa-flask"></i>
+                      </div>
+                      <div class="service-details">
+                          <h5>Curcumine Bioactive</h5>
+                          <p>Extrait de curcuma avec poivre noir pour meilleure absorption. 60 capsules premium.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Action anti-inflammatoire</li>
+                            <li><i class="fa fa-check-circle"></i>Antioxydants puissants</li>
+                            <li><i class="fa fa-check-circle"></i>Digestion optimisée</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tab-pane fade" id="services-specialty" role="tabpanel">
+                  <div class="row g-4">
+                    <div class="col-lg-6">
+                      <div class="service-item featured">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/tensiometre.jpg') }}" alt="Tensiomètre brachial numérique">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-heart-pulse"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Tensiomètre brachial numérique</h5>
+                          <p>Moniteur de tension artérielle précis et rapide. Mémoire de 60 mesures, écran LED grand format.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Haute précision médicale</li>
+                            <li><i class="fa fa-check-circle"></i>Prise en 30 secondes</li>
+                            <li><i class="fa fa-check-circle"></i>Stockage de données</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/glucometre.jpg') }}" alt="Glucomètre connecté">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-droplet"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Glucomètre connecté</h5>
+                          <p>Appareil de mesure de glucose avec application mobile. Synchronisation automatique et historique détaillé.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Connectivité Bluetooth</li>
+                            <li><i class="fa fa-check-circle"></i>Résultats en 5 secondes</li>
+                            <li><i class="fa fa-check-circle"></i>Alertes personnalisables</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/balance.jpg') }}" alt="Balance intelligente">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-weight-scale"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Balance intelligente</h5>
+                          <p>Balance avec analyse de composition corporelle (poids, eau, masse musculaire, etc.). Connectée via WiFi.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Suivi complet du poids</li>
+                            <li><i class="fa fa-check-circle"></i>Historique sur 12 mois</li>
+                            <li><i class="fa fa-check-circle"></i>Partage avec applications santé</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/oxymetre.jpg') }}" alt="Oxymètre de pouls">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-lungs"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Oxymètre de pouls</h5>
+                          <p>Capteur de saturation en oxygène et fréquence cardiaque. Petit format, résultats instantanés.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Mesure précise SpO2</li>
+                            <li><i class="fa fa-check-circle"></i>Batterie longue durée</li>
+                            <li><i class="fa fa-check-circle"></i>Facile à utiliser</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tab-pane fade" id="services-diagnostics" role="tabpanel">
+                  <div class="row g-4">
+                    <div class="col-lg-6">
+                      <div class="service-item featured">
+                          <div class="service-image">
+                          <img src="{{ asset('assets/img/products/tapis-yoga.jpg') }}" alt="Tapis de yoga premium">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-spa"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Tapis de yoga premium</h5>
+                          <p>Tapis éco-responsable antidérapant. Épaisseur 5mm pour confort optimal et stabilité.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Matériaux écologiques</li>
+                            <li><i class="fa fa-check-circle"></i>Antidérapant double face</li>
+                            <li><i class="fa fa-check-circle"></i>Facile à nettoyer</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/bouteille-hydratation.jpg') }}" alt="Bouteille hydratation intelligente">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-water"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Bouteille hydratation intelligente</h5>
+                          <p>Gourde avec capteur IoT qui vous rappelle de boire. Écran LED affichant consommation journalière.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Rappels automatiques</li>
+                            <li><i class="fa fa-check-circle"></i>Suivi d'hydratation</li>
+                            <li><i class="fa fa-check-circle"></i>Sans BPA</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/bandes-elastiques.jpg') }}" alt="Kit bandes élastiques">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-dumbbell"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Kit bandes élastiques</h5>
+                          <p>Ensemble de 5 bandes de résistance couleurs. Idéales pour renforcement musculaire et rééducation.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>5 niveaux de résistance</li>
+                            <li><i class="fa fa-check-circle"></i>Durables et portables</li>
+                            <li><i class="fa fa-check-circle"></i>Guide d'exercices inclus</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/pistolet-massage.jpg') }}" alt="Pistolet de massage">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-hand-fist"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Pistolet de massage</h5>
+                          <p>Masseur vibrant pour relâchement musculaire. 5 intensités, batterie rechargeable, silencieux.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>5 têtes interchangeables</li>
+                            <li><i class="fa fa-check-circle"></i>Batterie 4h d'autonomie</li>
+                            <li><i class="fa fa-check-circle"></i>Réduit les tensions</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/chaussettes-compression.jpg') }}" alt="Chaussettes de compression">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-socks"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Chaussettes de compression</h5>
+                          <p>Chaussettes médicales pour améliorer la circulation. Classe 2 de compression progressive.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Compression graduée</li>
+                            <li><i class="fa fa-check-circle"></i>Améliore circulation</li>
+                            <li><i class="fa fa-check-circle"></i>Confortable tout jour</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/tracker-sommeil.jpg') }}" alt="Tracker de sommeil">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-moon"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Tracker de sommeil</h5>
+                          <p>Capteur chevet pour analyse du sommeil. Rapporte durée, qualité et phases REM.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Sans port à porter</li>
+                            <li><i class="fa fa-check-circle"></i>Analyse IA avancée</li>
+                            <li><i class="fa fa-check-circle"></i>Conseils personnalisés</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tab-pane fade" id="services-emergency" role="tabpanel">
+                  <div class="row g-4">
+                    <div class="col-lg-6">
+                      <div class="service-item featured">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/kit-diabete.jpg') }}" alt="Kit diabète complet">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-pills"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Kit diabète complet</h5>
+                          <p>Kit de gestion du diabète avec glucomètre, lecteur, lancettes et carnet de suivi intégré.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Matériel médicalisé certifié</li>
+                            <li><i class="fa fa-check-circle"></i>Lancettes indolores</li>
+                            <li><i class="fa fa-check-circle"></i>Carnet glucose inclus</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/bundle-cardiaque.jpg') }}" alt="Bundle santé cardiaque">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-heart"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Bundle santé cardiaque</h5>
+                          <p>Ensemble produits pour santé cardiovasculaire : Oméga-3, CoQ10, magnésium et guide nutritionnel.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Formule cliniquement prouvée</li>
+                            <li><i class="fa fa-check-circle"></i>Dosage optimal</li>
+                            <li><i class="fa fa-check-circle"></i>Guide nutrition inclus</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/support-articulation.jpg') }}" alt="Support articulation premium">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-joint"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Support articulation premium</h5>
+                          <p>Combo arthrite : Glucosamine, chondroïtine, MSM et genouillères médicales de classe 2.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Réduction douleurs</li>
+                            <li><i class="fa fa-check-circle"></i>Mobilité améliorée</li>
+                            <li><i class="fa fa-check-circle"></i>Support biomécanique</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/systeme-respiratoire.jpg') }}" alt="Système santé respiratoire">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-lungs"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Système santé respiratoire</h5>
+                          <p>Kit respiration : Peak flow meter, inhalateur valvalisé, suppléments respiratoires et mouchoirs humidifiants.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Suivi flux expiratoire</li>
+                            <li><i class="fa fa-check-circle"></i>Soulagement respiration</li>
+                            <li><i class="fa fa-check-circle"></i>Confort optimisé</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/kit-allergie.jpg') }}" alt="Kit allergie management">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-shield-halved"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Kit allergie management</h5>
+                          <p>Gestion allergies : Anti-histaminiques naturels, spray nasal, masque protecteur et journal symptômes.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Solutions naturelles</li>
+                            <li><i class="fa fa-check-circle"></i>Réaction rapide</li>
+                            <li><i class="fa fa-check-circle"></i>Suivi automatisé</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="service-item">
+                        <div class="service-image">
+                          <img src="{{ asset('assets/img/products/kit-recuperation.jpg') }}" alt="Kit récupération post-opératoire">
+                        </div>
+                        <div class="service-icon-wrapper d-none">
+                          <i class="fa fa-bandage"></i>
+                        </div>
+                        <div class="service-details">
+                          <h5>Kit récupération post-opératoire</h5>
+                          <p>Récupération chirurgicale : Compression médicale, oreiller ergonomique, pansements avancés et guide réhabilitation.</p>
+                          <ul class="service-benefits">
+                            <li><i class="fa fa-check-circle"></i>Accélère cicatrisation</li>
+                            <li><i class="fa fa-check-circle"></i>Réduit enflure</li>
+                            <li><i class="fa fa-check-circle"></i>Confort garanti</li>
+                          </ul>
+                          <a href="{{ path('service-details') }}" class="service-link">
+                            <span>Ajouter au panier</span>
+                            <i class="fa fa-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section><!-- /Services Section -->
+
+    </main>
+
+    <footer id="footer" class="footer position-relative light-background">
+
+    <div class="container footer-top">
+      <div class="row gy-4">
+        <div class="col-lg-4 col-md-6 footer-about">
+          <a href="{{ path('index') }}" class="logo d-flex align-items-center">
+            <span class="sitename">Chronic Care</span>
+          </a>
+          <div class="footer-contact pt-3">
+            <p>1, Pôle Technologique</p>
+            <p>2 Rue André Ampère، Ariana 2083</p>
+            <p class="mt-3"><strong>Téléphone :</strong> <span>+33 1 23 45 67 89</span></p>
+            <p><strong>Email :</strong> <span>contact@chroniccare.org</span></p>
+          </div>
+          <div class="social-links d-flex mt-4">
+            <a href=""><i class="bi bi-twitter-x"></i></a>
+            <a href=""><i class="bi bi-facebook"></i></a>
+            <a href=""><i class="bi bi-instagram"></i></a>
+            <a href=""><i class="bi bi-linkedin"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Liens utiles</h4>
+          <ul>
+            <li><a href="{{ path('index') }}">Accueil</a></li>
+            <li><a href="{{ path('about') }}">À propos</a></li>
+            <li><a href="{{ path('privacy') }}">Politique de confidentialité</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Nos fonctionnalités</h4>
+          <ul>
+            <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
+            <li><a href="{{ path('coachs') }}">Coachs</a></li>
+            <li><a href="{{ path('boutique') }}">Boutique</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-3 footer-links">
+          <h4>Ressources</h4>
+          <ul>
+            <li><a href="{{ path('forum') }}">Forum santé</a></li>
+            <li><a href="{{ path('contenu-educatif') }}">Contenu éducatif</a></li>
+            <li><a href="{{ path('faq') }}">FAQ patients</a></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="container copyright text-center mt-4">
+    <p>© <span>Copyright</span> <strong class="px-1 sitename">Chronic Care</strong> <span>Tous droits réservés</span></p>
+      <div class="credits">
+        <!-- All the links in the footer should remain intact. -->
+        <!-- You can delete the links only if you've purchased the pro version. -->
+        <!-- Licensing information: https://bootstrapmade.com/license/ -->
+        <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
+        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a> | <a href="https://bootstrapmade.com/tools/">DevTools</a>
+      </div>
+    </div>
+
+  </footer>
+
+    <!-- Scroll Top -->
+    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+    <!-- Preloader -->
+    <div id="preloader"></div>
+{% endblock %}
