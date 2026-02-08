@@ -1,0 +1,45 @@
+# Routes pour les Produits et Commandes
+# ========================================
+
+# Routes automatically detected from controllers using #[Route] attributes
+
+# FRONT OFFICE - PRODUITS
+# GET  /products                    - Lister tous les produits
+# GET  /products/{id}               - Voir détails d'un produit
+# GET  /products/search              - Rechercher des produits
+
+# FRONT OFFICE - PANIER
+# GET  /cart                        - Afficher le panier
+# GET  /cart/add/{id}              - Ajouter un produit
+# GET  /cart/remove/{id}           - Retirer un produit
+# POST /cart/update/{id}           - Mettre à jour quantité
+# GET  /cart/clear                 - Vider le panier
+
+# FRONT OFFICE - COMMANDES
+# GET  /commandes                  - Historique des commandes
+# GET  /commandes/{id}             - Voir détails d'une commande
+# POST /commandes/create           - Créer une nouvelle commande (checkout)
+# GET  /commandes/track/{numero}   - Suivre une commande
+
+# ADMIN - PRODUITS
+# GET    /admin/products           - Lister les produits
+# GET    /admin/products/create    - Formulaire création
+# POST   /admin/products/create    - Créer un produit
+# GET    /admin/products/{id}/edit - Formulaire édition
+# POST   /admin/products/{id}/edit - Éditer un produit
+# POST   /admin/products/{id}/delete - Supprimer un produit
+# GET    /admin/products/low-stock - Produits avec stock faible
+
+# ADMIN - COMMANDES
+# GET    /admin/commandes          - Lister les commandes
+# GET    /admin/commandes/{id}     - Voir détails d'une commande
+# POST   /admin/commandes/{id}/status - Changer le statut
+# GET    /admin/commandes/pending  - Commandes en attente
+# GET    /admin/commandes/shipped  - Commandes expédiées
+# GET    /admin/commandes/stats    - Statistiques
+
+# Notes:
+# - Tous les controllers utilisent les attributes Symfony #[Route]
+# - Les routes sont automatiquement découvertes par le framework
+# - Requiert ROLE_USER pour les routes /commandes
+# - Requiert ROLE_ADMIN pour les routes /admin
