@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ProduitRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ProduitRepository::class)]
 class Produit
@@ -15,18 +16,26 @@ class Produit
     private ?int $id = null;
 
     #[ORM\Column(length: 200)]
+    #[Assert\NotBlank(message: 'Le nom du produit ne peut pas être vide')]
+    #[Assert\Length(max: 200, maxMessage: 'Le nom ne peut pas dépasser 200 caractères')]
     private string $nom;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'La description ne peut pas être vide')]
     private string $description;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Assert\NotBlank(message: 'Le prix ne peut pas être vide')]
+    #[Assert\Positive(message: 'Le prix doit être positif')]
     private string $prix;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'Le stock ne peut pas être vide')]
+    #[Assert\PositiveOrZero(message: 'Le stock doit être positif ou zéro')]
     private int $stock;
 
     #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: 'La catégorie ne peut pas être vide')]
     private string $categorie;
 
     #[ORM\Column]

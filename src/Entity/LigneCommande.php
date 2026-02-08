@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\LigneCommandeRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LigneCommandeRepository::class)]
 class LigneCommande
@@ -23,15 +24,22 @@ class LigneCommande
     private Produit $produit;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'La quantité ne peut pas être vide')]
+    #[Assert\Positive(message: 'La quantité doit être positive')]
     private int $quantite;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Assert\NotBlank(message: 'Le prix unitaire ne peut pas être vide')]
+    #[Assert\Positive(message: 'Le prix unitaire doit être positif')]
     private string $prixUnitaire;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Assert\NotBlank(message: 'Le sous-total ne peut pas être vide')]
+    #[Assert\Positive(message: 'Le sous-total doit être positif')]
     private string $sousTotal;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
+    #[Assert\PositiveOrZero(message: 'La remise doit être positive ou zéro', allowNull: true)]
     private ?string $remise = null;
 
     // GETTERS / SETTERS
