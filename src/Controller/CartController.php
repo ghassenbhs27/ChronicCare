@@ -42,8 +42,8 @@ class CartController extends AbstractController
     /**
      * Ajouter un produit au panier (supporte both URL params et query params)
      */
-    #[Route('/add', name: 'add')]
-    #[Route('/add/{id}', name: 'add_with_id', requirements: ['id' => '\d+'])]
+    #[Route('/add', name: 'add', methods: ['GET', 'POST'])]
+    #[Route('/add/{id}', name: 'add_with_id', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function add(?int $id = null, Request $request): Response
     {
         // Accepter l'id soit via URL soit via query parameter
