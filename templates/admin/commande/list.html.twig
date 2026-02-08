@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - Commandes - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Gestion des Commandes</h1>
+
+    <a href="{{ path('admin_commande_pending') }}" class="btn btn-warning mb-3">En attente</a>
+    <a href="{{ path('admin_commande_shipped') }}" class="btn btn-info mb-3">Expédiées</a>
+    <a href="{{ path('admin_commande_stats') }}" class="btn btn-success mb-3">Statistiques</a>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Client</th>
+                <th>Total</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for commande in commandes %}
+            <tr>
+                <td>{{ commande.numeroCommande }}</td>
+                <td>{{ commande.utilisateur.nom }} {{ commande.utilisateur.prenom }}</td>
+                <td>{{ commande.total }} €</td>
+                <td>
+                    <span class="badge 
+                        {% if commande.statut == 'en_attente' %}badge-warning
+                        {% elseif commande.statut == 'validée' %}badge-info
+                        {% elseif commande.statut == 'expédiée' %}badge-primary
+                        {% elseif commande.statut == 'livrée' %}badge-success
+                        {% else %}badge-danger
+                        {% endif %}
+                    ">{{ commande.statut }}</span>
+                </td>
+                <td>{{ commande.createdAt|date('d/m/Y') }}</td>
+                <td>
+                    <a href="{{ path('admin_commande_show', {id: commande.id}) }}" class="btn btn-sm btn-info">Détails</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

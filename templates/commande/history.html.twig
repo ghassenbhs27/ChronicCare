@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Historique Commandes - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Historique Commandes</h1>
+
+    {% if commandes is empty %}
+        <div class="alert alert-info">
+            Vous n'avez aucune commande. <a href="{{ path('produit_list') }}">Commencer les achats</a>
+        </div>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Statut</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for commande in commandes %}
+                <tr>
+                    <td>{{ commande.numeroCommande }}</td>
+                    <td>{{ commande.createdAt|date('d/m/Y H:i') }}</td>
+                    <td>{{ commande.total }} €</td>
+                    <td>
+                        <span class="badge 
+                            {% if commande.statut == 'en_attente' %}badge-warning
+                            {% elseif commande.statut == 'validée' %}badge-info
+                            {% elseif commande.statut == 'expédiée' %}badge-primary
+                            {% elseif commande.statut == 'livrée' %}badge-success
+                            {% else %}badge-danger
+                            {% endif %}
+                        ">{{ commande.statut }}</span>
+                    </td>
+                    <td>
+                        <a href="{{ path('commande_show', {id: commande.id}) }}" class="btn btn-sm btn-info">Détails</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}

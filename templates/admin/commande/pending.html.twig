@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - Commandes en attente - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Commandes en attente</h1>
+
+    <a href="{{ path('admin_commande_list') }}" class="btn btn-secondary mb-3">Retour</a>
+
+    {% if commandes is empty %}
+        <div class="alert alert-info">Aucune commande en attente</div>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Client</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for commande in commandes %}
+                <tr>
+                    <td>{{ commande.numeroCommande }}</td>
+                    <td>{{ commande.utilisateur.nom }} {{ commande.utilisateur.prenom }}</td>
+                    <td>{{ commande.total }} €</td>
+                    <td>{{ commande.createdAt|date('d/m/Y') }}</td>
+                    <td>
+                        <a href="{{ path('admin_commande_show', {id: commande.id}) }}" class="btn btn-sm btn-info">Détails</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}

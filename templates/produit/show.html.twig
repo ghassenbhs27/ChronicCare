@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ produit.nom }} - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1>{{ produit.nom }}</h1>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5>Description</h5>
+                    <p>{{ produit.description }}</p>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Prix</h6>
+                            <p class="h4 text-danger">{{ produit.prix }} €</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Stock</h6>
+                            <p>
+                                {% if produit.stock > 5 %}
+                                    <span class="badge badge-success">{{ produit.stock }} en stock</span>
+                                {% elseif produit.stock > 0 %}
+                                    <span class="badge badge-warning">{{ produit.stock }} en stock</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Rupture de stock</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>Catégorie</h6>
+                            <p>{{ produit.categorie }}</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <form action="{{ path('cart_add', {id: produit.id}) }}" method="GET">
+                        <div class="form-group">
+                            <label for="quantity">Quantité</label>
+                            <input type="number" name="quantity" id="quantity" class="form-control" value="1" min="1" max="{{ produit.stock }}">
+                        </div>
+
+                        {% if produit.stock > 0 %}
+                            <button type="submit" class="btn btn-lg btn-success">Ajouter au panier</button>
+                        {% else %}
+                            <button type="submit" class="btn btn-lg btn-danger" disabled>Indisponible</button>
+                        {% endif %}
+                    </form>
+
+                    <a href="{{ path('produit_list') }}" class="btn btn-secondary mt-3">Retour au catalogue</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

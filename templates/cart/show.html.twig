@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Panier - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Panier</h1>
+
+    {% if cart is empty %}
+        <div class="alert alert-info">
+            Votre panier est vide. <a href="{{ path('produit_list') }}">Continuer les achats</a>
+        </div>
+    {% else %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th>Prix</th>
+                    <th>Quantité</th>
+                    <th>Sous-total</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart %}
+                <tr>
+                    <td>{{ item.nom }}</td>
+                    <td>{{ item.prix }} €</td>
+                    <td>
+                        <form action="{{ path('cart_update', {id: item.id}) }}" method="POST" class="form-inline">
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control" style="width: 80px;">
+                            <button type="submit" class="btn btn-sm btn-warning ml-2">MAJ</button>
+                        </form>
+                    </td>
+                    <td>{{ (item.prix * item.quantity)|number_format(2, ',', ' ') }} €</td>
+                    <td>
+                        <a href="{{ path('cart_remove', {id: item.id}) }}" class="btn btn-sm btn-danger">Retirer</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="row mt-4">
+            <div class="col-md-8"></div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Total: <strong>{{ total|number_format(2, ',', ' ') }} €</strong></h5>
+                        
+                        <a href="{{ path('commande_create') }}" class="btn btn-lg btn-success btn-block mt-3">Passer la commande</a>
+                        <a href="{{ path('cart_clear') }}" class="btn btn-outline-danger btn-block mt-2">Vider le panier</a>
+                        <a href="{{ path('produit_list') }}" class="btn btn-outline-secondary btn-block mt-2">Continuer les achats</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

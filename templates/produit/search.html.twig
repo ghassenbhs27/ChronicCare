@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recherche Produits - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Résultats de recherche</h1>
+
+    {% if keyword %}
+        <p>Recherche pour: <strong>{{ keyword }}</strong></p>
+    {% elseif categorie %}
+        <p>Catégorie: <strong>{{ categorie }}</strong></p>
+    {% endif %}
+
+    <div class="row">
+        {% for produit in results %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ produit.nom }}</h5>
+                    <p class="card-text">{{ produit.prix }} €</p>
+                    
+                    <a href="{{ path('produit_show', {id: produit.id}) }}" class="btn btn-sm btn-info">Voir</a>
+                    <a href="{{ path('cart_add', {id: produit.id}) }}" class="btn btn-sm btn-success">Ajouter</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <p class="alert alert-info">Aucun résultat trouvé</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <a href="{{ path('produit_list') }}" class="btn btn-secondary mt-3">Retour au catalogue</a>
+</div>
+{% endblock %}
