@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\ProduitRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -40,9 +41,15 @@ final class FrontController extends AbstractController
     }
 
     #[Route('/boutique', name: 'boutique')]
-    public function boutique(): Response
+    public function boutique(ProduitRepository $produitRepository): Response
     {
-        return $this->render('front/boutique.html.twig');
+        $produits = $produitRepository->findAllActive();
+        $categories = $produitRepository->findAllCategories();
+
+        return $this->render('front/boutique.html.twig', [
+            'produits' => $produits,
+            'categories' => $categories,
+        ]);
     }
 
     #[Route('/service-details', name: 'service-details')]
