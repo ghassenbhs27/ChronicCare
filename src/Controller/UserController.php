@@ -1,6 +1,8 @@
 <?php
 namespace App\Controller;
 
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
@@ -12,20 +14,10 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/users')]
-#[IsGranted('ROLE_ADMIN')] // Toutes les routes protégées
+#[Route('/admin/users')]
+#[IsGranted('ROLE_ADMIN')]
 class UserController extends AbstractController
 {
-    #[Route('/', name: 'app_user_index', methods: ['GET'])]
-    public function index(UserRepository $userRepository): Response
-    {
-        $users = $userRepository->findAll();
-
-        return $this->render('front/connexion.html.twig', [
-            'users' => $users,
-        ]);
-    }
-
     #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
     public function new(
         Request $request,
@@ -33,43 +25,51 @@ class UserController extends AbstractController
         UserPasswordHasherInterface $passwordHasher
     ): Response {
         $user = new User();
-        $form = $this->createForm(UserType::class, $user);
+
+        // admin mode (roles + password optionnel)
+        $form = $this->createForm(UserType::class, $user, ['is_edit' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            try {
-                // Récupérer le mot de passe
-                $plainPassword = $form->get('password')->getData();
-                
-                if ($plainPassword) {
-                    $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
-                }
 
-                $entityManager->persist($user);
-                $entityManager->flush();
-
-                $this->addFlash('success', '🎉 Utilisateur créé avec succès !');
-
-                return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
-            } catch (\Exception $e) {
-                $this->addFlash('error', '❌ Erreur lors de la création : ' . $e->getMessage());
+            // hash password si fourni
+            $plainPassword = $form->get('password')->getData();
+            if ($plainPassword) {
+                $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
             }
+
+            // timestamps si tu veux
+            $user->setCreatedAt(new \DateTimeImmutable());
+            $user->setUpdatedAt(new \DateTimeImmutable());
+
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            $this->addFlash('success', '🎉 Utilisateur créé avec succès !');
+            return $this->redirectToRoute('app_user_index');
         }
 
-        return $this->render('user/new.html.twig', [
+        return $this->render('back/users/new.html.twig', [
             'user' => $user,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
-
-    #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    public function show(User $user): Response
+    #[Route('/', name: 'app_user_index', methods: ['GET'])]
+    public function index(Request $request, UserRepository $userRepository): Response
     {
-        return $this->render('user/show.html.twig', [
-            'user' => $user,
+        $sort = $request->query->get('sort', 'createdAt');
+        $order = $request->query->get('order', 'DESC');
+        $search = $request->query->get('q');
+
+        $users = $userRepository->findAllSortedAndFiltered($search, $sort, $order);
+
+        return $this->render('back/users/index.html.twig', [
+            'users' => $users,
+            'currentSort' => $sort,
+            'currentOrder' => $order,
+            'search' => $search,
         ]);
     }
-
     #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
     public function edit(
         Request $request,
@@ -77,31 +77,26 @@ class UserController extends AbstractController
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher
     ): Response {
-        $form = $this->createForm(UserType::class, $user);
+        $form = $this->createForm(UserType::class, $user, ['is_edit' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            try {
-                // Mettre à jour le mot de passe s'il est fourni
-                $plainPassword = $form->get('password')->getData();
-                if ($plainPassword) {
-                    $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
-                }
 
-                $user->setUpdatedAt(new \DateTimeImmutable());
-                $entityManager->flush();
-
-                $this->addFlash('success', '✏️ Utilisateur modifié avec succès !');
-
-                return $this->redirectToRoute('app_user_show', ['id' => $user->getId()], Response::HTTP_SEE_OTHER);
-            } catch (\Exception $e) {
-                $this->addFlash('error', '❌ Erreur lors de la modification : ' . $e->getMessage());
+            $plainPassword = $form->get('password')->getData();
+            if ($plainPassword) {
+                $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
             }
+
+            $user->setUpdatedAt(new \DateTimeImmutable());
+            $entityManager->flush();
+
+            $this->addFlash('success', '✏️ Utilisateur modifié avec succès !');
+            return $this->redirectToRoute('app_user_index');
         }
 
-        return $this->render('user/edit.html.twig', [
+        return $this->render('back/users/edit.html.twig', [
             'user' => $user,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 
@@ -109,17 +104,53 @@ class UserController extends AbstractController
     public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete' . $user->getId(), $request->request->get('_token'))) {
-            try {
-                $userName = $user->getFullName();
-                $entityManager->remove($user);
-                $entityManager->flush();
-
-                $this->addFlash('success', "🗑️ L'utilisateur $userName a été supprimé avec succès !");
-            } catch (\Exception $e) {
-                $this->addFlash('error', '❌ Erreur lors de la suppression : ' . $e->getMessage());
-            }
+            $entityManager->remove($user);
+            $entityManager->flush();
+            $this->addFlash('success', "🗑️ Utilisateur supprimé !");
         }
 
-        return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_user_index');
     }
+    #[Route('/export/pdf', name: 'app_user_export_pdf', methods: ['GET'])]
+    public function exportPdf(Request $request, UserRepository $userRepository): Response
+    {
+    // ✅ récupérer mêmes filtres/tri que la liste
+        $sort = $request->query->get('sort', 'createdAt');
+        $order = $request->query->get('order', 'DESC');
+        $search = trim((string) $request->query->get('q', ''));
+
+        $users = $userRepository->findAllSortedAndFiltered($search, $sort, $order);
+
+    // ✅ HTML depuis Twig
+        $html = $this->renderView('back/users/pdf.html.twig', [
+            'users' => $users,
+            'generatedAt' => new \DateTimeImmutable(),
+            'search' => $search,
+            'sort' => $sort,
+            'order' => $order,
+        ]);
+
+    // ✅ Dompdf config
+        $options = new Options();
+        $options->set('defaultFont', 'DejaVu Sans'); // support accents
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $filename = 'utilisateurs_' . (new \DateTimeImmutable())->format('Y-m-d_H-i') . '.pdf';
+
+        return new Response(
+            $dompdf->output(),
+            200,
+            [
+                'Content-Type' => 'application/pdf',
+                 'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]
+        );
+    }
+
+    
 }

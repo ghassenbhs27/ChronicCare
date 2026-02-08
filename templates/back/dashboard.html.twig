@@ -1,0 +1,215 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Dashboard - Chronic Care{% endblock %}
+
+{% block page_title %}Tableau de bord{% endblock %}
+{% block page_subtitle %}Bienvenue dans l'espace administrateur de Chronic Care{% endblock %}
+
+{% block body %}
+<div class="container">
+
+  <div class="row g-3 mb-3">
+    <div class="col-12">
+      <div class="cc-hero card border-0 shadow-sm">
+        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="cc-hero-icon">
+              <i class="bi bi-speedometer2"></i>
+            </div>
+            <div>
+              <div class="text-muted small">Espace Admin</div>
+              <h2 class="mb-0">Espace d'administration</h2>
+              <div class="text-muted">Gérez rapidement les modules (utilisateurs, services, rendez-vous, stats)</div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <a href="{{ path('index') }}" class="btn btn-light border">
+              <i class="bi bi-house-door me-1"></i> Retour au site
+            </a>
+            <a href="{{ path('app_logout') }}" class="btn btn-outline-danger">
+              <i class="bi bi-box-arrow-right me-1"></i> Déconnexion
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Utilisateurs -->
+    <div class="col-lg-6">
+      <div class="cc-card cc-card-users card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex align-items-center gap-3">
+              <div class="cc-icon cc-icon-users">
+                <i class="bi bi-people-fill"></i>
+              </div>
+              <div>
+                <h5 class="mb-1">Gestion des utilisateurs</h5>
+                <div class="text-muted">Créer, modifier ou supprimer des utilisateurs.</div>
+              </div>
+            </div>
+            <span class="badge rounded-pill text-bg-primary-subtle border">Admin</span>
+          </div>
+
+          <div class="d-flex gap-2 mt-3">
+            <a href="{{ path('app_user_index') }}" class="btn btn-primary">
+              <i class="bi bi-person-lines-fill me-1"></i> Gérer les utilisateurs
+            </a>
+            <a href="{{ path('app_user_new') }}" class="btn btn-light border">
+              <i class="bi bi-person-plus me-1"></i> Ajouter
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div class="col-lg-6">
+      <div class="cc-card cc-card-services card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex align-items-center gap-3">
+              <div class="cc-icon cc-icon-services">
+                <i class="bi bi-box-seam-fill"></i>
+              </div>
+              <div>
+                <h5 class="mb-1">Gérer les services</h5>
+                <div class="text-muted">Ajouter, modifier ou supprimer des services.</div>
+              </div>
+            </div>
+            <span class="badge rounded-pill text-bg-warning-subtle border">Catalogue</span>
+          </div>
+
+          <div class="d-flex gap-2 mt-3">
+            {# Remplace la route quand tu auras le module services #}
+            <a href="#" class="btn btn-warning text-white disabled" aria-disabled="true" title="À connecter plus tard">
+              <i class="bi bi-gear-fill me-1"></i> Gérer les services
+            </a>
+          </div>
+          <div class="small text-muted mt-2">
+            <i class="bi bi-info-circle me-1"></i> Module à connecter quand tu crées les routes des services.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rendez-vous -->
+    <div class="col-lg-6">
+      <div class="cc-card cc-card-appointments card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex align-items-center gap-3">
+              <div class="cc-icon cc-icon-appointments">
+                <i class="bi bi-calendar2-check-fill"></i>
+              </div>
+              <div>
+                <h5 class="mb-1">Gestion des rendez-vous</h5>
+                <div class="text-muted">Suivi et gestion des rendez-vous des utilisateurs.</div>
+              </div>
+            </div>
+            <span class="badge rounded-pill text-bg-success-subtle border">Planning</span>
+          </div>
+
+          <div class="d-flex gap-2 mt-3">
+            {# Remplace la route quand tu auras le module RDV #}
+            <a href="#" class="btn btn-success disabled" aria-disabled="true" title="À connecter plus tard">
+              <i class="bi bi-calendar-week me-1"></i> Gérer les rendez-vous
+            </a>
+          </div>
+          <div class="small text-muted mt-2">
+            <i class="bi bi-info-circle me-1"></i> Module à connecter quand tu crées les routes RDV.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="col-lg-6">
+      <div class="cc-card cc-card-stats card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex align-items-center gap-3">
+              <div class="cc-icon cc-icon-stats">
+                <i class="bi bi-bar-chart-fill"></i>
+              </div>
+              <div>
+                <h5 class="mb-1">Statistiques</h5>
+                <div class="text-muted">Suivi de l’utilisation et des indicateurs clés.</div>
+              </div>
+            </div>
+            <span class="badge rounded-pill text-bg-info-subtle border">Insights</span>
+          </div>
+
+          <div class="d-flex gap-2 mt-3">
+            
+           <a href="{{ path('admin_statistics_index') }}" class="btn btn-info text-white">
+                <i class="bi bi-graph-up-arrow me-1"></i> Voir les statistiques
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    /* Hero */
+    .cc-hero{
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(13,110,253,.10), rgba(25,135,84,.08));
+    }
+    .cc-hero-icon{
+      width: 54px; height: 54px;
+      border-radius: 16px;
+      display:flex; align-items:center; justify-content:center;
+      background: rgba(13,110,253,.12);
+      color: #0d6efd;
+      font-size: 1.4rem;
+    }
+
+    /* Cards */
+    .cc-card{
+      border-radius: 18px;
+      transition: transform .15s ease, box-shadow .15s ease;
+      overflow: hidden;
+      position: relative;
+    }
+    .cc-card:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 16px 40px rgba(16, 24, 40, .10) !important;
+    }
+
+    .cc-icon{
+      width: 48px; height: 48px;
+      border-radius: 16px;
+      display:flex; align-items:center; justify-content:center;
+      font-size: 1.25rem;
+      color: #fff;
+    }
+
+    /* Module colors */
+    .cc-icon-users{ background: linear-gradient(135deg, #0d6efd, #4f8cff); }
+    .cc-icon-services{ background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+    .cc-icon-appointments{ background: linear-gradient(135deg, #198754, #34d399); }
+    .cc-icon-stats{ background: linear-gradient(135deg, #0dcaf0, #60a5fa); }
+
+    /* Subtle left accent */
+    .cc-card::before{
+      content:"";
+      position:absolute; left:0; top:0; bottom:0;
+      width:6px;
+      opacity:.9;
+    }
+    .cc-card-users::before{ background:#0d6efd; }
+    .cc-card-services::before{ background:#f59e0b; }
+    .cc-card-appointments::before{ background:#198754; }
+    .cc-card-stats::before{ background:#0dcaf0; }
+  </style>
+{% endblock %}

@@ -226,11 +226,21 @@
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-
       <div class="d-flex gap-2 align-items-center">
-        <a class="btn-getstarted" href="{{ path('app_login') }}">Se connecter</a>
-        <a class="btn-getstarted" href="{{ path('app_register') }}">S'inscrire</a>
+         {% if app.user %}
+           <a class="btn-getstarted"
+            href="#"
+            data-open-profile-modal
+            data-url="{{ path('app_profile_modal') }}">
+           Profil
+           </a>
+           <a class="btn-getstarted" href="{{ path('app_logout') }}">Déconnexion</a>
+          {% else %}
+            <a class="btn-getstarted" href="{{ path('app_login') }}">Se connecter</a>
+            <a class="btn-getstarted" href="{{ path('app_register') }}">S'inscrire</a>
+          {% endif %}
       </div>
+
 
     </div>
   </header>

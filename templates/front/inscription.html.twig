@@ -61,9 +61,22 @@
       </nav>
 
       <div class="d-flex gap-2 align-items-center">
-        <a class="btn-getstarted" href="{{ path('app_login') }}">Se connecter</a>
-        <a class="btn-getstarted" href="{{ path('app_register') }}">S'inscrire</a>
-      </div>
+  {% if app.user %}
+    <a class="btn-getstarted"
+       href="#"
+       data-open-profile-modal
+       data-url="{{ path('app_profile_modal') }}">
+      Profil
+    </a>
+    <a class="btn-getstarted" href="{{ path('app_logout') }}">
+      Déconnexion
+    </a>
+  {% else %}
+    <a class="btn-getstarted" href="{{ path('app_login') }}">Se connecter</a>
+    <a class="btn-getstarted" href="{{ path('app_register') }}">S'inscrire</a>
+  {% endif %}
+</div>
+
 
     </div>
   </header>
@@ -177,6 +190,11 @@
         <div class="col-md-12">
           {{ form_widget(form.password.second, {'attr': {'class': 'form-control', 'placeholder': 'Confirmer le mot de passe'}}) }}
           <div class="text-danger">{{ form_errors(form.password.second) }}</div>
+        </div>
+
+        <div class="col-md-12">
+          {{ form_widget(form.accountType, {'attr': {'class': 'form-select'}}) }}
+           <div class="text-danger">{{ form_errors(form.accountType) }}</div>
         </div>
 
         {# ✅ Checkbox OPTIONNELLE (pas required) #}

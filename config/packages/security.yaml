@@ -45,7 +45,7 @@ security:
         
         # Routes protégées
         - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/users, roles: ROLE_ADMIN }
+        - { path: ^/admin/users, roles: ROLE_ADMIN }
         
         # Décommentez si besoin d'autres protections
         # - { path: ^/profile, roles: ROLE_USER }

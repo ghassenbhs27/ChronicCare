@@ -19,7 +19,7 @@ class SecurityController extends BaseController
         if ($this->getUser()) {
             // Redirect admins to user management
             if ($this->isGranted('ROLE_ADMIN')) {
-                return $this->redirectToRoute('app_user_index');
+                return $this->redirectToRoute('admin_dashboard');
             }
             // Redirect regular users to homepage
             return $this->redirectToRoute('index');
@@ -68,8 +68,9 @@ public function register(
         }
 
         // Définir le rôle par défaut
-        $user->setRoles(['ROLE_PATIENT']);
-        dump('Rôles : ', $user->getRoles());
+        $selectedRole = $form->get('accountType')->getData();
+        $user->setRoles([$selectedRole]);
+        //dump('Rôles : ', $user->getRoles());
 
         // Définir les dates
         $user->setCreatedAt(new \DateTimeImmutable());
@@ -98,7 +99,8 @@ public function register(
     }
 
     return $this->render('front/inscription.html.twig', [
-        'form' => $form,
+        'form' => $form->createView(),
     ]);
+
 }
 }

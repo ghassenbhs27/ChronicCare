@@ -1,0 +1,156 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Utilisateurs - Chronic Care{% endblock %}
+{% block page_title %}Utilisateurs{% endblock %}
+{% block page_subtitle %}Liste des comptes enregistrés{% endblock %}
+
+{% block body %}
+<div class="container">
+
+  {% for label, messages in app.flashes %}
+    {% for message in messages %}
+      <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endfor %}
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Liste des utilisateurs</h2>
+    <a href="{{ path('app_user_new') }}" class="btn btn-primary">
+      <i class="bi bi-person-plus me-1"></i> Ajouter un utilisateur
+    </a>
+    <a href="{{ path('app_user_export_pdf', { q: search ?? '', sort: currentSort ?? 'createdAt', order: currentOrder ?? 'DESC' }) }}"
+        class="btn btn-outline-dark">
+        <i class="bi bi-file-earmark-pdf me-1"></i> Télécharger PDF
+    </a>
+  </div>
+    {# ✅ Barre de tri #}
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="text-muted small">
+            <i class="bi bi-funnel me-1"></i>
+            Trier par :
+        </div>
+
+        <div class="btn-group" role="group" aria-label="Tri utilisateurs">
+            <a href="{{ path('app_user_index', { sort: 'nom', order: (currentSort == 'nom' and currentOrder == 'ASC') ? 'DESC' : 'ASC' }) }}"
+                class="btn btn-outline-secondary btn-sm {{ currentSort == 'nom' ? 'active' : '' }}">
+                Nom
+                {% if currentSort == 'nom' %}
+                    <i class="bi {{ currentOrder == 'ASC' ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up' }} ms-1"></i>
+                {% endif %}
+            </a>
+
+            <a href="{{ path('app_user_index', { sort: 'prenom', order: (currentSort == 'prenom' and currentOrder == 'ASC') ? 'DESC' : 'ASC' }) }}"
+                class="btn btn-outline-secondary btn-sm {{ currentSort == 'prenom' ? 'active' : '' }}">
+                Prénom
+                {% if currentSort == 'prenom' %}
+                    <i class="bi {{ currentOrder == 'ASC' ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up' }} ms-1"></i>
+                {% endif %}
+            </a>
+
+            <a href="{{ path('app_user_index', { sort: 'createdAt', order: (currentSort == 'createdAt' and currentOrder == 'ASC') ? 'DESC' : 'ASC' }) }}"
+                class="btn btn-outline-secondary btn-sm {{ currentSort == 'createdAt' ? 'active' : '' }}">
+                Date d’inscription
+                {% if currentSort == 'createdAt' %}
+                    <i class="bi {{ currentOrder == 'ASC' ? 'bi-sort-down' : 'bi-sort-up' }} ms-1"></i>
+                {% endif %}
+            </a>
+        </div>
+    </div>
+
+    <form method="get" class="mb-3">
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+
+            <div class="input-group" style="max-width: 320px;">
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input
+                    type="text"
+                    name="q"
+                    class="form-control"
+                    placeholder="Rechercher par nom ou prénom..."
+                    value="{{ search ?? '' }}"
+                >
+            </div>
+
+            {# conserver tri pendant la recherche #}
+            <input type="hidden" name="sort" value="{{ currentSort }}">
+            <input type="hidden" name="order" value="{{ currentOrder }}">
+
+            <button class="btn btn-outline-primary btn-sm">
+                Rechercher
+            </button>
+
+            {% if search %}
+                <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary btn-sm">
+                    Réinitialiser
+                </a>
+            {% endif %}
+         </div>
+    </form>
+
+
+  <div class="row g-3">
+    {% for user in users %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="mb-1">{{ user.prenom }} {{ user.nom }}</h5>
+                <div class="text-muted small">{{ user.email }}</div>
+              </div>
+              <span class="badge bg-light text-dark border">
+                #{{ user.id }}
+              </span>
+            </div>
+
+            <hr>
+
+            <div class="mb-2">
+              <div class="small text-muted">Genre</div>
+              <div class="fw-semibold">{{ user.genre }}</div>
+            </div>
+
+            <div class="mb-2">
+                <div class="small text-muted">Date d'inscription</div>
+                <div class="fw-semibold">{{ user.createdAt ? user.createdAt|date('d/m/Y H:i') : '—' }}
+            </div>
+</div>
+            <div class="mb-3">
+              <div class="small text-muted mb-1">Rôles</div>
+              {% for r in user.roles %}
+                <span class="badge bg-secondary me-1">{{ r }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="d-flex gap-2">
+              <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-pencil-square me-1"></i> Modifier
+              </a>
+
+              <form method="post"
+                    action="{{ path('app_user_delete', {id: user.id}) }}"
+                    onsubmit="return confirm('Supprimer cet utilisateur ?');"
+                    class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                <button class="btn btn-outline-danger btn-sm">
+                  <i class="bi bi-trash me-1"></i> Supprimer
+                </button>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="col-12">
+        <div class="alert alert-info mb-0">Aucun utilisateur trouvé.</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

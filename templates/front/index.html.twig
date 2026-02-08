@@ -44,9 +44,31 @@
       </nav>
 
       <div class="d-flex gap-2 align-items-center">
-        <a class="btn-getstarted" href="{{ path('app_login') }}">Se connecter</a>
-        <a class="btn-getstarted" href="{{ path('app_register') }}">S'inscrire</a>
-      </div>
+        {% if app.user %}
+
+        {# ✅ Bouton Back فقط للـ ADMIN #}
+        {% if is_granted('ROLE_ADMIN') %}
+          <a class="btn-getstarted" href="{{ path('admin_dashboard') }}">
+            Back
+          </a>
+        {% endif %}
+
+        <a class="btn-getstarted"
+          href="#"
+          data-open-profile-modal
+          data-url="{{ path('app_profile_modal') }}">
+          Profil
+        </a>
+
+        <a class="btn-getstarted" href="{{ path('app_logout') }}">
+          Déconnexion
+        </a>
+
+        {% else %}
+          <a class="btn-getstarted" href="{{ path('app_login') }}">Se connecter</a>
+          <a class="btn-getstarted" href="{{ path('app_register') }}">S'inscrire</a>
+        {% endif %}
+    </div>
 
     </div>
   </header>

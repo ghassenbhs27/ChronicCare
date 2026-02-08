@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Liste des utilisateurs</title>
+  <style>
+    body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color:#111; }
+    .header { margin-bottom: 12px; }
+    .title { font-size: 18px; font-weight: 700; margin: 0 0 4px 0; }
+    .meta { color:#555; font-size: 11px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+    th { background: #f3f6ff; text-align: left; }
+    .badge { display:inline-block; padding:2px 6px; border-radius: 10px; background:#eee; font-size: 10px; margin-right: 4px; }
+    .muted { color:#666; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title">Liste des utilisateurs</div>
+    <div class="meta">
+      Généré le : {{ generatedAt|date('d/m/Y H:i') }}
+      {% if search %}
+        — Filtre : “{{ search }}”
+      {% endif %}
+      — Tri : {{ sort }} ({{ order }})
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:55px;">ID</th>
+        <th>Nom & Prénom</th>
+        <th>Email</th>
+        <th style="width:90px;">Genre</th>
+        <th style="width:130px;">Inscription</th>
+        <th>Rôles</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+        <tr>
+          <td>#{{ u.id }}</td>
+          <td><strong>{{ u.nom }}</strong> {{ u.prenom }}</td>
+          <td class="muted">{{ u.email }}</td>
+          <td>{{ u.genre ?? '—' }}</td>
+          <td>{{ u.createdAt ? u.createdAt|date('d/m/Y H:i') : '—' }}</td>
+          <td>
+            {% for r in u.roles %}
+              <span class="badge">{{ r }}</span>
+            {% endfor %}
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="6">Aucun utilisateur.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</body>
+</html>

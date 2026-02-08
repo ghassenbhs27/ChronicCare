@@ -1,0 +1,164 @@
+{# templates/profile/modal_content.html.twig #}
+
+{% if saved is defined and saved %}
+  <div class="alert alert-success d-flex align-items-center" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    Profil mis à jour avec succès.
+  </div>
+{% endif %}
+
+{% set mode = mode|default('view') %}
+
+{% if mode == 'view' %}
+  <div class="cc-profile">
+    <div class="cc-avatar">
+      {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+    </div>
+    <div>
+      <p class="cc-name">{{ app.user.prenom }} {{ app.user.nom }}</p>
+      <p class="cc-sub"><i class="bi bi-envelope me-1"></i>{{ app.user.email }}</p>
+    </div>
+  </div>
+
+  <ul class="cc-list">
+    <li class="cc-item">
+      <span class="cc-ico"><i class="bi bi-person"></i></span>
+      <div>
+        <p class="cc-k">Prénom</p>
+        <p class="cc-v">{{ app.user.prenom }}</p>
+      </div>
+    </li>
+
+    <li class="cc-item">
+      <span class="cc-ico"><i class="bi bi-person-badge"></i></span>
+      <div>
+        <p class="cc-k">Nom</p>
+        <p class="cc-v">{{ app.user.nom }}</p>
+      </div>
+    </li>
+
+    <li class="cc-item">
+      <span class="cc-ico"><i class="bi bi-envelope"></i></span>
+      <div>
+        <p class="cc-k">Email</p>
+        <p class="cc-v">{{ app.user.email }}</p>
+      </div>
+    </li>
+
+    <li class="cc-item">
+      <span class="cc-ico"><i class="bi bi-gender-ambiguous"></i></span>
+      <div>
+        <p class="cc-k">Genre</p>
+        <p class="cc-v">{{ app.user.genre }}</p>
+      </div>
+    </li>
+
+    {# Affichage rôle actuel #}
+    <li class="cc-item">
+      <span class="cc-ico"><i class="bi bi-award"></i></span>
+      <div>
+        <p class="cc-k">Rôle</p>
+        <p class="cc-v">
+          {% if 'ROLE_COACH' in app.user.roles %}
+            Coach
+          {% elseif 'ROLE_NUTRITIONIST' in app.user.roles %}
+            Nutritionniste
+          {% else %}
+            Patient
+          {% endif %}
+        </p>
+      </div>
+    </li>
+  </ul>
+
+  <div class="cc-actions">
+    <button
+      type="button"
+      class="cc-btn cc-btn-primary"
+      data-profile-action="edit"
+      data-url="{{ path('app_profile_edit') }}">
+      <i class="bi bi-pencil-square me-1"></i> Modifier
+    </button>
+  </div>
+
+  <p class="cc-hint">
+    <i class="bi bi-shield-check me-1"></i>
+    Vos informations sont sécurisées et modifiables à tout moment.
+  </p>
+
+{% else %}
+  {% if form is not defined %}
+    <div class="alert alert-danger">
+      Formulaire indisponible (variable <b>form</b> manquante). Vérifie que /profile/edit renvoie bien <code>'form' => $form->createView()</code>.
+    </div>
+  {% else %}
+    {{ form_start(form, {
+      action: path('app_profile_edit'),
+      method: 'POST',
+      attr: { id: 'profile-edit-form', novalidate: 'novalidate' }
+    }) }}
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Prénom</label>
+        {{ form_widget(form.prenom) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.prenom) }}</div>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Nom</label>
+        {{ form_widget(form.nom) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.nom) }}</div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-bold">Email</label>
+        {{ form_widget(form.email) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.email) }}</div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-bold">Genre</label>
+        {{ form_widget(form.genre) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.genre) }}</div>
+      </div>
+
+      {# Si tu as ajouté mainRole dans ProfileType, il s’affichera ici #}
+      {% if form.mainRole is defined %}
+        <div class="col-12">
+          <label class="form-label fw-bold">Vous êtes</label>
+          {{ form_widget(form.mainRole) }}
+          <div class="text-danger small mt-1">{{ form_errors(form.mainRole) }}</div>
+        </div>
+      {% endif %}
+
+      <div class="col-12">
+        <label class="form-label fw-bold">Nouveau mot de passe (optionnel)</label>
+        {{ form_widget(form.newPassword.first) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.newPassword.first) }}</div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-bold">Confirmer le nouveau mot de passe</label>
+        {{ form_widget(form.newPassword.second) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.newPassword.second) }}</div>
+      </div>
+    </div>
+
+    <div class="cc-actions mt-3 d-flex justify-content-end gap-2">
+      <button
+        type="button"
+        class="cc-btn"
+        data-profile-action="cancel"
+        data-url="{{ path('app_profile_modal') }}">
+        Annuler
+      </button>
+
+      <button type="submit" class="cc-btn cc-btn-primary">
+        <i class="bi bi-check2-circle me-1"></i> Enregistrer
+      </button>
+    </div>
+
+    {{ form_end(form) }}
+  {% endif %}
+{% endif %}

@@ -1,0 +1,367 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Statistiques{% endblock %}
+{% block page_title %}Statistiques{% endblock %}
+{% block page_subtitle %}Aperçu des inscriptions utilisateurs{% endblock %}
+
+{% block body %}
+<div class="container stats-wrap py-2">
+
+  <!-- Header row (mini infos) -->
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2">
+      <span class="pill pill-info">
+        <i class="bi bi-lightning-charge-fill me-1"></i> Insights
+      </span>
+      <span class="pill pill-muted">
+        <i class="bi bi-clock me-1"></i> Mise à jour : {{ "now"|date("d/m/Y H:i") }}
+      </span>
+    </div>
+
+    <a href="{{ path('app_user_index') }}" class="btn btn-light border btn-sm">
+      <i class="bi bi-people me-1"></i> Voir les utilisateurs
+    </a>
+  </div>
+
+  <!-- KPIs -->
+  <div class="row g-4 stats-section">
+    <div class="col-lg-6">
+      <div class="kpi-card kpi-card-primary p-4 d-flex justify-content-between align-items-center">
+        <div>
+          <div class="kpi-label">Utilisateurs totaux</div>
+          <div class="kpi-value">{{ totalUsers }}</div>
+          <div class="kpi-subtext">
+            <i class="bi bi-shield-check me-1"></i> Comptes actifs & enregistrés
+          </div>
+        </div>
+        <div class="kpi-icon kpi-blue">
+          <i class="bi bi-people-fill"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="kpi-card kpi-card-success p-4 d-flex justify-content-between align-items-center">
+        <div>
+          <div class="kpi-label">Inscriptions (30 jours)</div>
+          <div class="d-flex align-items-end gap-2">
+            <div class="kpi-value">{{ newUsers30 }}</div>
+
+            {# Badge croissance (si calculé) #}
+            {% if growthPercent is defined %}
+              {% set up = growthPercent >= 0 %}
+              <span class="growth-badge {{ up ? 'growth-up' : 'growth-down' }}">
+                <i class="bi {{ up ? 'bi-arrow-up-right' : 'bi-arrow-down-right' }} me-1"></i>
+                {{ growthPercent }}%
+              </span>
+            {% endif %}
+          </div>
+
+          {% if newUsersPrev30 is defined %}
+            <div class="kpi-subtext">
+              <i class="bi bi-bar-chart me-1"></i>
+              Période précédente : {{ newUsersPrev30 }}
+            </div>
+          {% else %}
+            <div class="kpi-subtext">
+              <i class="bi bi-info-circle me-1"></i>
+              Compare 30j vs 30j précédents (optionnel)
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="kpi-icon kpi-green">
+          <i class="bi bi-person-plus-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="chart-card">
+        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+          <div class="chart-title">
+            <i class="bi bi-graph-up"></i>
+            Inscriptions par jour (30 derniers jours)
+          </div>
+          <span class="pill pill-muted">
+            <i class="bi bi-calendar3 me-1"></i> 30 jours
+          </span>
+        </div>
+        <canvas id="chartByDay" height="120"></canvas>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="chart-card h-100">
+        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+          <div class="chart-title">
+            <i class="bi bi-gender-ambiguous"></i>
+            Répartition par genre
+          </div>
+          <span class="pill pill-muted">
+            <i class="bi bi-pie-chart me-1"></i> Global
+          </span>
+        </div>
+        <canvas id="chartByGenre"></canvas>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="chart-card">
+        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+          <div class="chart-title">
+            <i class="bi bi-person-badge-fill"></i>
+            Répartition par profil (rôle)
+          </div>
+          <span class="pill pill-muted">
+            <i class="bi bi-person-workspace me-1"></i> Profils
+          </span>
+        </div>
+        <canvas id="chartByRole" height="90"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    const labelsDay  = {{ labelsDay|json_encode|raw }};
+    const dataDay    = {{ dataDay|json_encode|raw }};
+
+    const labelsGenre = {{ labelsGenre|json_encode|raw }};
+    const dataGenre   = {{ dataGenre|json_encode|raw }};
+
+    const labelsRole = {{ labelsRole|json_encode|raw }};
+    const dataRole   = {{ dataRole|json_encode|raw }};
+
+    // Inscriptions/jour (line)
+    new Chart(document.getElementById('chartByDay'), {
+      type: 'line',
+      data: {
+        labels: labelsDay,
+        datasets: [{
+          label: 'Inscriptions',
+          data: dataDay,
+          tension: 0.35,
+          fill: true,
+          pointRadius: 2,
+          pointHoverRadius: 4
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+          tooltip: { intersect: false, mode: 'index' }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { maxRotation: 0 }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,.06)' }
+          }
+        }
+      }
+    });
+
+    // Genre (doughnut)
+    // Genre (doughnut) — couleurs FIXÉES par label
+    const genreColors = labelsGenre.map(label => {
+        if (label === 'Homme') return '#2879af';   // rose
+        if (label === 'Femme') return '#df7289';   // bleu
+        return '#adb5bd'; // fallback
+    });
+
+    new Chart(document.getElementById('chartByGenre'), {
+        type: 'doughnut',
+        data: {
+            labels: labelsGenre,
+            datasets: [{
+            data: dataGenre,
+            backgroundColor: genreColors,
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        plugins: {
+            legend: { position: 'bottom' }
+        },
+        cutout: '65%'
+        }
+    });
+
+
+    // Roles (bar)
+    new Chart(document.getElementById('chartByRole'), {
+      type: 'bar',
+      data: {
+        labels: labelsRole,
+        datasets: [{ data: dataRole }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.06)' } }
+        }
+      }
+    });
+  </script>
+{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+  :root{
+    --bg-soft: rgba(255,255,255,.72);
+    --border-soft: rgba(255,255,255,.28);
+    --shadow-soft: 0 24px 55px rgba(0,0,0,.10);
+    --radius-xl: 22px;
+  }
+
+  /* Fond dashboard */
+  .stats-wrap{
+    position: relative;
+  }
+  .stats-wrap::before{
+    content:"";
+    position:absolute;
+    inset:-18px;
+    z-index:-1;
+    border-radius: 28px;
+    background:
+      radial-gradient(800px 320px at 15% 10%, rgba(13,110,253,.22), transparent 60%),
+      radial-gradient(700px 320px at 85% 0%, rgba(25,135,84,.18), transparent 60%),
+      radial-gradient(900px 380px at 50% 100%, rgba(13,202,240,.18), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.15));
+    border: 1px solid rgba(255,255,255,.25);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Pills */
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.35rem .6rem;
+    border-radius: 999px;
+    font-size: .85rem;
+    border: 1px solid rgba(0,0,0,.06);
+    background: rgba(255,255,255,.72);
+  }
+  .pill-info{
+    border-color: rgba(13,110,253,.18);
+    background: rgba(13,110,253,.08);
+    color: #0d6efd;
+    font-weight: 600;
+  }
+  .pill-muted{
+    color: #6c757d;
+  }
+
+  /* KPI cards */
+  .kpi-card{
+    background: linear-gradient(180deg, var(--bg-soft), rgba(255,255,255,.92));
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-soft);
+    transition: transform .25s ease, box-shadow .25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::after{
+    content:"";
+    position:absolute;
+    inset:-60px;
+    background: radial-gradient(220px 140px at 80% 30%, rgba(255,255,255,.55), transparent 60%);
+    opacity:.7;
+    pointer-events:none;
+  }
+  .kpi-card:hover{
+    transform: translateY(-5px);
+    box-shadow: 0 32px 85px rgba(0,0,0,.14);
+  }
+  .kpi-label{
+    font-size: .82rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .kpi-value{
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+  .kpi-subtext{
+    color:#6c757d;
+    margin-top:.35rem;
+    font-size:.92rem;
+  }
+
+  .kpi-icon{
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 1.6rem;
+    color:#fff;
+    box-shadow: 0 14px 35px rgba(0,0,0,.12);
+  }
+  .kpi-blue{ background: linear-gradient(135deg,#0d6efd,#5aa2ff); }
+  .kpi-green{ background: linear-gradient(135deg,#198754,#4ade80); }
+
+  /* Growth badge */
+  .growth-badge{
+    display:inline-flex;
+    align-items:center;
+    padding:.28rem .55rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: .9rem;
+    border: 1px solid rgba(0,0,0,.06);
+    transform: translateY(-2px);
+  }
+  .growth-up{
+    background: rgba(25,135,84,.12);
+    color: #198754;
+    border-color: rgba(25,135,84,.22);
+  }
+  .growth-down{
+    background: rgba(220,53,69,.12);
+    color: #dc3545;
+    border-color: rgba(220,53,69,.22);
+  }
+
+  /* Chart cards */
+  .chart-card{
+    background: linear-gradient(180deg, rgba(255,255,255,.74), #fff);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-soft);
+    padding: 1.35rem;
+  }
+  .chart-title{
+    font-weight: 700;
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+  }
+  .chart-title i{ font-size:1.15rem; opacity:.9; }
+
+  .stats-section{ margin-bottom: 1.8rem; }
+</style>
+{% endblock %}
