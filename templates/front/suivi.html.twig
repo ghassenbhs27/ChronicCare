@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon suivi{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .header-spacer { height: 80px; }
+    @media (max-width: 768px) { .header-spacer { height: 110px; } }
+    .suivi-section { position: relative; overflow: hidden; }
+    .suivi-card {
+      background: var(--surface-color);
+      border-radius: 18px;
+      border: 1px solid color-mix(in srgb, var(--default-color), transparent 86%);
+      box-shadow: 0 16px 30px rgba(16, 24, 40, 0.08);
+      padding: 1.5rem;
+      height: 100%;
+    }
+    .suivi-title { margin-bottom: 0.25rem; color: var(--heading-color); }
+    .suivi-muted { color: color-mix(in srgb, var(--default-color), transparent 25%); }
+  </style>
+{% endblock %}
+
+{% block body %}
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+    <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename">Chronic Care</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{{ path('index') }}">Accueil</a></li>
+        <li><a href="{{ path('suivi_front_dashboard') }}" class="active">Mon suivi</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+    <a class="btn-getstarted" href="{{ path('connexion') }}">Se connecter</a>
+  </div>
+</header>
+
+<div class="header-spacer"></div>
+
+<main class="main">
+  <section class="suivi-section section light-background">
+    <div class="container">
+      <div class="row mb-4">
+        <div class="col-12">
+          <h2 class="suivi-title">Gestion de suivi</h2>
+          <p class="suivi-muted">Consultez vos activites et vos etats de sante depuis un espace unique.</p>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="suivi-card">
+            <h3 class="h5 mb-2">Suivi des activites</h3>
+            <p class="suivi-muted mb-3">Historique de vos activites physiques, duree et calories.</p>
+            <a class="btn btn-primary" href="{{ path('front_activite_index') }}">Voir les activites</a>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="suivi-card">
+            <h3 class="h5 mb-2">Suivi des etats</h3>
+            <p class="suivi-muted mb-3">Historique des releves de sante avec valeur et unite.</p>
+            <a class="btn btn-primary" href="{{ path('front_etat_index') }}">Voir les etats</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

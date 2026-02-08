@@ -1,0 +1,153 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mon suivi - Activites{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .header-spacer { height: 80px; }
+    @media (max-width: 768px) { .header-spacer { height: 110px; } }
+    .panel {
+      background: var(--surface-color);
+      border-radius: 18px;
+      padding: 1.5rem;
+      border: 1px solid color-mix(in srgb, var(--default-color), transparent 86%);
+      box-shadow: 0 16px 30px rgba(16, 24, 40, 0.08);
+    }
+    .kpi {
+      border: 1px solid color-mix(in srgb, var(--default-color), transparent 86%);
+      border-radius: 12px;
+      padding: 0.9rem;
+      height: 100%;
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+    <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0"><h1 class="sitename">Chronic Care</h1></a>
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{{ path('index') }}">Accueil</a></li>
+        <li><a href="{{ path('suivi_front_dashboard') }}" class="active">Mon suivi</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+    <a class="btn-getstarted" href="{{ path('front_etat_index') }}">Voir etats</a>
+  </div>
+</header>
+
+<div class="header-spacer"></div>
+
+<main class="main">
+  <section class="section light-background">
+    <div class="container">
+      <div class="panel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h4 mb-0">Mes activites quotidiennes</h2>
+          <div class="d-flex gap-2">
+            <a class="btn btn-primary" href="{{ path('front_activite_new') }}">Nouvelle activite</a>
+            <a class="btn btn-outline-secondary" href="{{ path('suivi_front_dashboard') }}">Tableau de bord</a>
+          </div>
+        </div>
+
+        {% for message in app.flashes('danger') %}
+          <div class="alert alert-danger">{{ message }}</div>
+        {% endfor %}
+        {% for message in app.flashes('success') %}
+          <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-3"><div class="kpi"><div class="text-muted small">Activites</div><div class="h5 mb-0">{{ stats.totalActivites }}</div></div></div>
+          <div class="col-md-3"><div class="kpi"><div class="text-muted small">Duree totale</div><div class="h5 mb-0">{{ stats.totalDuree }} min</div></div></div>
+          <div class="col-md-3"><div class="kpi"><div class="text-muted small">Calories brulees</div><div class="h5 mb-0">{{ stats.totalCalories }}</div></div></div>
+          <div class="col-md-3"><div class="kpi"><div class="text-muted small">Moyenne calories</div><div class="h5 mb-0">{{ stats.moyenneCalories|number_format(1, '.', ' ') }}</div></div></div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="kpi">
+              <div class="d-flex justify-content-between">
+                <span>Objectif duree ({{ goalMinutes }} min)</span><strong>{{ minutesProgress }}%</strong>
+              </div>
+              <div class="progress mt-2"><div class="progress-bar" role="progressbar" style="width: {{ minutesProgress }}%"></div></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="kpi">
+              <div class="d-flex justify-content-between">
+                <span>Objectif calories ({{ goalCalories }})</span><strong>{{ caloriesProgress }}%</strong>
+              </div>
+              <div class="progress mt-2"><div class="progress-bar bg-success" role="progressbar" style="width: {{ caloriesProgress }}%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <form method="get" class="row g-2 mb-3">
+          <div class="col-md-5">
+            <input type="text" name="q" value="{{ q ?? '' }}" class="form-control" placeholder="Rechercher (type, notes)...">
+          </div>
+          <div class="col-md-3">
+            {% set s = sort ?? 'dateActivite' %}
+            <select name="sort" class="form-select">
+              <option value="dateActivite" {{ s == 'dateActivite' ? 'selected' : '' }}>Date activite</option>
+              <option value="type" {{ s == 'type' ? 'selected' : '' }}>Type</option>
+              <option value="duree" {{ s == 'duree' ? 'selected' : '' }}>Duree</option>
+              <option value="calories" {{ s == 'calories' ? 'selected' : '' }}>Calories</option>
+              <option value="createdAt" {{ s == 'createdAt' ? 'selected' : '' }}>Cree le</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            {% set d = dir ?? 'DESC' %}
+            <select name="dir" class="form-select">
+              <option value="DESC" {{ d == 'DESC' ? 'selected' : '' }}>DESC</option>
+              <option value="ASC" {{ d == 'ASC' ? 'selected' : '' }}>ASC</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Filtrer</button>
+            <a class="btn btn-outline-secondary" href="{{ path('front_activite_index') }}">Reset</a>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-striped align-middle mb-0">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Duree</th>
+                <th>Calories</th>
+                <th>Date</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for activite in activites %}
+                <tr>
+                  <td>{{ activite.id }}</td>
+                  <td>{{ activite.type }}</td>
+                  <td>{{ activite.duree }} min</td>
+                  <td>{{ activite.calories }}</td>
+                  <td>{{ activite.dateActivite ? activite.dateActivite|date('Y-m-d') : '' }}</td>
+                  <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('front_activite_show', {id: activite.id}) }}">Voir</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('front_activite_edit', {id: activite.id}) }}">Edit</a>
+                    <form method="post" action="{{ path('front_activite_delete', {id: activite.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer cette activite ?');">
+                      <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ activite.id) }}">
+                      <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6">Aucune activite.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

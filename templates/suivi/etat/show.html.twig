@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration - Detail etat{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+  <h1 class="mb-3">Detail etat</h1>
+  <table class="table table-striped align-middle">
+    <tbody>
+      <tr><th>ID</th><td>{{ etat.id }}</td></tr>
+      <tr><th>Type</th><td>{{ etat.type }}</td></tr>
+      <tr><th>Valeur</th><td>{{ etat.valeur }}</td></tr>
+      <tr><th>Unite</th><td>{{ etat.unite }}</td></tr>
+      <tr><th>Date releve</th><td>{{ etat.dateReleve ? etat.dateReleve|date('Y-m-d') : '' }}</td></tr>
+      <tr><th>Utilisateur</th><td>{{ etat.utilisateur ? etat.utilisateur.id : '-' }}</td></tr>
+    </tbody>
+  </table>
+  <a class="btn btn-outline-secondary" href="{{ path('admin_etat_index') }}">Retour</a>
+  <a class="btn btn-primary" href="{{ path('admin_etat_edit', {id: etat.id}) }}">Modifier</a>
+</div>
+{% endblock %}

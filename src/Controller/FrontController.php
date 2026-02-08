@@ -80,4 +80,10 @@ final class FrontController extends AbstractController
     {
         return $this->render('front/about.html.twig');
     }
+
+    #[Route('/suivi', name: 'suivi_front_dashboard')]
+    public function suivi(): Response
+    {
+        return $this->render('front/suivi.html.twig');
+    }
 }
