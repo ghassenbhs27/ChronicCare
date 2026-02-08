@@ -57,7 +57,7 @@ class PaymentService
 
         // Ici on pourrait appeler une API de paiement (Stripe, PayPal, etc.)
         // Pour cette version simple, on simule juste le paiement
-        
+
         return true;
     }
 

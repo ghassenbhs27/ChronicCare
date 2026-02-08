@@ -37,7 +37,7 @@ class CommandeService
             $ligneCommande->setProduit($item['produit']);
             $ligneCommande->setQuantite($item['quantity']);
             $ligneCommande->setPrixUnitaire($item['produit']->getPrix());
-            
+
             $sousTotal = (float) $item['produit']->getPrix() * $item['quantity'];
             $ligneCommande->setSousTotal($sousTotal);
             $ligneCommande->setRemise(0);

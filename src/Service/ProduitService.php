@@ -79,7 +79,7 @@ class ProduitService
     {
         $skip = ($page - 1) * $limit;
         $products = $this->produitRepository->findAllActive();
-        
+
         return array_slice($products, $skip, $limit);
     }
 
