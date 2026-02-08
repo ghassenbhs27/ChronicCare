@@ -8,7 +8,7 @@ use App\Repository\ProduitRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/cart', name: 'cart_')]
 class CartController extends AbstractController
@@ -40,14 +40,43 @@ class CartController extends AbstractController
     }
 
     /**
-     * Ajouter un produit au panier
+     * Ajouter un produit au panier (supporte both URL params et query params)
      */
-    #[Route('/add/{id}', name: 'add', requirements: ['id' => '\d+'])]
-    public function add(int $id, Request $request): Response
+    #[Route('/add', name: 'add')]
+    #[Route('/add/{id}', name: 'add_with_id', requirements: ['id' => '\d+'])]
+    public function add(?int $id = null, Request $request): Response
     {
+        // Accepter l'id soit via URL soit via query parameter
+        if ($id === null) {
+            $id = $request->query->getInt('id');
+        }
+        
+        if (!$id) {
+            $errorResponse = [
+                'success' => false,
+                'message' => 'ID produit manquant'
+            ];
+            
+            // Si c'est une requête AJAX, retourner JSON
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse($errorResponse);
+            }
+            
+            throw $this->createNotFoundException('Produit non trouvé');
+        }
+
         $produit = $this->produitRepository->find($id);
 
         if (!$produit) {
+            $errorResponse = [
+                'success' => false,
+                'message' => 'Produit non trouvé'
+            ];
+            
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse($errorResponse);
+            }
+            
             throw $this->createNotFoundException('Produit non trouvé');
         }
 
@@ -58,6 +87,16 @@ class CartController extends AbstractController
         }
 
         $this->cartService->addToCart($produit, $quantity);
+
+        // Si c'est une requête AJAX, retourner JSON
+        if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Produit ajouté au panier',
+                'cartCount' => $this->cartService->getCartCount(),
+                'cartTotal' => $this->cartService->getCartTotal(),
+            ]);
+        }
 
         $this->addFlash('success', 'Produit ajouté au panier');
 

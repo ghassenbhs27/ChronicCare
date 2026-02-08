@@ -3,16 +3,16 @@
 namespace App\Service;
 
 use App\Entity\Produit;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class CartService
 {
-    private $session;
+    private $requestStack;
     private const CART_SESSION_KEY = 'cart';
 
-    public function __construct(SessionInterface $session)
+    public function __construct(RequestStack $requestStack)
     {
-        $this->session = $session;
+        $this->requestStack = $requestStack;
     }
 
     /**
@@ -20,8 +20,9 @@ class CartService
      */
     private function initCart(): void
     {
-        if (!$this->session->has(self::CART_SESSION_KEY)) {
-            $this->session->set(self::CART_SESSION_KEY, []);
+        $session = $this->requestStack->getSession();
+        if (!$session->has(self::CART_SESSION_KEY)) {
+            $session->set(self::CART_SESSION_KEY, []);
         }
     }
 
@@ -31,7 +32,8 @@ class CartService
     public function addToCart(Produit $produit, int $quantity = 1): void
     {
         $this->initCart();
-        $cart = $this->session->get(self::CART_SESSION_KEY);
+        $session = $this->requestStack->getSession();
+        $cart = $session->get(self::CART_SESSION_KEY);
 
         $productId = $produit->getId();
 
@@ -48,7 +50,7 @@ class CartService
             ];
         }
 
-        $this->session->set(self::CART_SESSION_KEY, $cart);
+        $session->set(self::CART_SESSION_KEY, $cart);
     }
 
     /**
@@ -57,13 +59,14 @@ class CartService
     public function removeFromCart(int $productId): void
     {
         $this->initCart();
-        $cart = $this->session->get(self::CART_SESSION_KEY);
+        $session = $this->requestStack->getSession();
+        $cart = $session->get(self::CART_SESSION_KEY);
 
         if (isset($cart[$productId])) {
             unset($cart[$productId]);
         }
 
-        $this->session->set(self::CART_SESSION_KEY, $cart);
+        $session->set(self::CART_SESSION_KEY, $cart);
     }
 
     /**
@@ -72,7 +75,8 @@ class CartService
     public function updateQuantity(int $productId, int $quantity): void
     {
         $this->initCart();
-        $cart = $this->session->get(self::CART_SESSION_KEY);
+        $session = $this->requestStack->getSession();
+        $cart = $session->get(self::CART_SESSION_KEY);
 
         if (isset($cart[$productId])) {
             if ($quantity <= 0) {
@@ -82,7 +86,7 @@ class CartService
             }
         }
 
-        $this->session->set(self::CART_SESSION_KEY, $cart);
+        $session->set(self::CART_SESSION_KEY, $cart);
     }
 
     /**
@@ -90,7 +94,8 @@ class CartService
      */
     public function clearCart(): void
     {
-        $this->session->set(self::CART_SESSION_KEY, []);
+        $session = $this->requestStack->getSession();
+        $session->set(self::CART_SESSION_KEY, []);
     }
 
     /**
@@ -99,7 +104,8 @@ class CartService
     public function getCart(): array
     {
         $this->initCart();
-        return $this->session->get(self::CART_SESSION_KEY, []);
+        $session = $this->requestStack->getSession();
+        return $session->get(self::CART_SESSION_KEY, []);
     }
 
     /**
