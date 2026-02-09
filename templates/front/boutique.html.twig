@@ -455,7 +455,7 @@
 
     <script>
       function ajouterAuPanier(productId, productName) {
-        fetch('{{ path('cart_add') }}?id=' + productId + '&quantity=1', {
+        fetch('/cart/add?id=' + productId + '&quantity=1', {
           method: 'GET',
           headers: {
             'X-Requested-With': 'XMLHttpRequest'
@@ -472,6 +472,8 @@
                 cartCount.textContent = data.cartCount;
               }
             }
+          } else {
+            alert('Erreur: ' + (data.message || 'Impossible d\'ajouter au panier'));
           }
         })
         .catch(error => {
