@@ -1,0 +1,69 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande #{{ commande.numeroCommande }} - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Commande #{{ commande.numeroCommande }}</h1>
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Détails</h5>
+                    <p><strong>Date:</strong> {{ commande.createdAt|date('d/m/Y H:i') }}</p>
+                    <p><strong>Statut:</strong> 
+                        <span class="badge 
+                            {% if commande.statut == 'en_attente' %}badge-warning
+                            {% elseif commande.statut == 'validée' %}badge-info
+                            {% elseif commande.statut == 'expédiée' %}badge-primary
+                            {% elseif commande.statut == 'livrée' %}badge-success
+                            {% else %}badge-danger
+                            {% endif %}
+                        ">{{ commande.statut }}</span>
+                    </p>
+
+                    <hr>
+
+                    <h6>Articles</h6>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Quantité</th>
+                                <th>Prix</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ligne in commande.ligneCommandes %}
+                            <tr>
+                                <td>{{ ligne.produit.nom }}</td>
+                                <td>{{ ligne.quantite }}</td>
+                                <td>{{ ligne.prixUnitaire }} €</td>
+                                <td>{{ ligne.sousTotal }} €</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Résumé</h5>
+                    <hr>
+                    <p class="d-flex justify-content-between">
+                        <span>Total:</span>
+                        <strong>{{ commande.total }} €</strong>
+                    </p>
+
+                    <a href="{{ path('commande_history') }}" class="btn btn-secondary btn-block mt-3">Retour</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

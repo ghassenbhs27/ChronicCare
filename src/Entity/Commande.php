@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommandeRepository::class)]
 class Commande
@@ -21,12 +22,17 @@ class Commande
     private User $utilisateur;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Assert\NotBlank(message: 'Le numéro de commande ne peut pas être vide')]
     private string $numeroCommande;
 
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: 'Le statut ne peut pas être vide')]
+    #[Assert\Choice(choices: ['en_attente', 'validée', 'expédiée', 'livrée', 'annulée'], message: 'Le statut doit être valide')]
     private string $statut;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Assert\NotBlank(message: 'Le total ne peut pas être vide')]
+    #[Assert\Positive(message: 'Le total doit être positif')]
     private string $total;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]

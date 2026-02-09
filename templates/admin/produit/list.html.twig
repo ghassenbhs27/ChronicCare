@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - Produits - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Gestion des Produits</h1>
+
+    <a href="{{ path('admin_produit_create') }}" class="btn btn-success mb-3">+ Nouveau produit</a>
+    <a href="{{ path('admin_produit_low_stock') }}" class="btn btn-warning mb-3">Stock faible</a>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Catégorie</th>
+                <th>Prix</th>
+                <th>Stock</th>
+                <th>Statut</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for produit in produits %}
+            <tr>
+                <td>{{ produit.nom }}</td>
+                <td>{{ produit.categorie }}</td>
+                <td>{{ produit.prix }} €</td>
+                <td>{{ produit.stock }}</td>
+                <td>
+                    <span class="badge {% if produit.isActive %}badge-success{% else %}badge-danger{% endif %}">
+                        {% if produit.isActive %}Actif{% else %}Inactif{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ path('admin_produit_edit', {id: produit.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
+                    <form action="{{ path('admin_produit_delete', {id: produit.id}) }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ produit.id) }}">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr?')">Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

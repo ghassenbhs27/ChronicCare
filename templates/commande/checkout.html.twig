@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Checkout - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Finaliser la commande</h1>
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Panier</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Quantité</th>
+                                <th>Prix</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart %}
+                            <tr>
+                                <td>{{ item.nom }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.prix }} €</td>
+                                <td>{{ (item.prix * item.quantity)|number_format(2, ',', ' ') }} €</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5>Informations de paiement</h5>
+                    
+                    <form method="POST">
+                        <div class="form-group">
+                            <label>Nom</label>
+                            <input type="text" name="cardHolder" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Numéro de carte</label>
+                            <input type="text" name="cardNumber" class="form-control" placeholder="1234 5678 9012 3456" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>CVV</label>
+                                    <input type="text" name="cvv" class="form-control" placeholder="123" maxlength="4" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-lg btn-success btn-block">Payer {{ total|number_format(2, ',', ' ') }} €</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Total: {{ total|number_format(2, ',', ' ') }} €</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

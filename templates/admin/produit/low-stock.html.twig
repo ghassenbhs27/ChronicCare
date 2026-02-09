@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - Stock Faible - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Produits - Stock Faible</h1>
+
+    <a href="{{ path('admin_produit_list') }}" class="btn btn-secondary mb-3">Retour</a>
+
+    {% if produits is empty %}
+        <div class="alert alert-info">Aucun produit avec stock faible</div>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Stock</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produit in produits %}
+                <tr>
+                    <td>{{ produit.nom }}</td>
+                    <td><span class="badge badge-danger">{{ produit.stock }}</span></td>
+                    <td>
+                        <a href="{{ path('admin_produit_edit', {id: produit.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}

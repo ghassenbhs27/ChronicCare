@@ -16,28 +16,58 @@ class LigneCommandeRepository extends ServiceEntityRepository
         parent::__construct($registry, LigneCommande::class);
     }
 
-    //    /**
-    //     * @return LigneCommande[] Returns an array of LigneCommande objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('l')
-    //            ->andWhere('l.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('l.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * Obtenir toutes les lignes d'une commande (eager loading)
+     * @return LigneCommande[]
+     */
+    public function findByCommande($commande): array
+    {
+        return $this->createQueryBuilder('l')
+            ->leftJoin('l.produit', 'p')
+            ->addSelect('p')
+            ->andWhere('l.commande = :commande')
+            ->setParameter('commande', $commande)
+            ->getQuery()
+            ->getResult();
+    }
 
-    //    public function findOneBySomeField($value): ?LigneCommande
-    //    {
-    //        return $this->createQueryBuilder('l')
-    //            ->andWhere('l.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * Total des ventes par produit
+     */
+    public function getTotalVentesByProduit($produit): ?string
+    {
+        return $this->createQueryBuilder('l')
+            ->select('SUM(l.sousTotal)')
+            ->andWhere('l.produit = :produit')
+            ->setParameter('produit', $produit)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Quantité totale vendue par produit
+     */
+    public function getTotalQuantityByProduit($produit): ?int
+    {
+        return $this->createQueryBuilder('l')
+            ->select('SUM(l.quantite)')
+            ->andWhere('l.produit = :produit')
+            ->setParameter('produit', $produit)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Produits les plus vendus
+     */
+    public function getTopSellingProducts(int $limit = 10): array
+    {
+        return $this->createQueryBuilder('l')
+            ->select('l.produit, SUM(l.quantite) as totalQty')
+            ->groupBy('l.produit')
+            ->orderBy('totalQty', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }

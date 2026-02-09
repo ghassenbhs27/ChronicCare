@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - Statistiques - ChronicCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Statistiques des Commandes</h1>
+
+    <a href="{{ path('admin_commande_list') }}" class="btn btn-secondary mb-3">Retour</a>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Total des ventes</h5>
+                    <h2 class="text-success">{{ totalVentes|number_format(2, ',', ' ') }} €</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Commandes par statut</h5>
+                    <ul>
+                        {% for stat in countByStatus %}
+                            <li>{{ stat.statut }}: {{ stat.count }} commande(s)</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Commandes récentes</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Numéro</th>
+                                <th>Total</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for commande in recentCommandes %}
+                            <tr>
+                                <td>{{ commande.numeroCommande }}</td>
+                                <td>{{ commande.total }} €</td>
+                                <td>{{ commande.statut }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
