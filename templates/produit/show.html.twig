@@ -4,8 +4,36 @@
 
 {% block content %}
 <main class="main">
+  <!-- Modal Ajout au Panier -->
+  <div id="cartSuccessModal" class="modal" tabindex="-1" style="display:none; position:fixed; z-index:1050; left:0; top:0; width:100vw; height:100vh; overflow:auto; background:rgba(0,0,0,0.5);">
+    <div class="modal-dialog" style="max-width:600px; margin:5% auto;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Produit ajouté au panier avec succès</h5>
+          <button type="button" class="btn-close" aria-label="Close" onclick="closeCartSuccessModal()"></button>
+        </div>
+        <div class="modal-body d-flex align-items-center">
+          <img id="cartSuccessImage" src="" alt="Produit" style="width:120px; height:120px; object-fit:contain; margin-right:24px;">
+          <div>
+            <div id="cartSuccessName" style="font-weight:bold;"></div>
+            <div id="cartSuccessPrice"></div>
+            <div id="cartSuccessDetails"></div>
+            <div id="cartSuccessQuantity"></div>
+            <div class="mt-2" id="cartSuccessMessage" style="color:green; font-weight:bold;"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="me-auto">
+            <span id="cartSuccessTotal"></span>
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="closeCartSuccessModal()">Continuer mes achats</button>
+          <a href="/cart" class="btn btn-success">Commander</a>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- Product Details Section -->
-  <section class="product-details section">
+  <section class="product-details section py-5">
     <div class="container">
       <div class="row g-5 align-items-center">
         
@@ -17,9 +45,9 @@
                 src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" 
                 alt="{{ produit.nom }}"
                 style="max-width: 100%; max-height: 450px; object-fit: contain;"
-                onerror="this.style.display='none'; document.querySelector('.product-placeholder').style.display='flex';"
+                onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';"
               >
-              <div class="product-placeholder" style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; text-align: center;">
+              <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; text-align: center;">
                 {{ produit.nom }}
               </div>
             </div>
@@ -33,7 +61,7 @@
             <div class="product-header mb-4">
               <div class="d-flex justify-content-between align-items-start">
                 <div>
-                  <h1 class="product-title mb-2">{{ produit.nom }}</h1>
+                  <h1 class="mb-2" style="font-size: 2rem; font-weight: 700; color: #333;">{{ produit.nom }}</h1>
                   <span class="badge bg-primary">{{ produit.categorie }}</span>
                 </div>
                 <button class="btn btn-outline-danger btn-sm" onclick="toggleWishlist()">
@@ -53,14 +81,13 @@
                   <i class="fa fa-star-half-o" style="color: #ffc107;"></i>
                 </div>
                 <span class="text-muted">(324 avis)</span>
-                <a href="#reviews" class="text-primary">Donnez votre avis</a>
               </div>
             </div>
 
             <!-- Price Section -->
             <div class="product-price mb-4 p-3 bg-light rounded-3">
               <div class="d-flex align-items-baseline gap-2">
-                <h2 class="price-main text-primary" style="font-size: 2.5rem; font-weight: 700;">
+                <h2 style="font-size: 2.5rem; font-weight: 700; color: #0d6efd; margin: 0;">
                   {{ produit.prix }}€
                 </h2>
                 <span class="text-muted text-decoration-line-through">{{ (produit.prix * 1.2)|number_format(2, ',', '.') }}€</span>
@@ -126,7 +153,7 @@
             </form>
 
             <!-- Trust Badges -->
-            <div class="trust-badges d-flex gap-3 flexi-wrap">
+            <div class="trust-badges d-flex gap-3 flex-wrap">
               <div class="badge-item text-center">
                 <i class="fa fa-shield" style="font-size: 1.5rem; color: #0d6efd;"></i>
                 <small>Paiement sécurisé</small>
@@ -153,205 +180,218 @@
         </div>
       </div>
 
-      <!-- Description & Details Tabs -->
+      <!-- Description & Details Section -->
       <div class="row mt-5">
         <div class="col-12">
-          <ul class="nav nav-tabs mb-4" role="tablist" style="border-bottom: 2px solid #e9ecef;">
-            <li class="nav-item" role="presentation">
-              <a class="nav-link active fw-bold" id="description-tab" data-bs-toggle="tab" href="#description" role="tab">
-                Description
-              </a>
-            </li>
-            <li class="nav-item" role="presentation">
-              <a class="nav-link fw-bold" id="benefits-tab" data-bs-toggle="tab" href="#benefits" role="tab">
-                Bénéfices
-              </a>
-            </li>
-            <li class="nav-item" role="presentation">
-              <a class="nav-link fw-bold" id="specs-tab" data-bs-toggle="tab" href="#specs" role="tab">
-                Caractéristiques
-              </a>
-            </li>
-            <li class="nav-item" role="presentation">
-              <a class="nav-link fw-bold" id="reviews-tab" data-bs-toggle="tab" href="#reviews" role="tab">
-                Avis (324)
-              </a>
-            </li>
-          </ul>
+          <!-- Description -->
+          <div class="description-content mb-5 p-4 bg-light rounded-3">
+            <h3 class="mb-3">📌 Description du produit</h3>
+            <p class="lead">{{ produit.description }}</p>
+            <hr>
+            <p>Ce produit a été sélectionné par nos experts pour sa qualité et ses bénéfices prouvés scientifiquement. 
+              Il répond aux normes les plus strictes de contrôle qualité.</p>
+          </div>
 
-          <div class="tab-content">
-            <!-- Description Tab -->
-            <div class="tab-pane fade show active" id="description" role="tabpanel">
-              <div class="description-content">
-                <h3 class="mb-3">📌 Description du produit</h3>
-                <p class="lead">{{ produit.description }}</p>
-                <hr>
-                <p>Ce produit a été sélectionné par nos experts pour sa qualité et ses bénéfices prouvés scientifiquement. 
-                  Il répond aux normes les plus strictes de contrôle qualité et est garanti sans danger pour la santé.</p>
+          <!-- Benefits -->
+          <div class="benefits-content mb-5">
+            <h3 class="mb-3">✨ Bénéfices principaux</h3>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <div class="benefit-item p-3 bg-light rounded-3">
+                  <h5 class="mb-2"><i class="fa fa-check-circle text-success me-2"></i> Efficacité prouvée</h5>
+                  <p>Résultats visibles dans les 2-4 semaines d'utilisation régulière</p>
+                </div>
               </div>
-            </div>
-
-            <!-- Benefits Tab -->
-            <div class="tab-pane fade" id="benefits" role="tabpanel">
-              <div class="benefits-content">
-                <h3 class="mb-3">✨ Bénéfices principaux</h3>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <div class="benefit-item p-3 bg-light rounded-3">
-                      <h5 class="mb-2"><i class="fa fa-check-circle text-success me-2"></i> Efficacité prouvée</h5>
-                      <p>Résultats visibles dans les 2-4 semaines d'utilisation régulière</p>
-                    </div>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <div class="benefit-item p-3 bg-light rounded-3">
-                      <h5 class="mb-2"><i class="fa fa-check-circle text-success me-2"></i> 100% naturel</h5>
-                      <p>Ingrédients sélectionnés biologiques et éco-responsables</p>
-                    </div>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <div class="benefit-item p-3 bg-light rounded-3">
-                      <h5 class="mb-2"><i class="fa fa-check-circle text-success me-2"></i> Pas d'effets secondaires</h5>
-                      <p>Contrôle dermatologique et toxicologique complet</p>
-                    </div>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <div class="benefit-item p-3 bg-light rounded-3">
-                      <h5 class="mb-2"><i class="fa fa-check-circle text-success me-2"></i> Livré rapidement</h5>
-                      <p>Frais de port gratuit à partir de 100€ d'achat</p>
-                    </div>
-                  </div>
+              <div class="col-md-6 mb-3">
+                <div class="benefit-item p-3 bg-light rounded-3">
+                  <h5 class="mb-2"><i class="fa fa-check-circle text-success me-2"></i> 100% naturel</h5>
+                  <p>Ingrédients sélectionnés biologiques et éco-responsables</p>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="benefit-item p-3 bg-light rounded-3">
+                  <h5 class="mb-2"><i class="fa fa-check-circle text-success me-2"></i> Pas d'effets secondaires</h5>
+                  <p>Contrôle dermatologique et toxicologique complet</p>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="benefit-item p-3 bg-light rounded-3">
+                  <h5 class="mb-2"><i class="fa fa-check-circle text-success me-2"></i> Livré rapidement</h5>
+                  <p>Frais de port gratuit à partir de 100€ d'achat</p>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Specs Tab -->
-            <div class="tab-pane fade" id="specs" role="tabpanel">
-              <div class="specs-content">
-                <h3 class="mb-3">📊 Caractéristiques techniques</h3>
-                <table class="table table-borderless">
-                  <tr>
-                    <td class="fw-bold" style="width: 30%;">Catégorie:</td>
-                    <td>{{ produit.categorie }}</td>
-                  </tr>
-                  <tr>
-                    <td class="fw-bold">Prix:</td>
-                    <td style="font-size: 1.3rem; color: #0d6efd; font-weight: 700;">{{ produit.prix }}€</td>
-                  </tr>
-                  <tr>
-                    <td class="fw-bold">Stock disponible:</td>
-                    <td>{{ produit.stock }} unité(s)</td>
-                  </tr>
-                  <tr>
-                    <td class="fw-bold">Statut:</td>
-                    <td>
-                      {% if produit.isActive %}
-                        <span class="badge bg-success">Disponible à la vente</span>
-                      {% else %}
-                        <span class="badge bg-secondary">Indisponible</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="fw-bold">Avis clients:</td>
-                    <td>
-                      <i class="fa fa-star" style="color: #ffc107;"></i>
-                      <i class="fa fa-star" style="color: #ffc107;"></i>
-                      <i class="fa fa-star" style="color: #ffc107;"></i>
-                      <i class="fa fa-star" style="color: #ffc107;"></i>
-                      <i class="fa fa-star-half-o" style="color: #ffc107;"></i>
-                      4.5/5 (324 avis)
-                    </td>
-                  </tr>
-                </table>
-              </div>
-            </div>
+          <!-- Specifications -->
+          <div class="specs-content mb-5 p-4 bg-light rounded-3">
+            <h3 class="mb-3">📊 Caractéristiques techniques</h3>
 
-            <!-- Reviews Tab -->
-            <div class="tab-pane fade" id="reviews" role="tabpanel">
-              <div class="reviews-content">
-                <h3 class="mb-4">💬 Avis des clients</h3>
-                
-                <!-- Add Review Form -->
-                <div class="add-review p-4 bg-light rounded-3 mb-4">
-                  <h5 class="mb-3">Donnez votre avis</h5>
+          <!-- Modal Achat Express -->
+          <div id="achatExpressModal" class="modal" tabindex="-1" style="display:none; position:fixed; z-index:1050; left:0; top:0; width:100vw; height:100vh; overflow:auto; background:rgba(0,0,0,0.5);">
+            <div class="modal-dialog" style="max-width:500px; margin:5% auto;">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">COMMANDE EN UN CLIC</h5>
+                  <button type="button" class="btn-close" aria-label="Close" onclick="closeAchatExpressModal()"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Nos experts vous appelleront et vous préciseront les détails de la commande !</p>
                   <form>
                     <div class="mb-3">
-                      <label class="form-label fw-bold">Votre note</label>
-                      <div class="stars-input">
-                        <input type="radio" name="rating" value="5">
-                        <i class="fa fa-star" style="font-size: 2rem; cursor: pointer; margin-right: 10px;"></i>
-                      </div>
+                      <label class="form-label">Nom <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                      <label class="form-label fw-bold">Votre avis</label>
-                      <textarea class="form-control" rows="4" placeholder="Partagez votre expérience..."></textarea>
+                      <label class="form-label">Prénom</label>
+                      <input type="text" class="form-control">
                     </div>
-                    <button type="submit" class="btn btn-primary">Publier mon avis</button>
+                    <div class="mb-3">
+                      <label class="form-label">E-mail <span class="text-danger">*</span></label>
+                      <input type="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Téléphone <span class="text-danger">*</span></label>
+                      <input type="tel" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">État</label>
+                      <select class="form-select">
+                        <option>Choisir</option>
+                        <option>Tunis</option>
+                        <option>Ariana</option>
+                        <option>Ben Arous</option>
+                        <option>...</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Adresse <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" required>
+                    </div>
                   </form>
                 </div>
-
-                <!-- Sample Reviews -->
-                <div class="reviews-list">
-                  <div class="review-item p-3 border-bottom">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                      <div>
-                        <strong>Marie D.</strong>
-                        <div class="stars">
-                          <i class="fa fa-star" style="color: #ffc107;"></i>
-                          <i class="fa fa-star" style="color: #ffc107;"></i>
-                          <i class="fa fa-star" style="color: #ffc107;"></i>
-                          <i class="fa fa-star" style="color: #ffc107;"></i>
-                          <i class="fa fa-star" style="color: #ffc107;"></i>
-                        </div>
-                      </div>
-                      <small class="text-muted">Il y a 2 jours</small>
-                    </div>
-                    <p class="mb-0">Excellent produit! J'ai vu les résultats après 3 semaines d'utilisation. Très satisfaite!</p>
-                  </div>
-
-                  <div class="review-item p-3 border-bottom">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                      <div>
-                        <strong>Jean P.</strong>
-                        <div class="stars">
-                          <i class="fa fa-star" style="color: #ffc107;"></i>
-                          <i class="fa fa-star" style="color: #ffc107;"></i>
-                          <i class="fa fa-star" style="color: #ffc107;"></i>
-                          <i class="fa fa-star" style="color: #ffc107;"></i>
-                        </div>
-                      </div>
-                      <small class="text-muted">Il y a 1 semaine</small>
-                    </div>
-                    <p class="mb-0">Bon rapport qualité-prix. Livraison rapide et bien emballé.</p>
-                  </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" onclick="closeAchatExpressModal()">Annuler</button>
+                  <button type="button" class="btn btn-success">Commander</button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <script>
+          function achatExpress() {
+            document.getElementById('achatExpressModal').style.display = 'block';
+          }
+          function closeAchatExpressModal() {
+            document.getElementById('achatExpressModal').style.display = 'none';
+          }
+          // Fermer le modal si on clique en dehors
+          window.onclick = function(event) {
+            var modal = document.getElementById('achatExpressModal');
+            if (event.target === modal) {
+              closeAchatExpressModal();
+            }
+          }
+          </script>
+            <table class="table table-borderless">
+              <tr>
+                <td class="fw-bold" style="width: 30%;">Catégorie:</td>
+                <td>{{ produit.categorie }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold">Prix:</td>
+                <td style="font-size: 1.3rem; color: #0d6efd; font-weight: 700;">{{ produit.prix }}€</td>
+              </tr>
+              <tr>
+                <td class="fw-bold">Stock disponible:</td>
+                <td>{{ produit.stock }} unité(s)</td>
+              </tr>
+              <tr>
+                <td class="fw-bold">Statut:</td>
+                <td>
+                  {% if produit.isActive %}
+                    <span class="badge bg-success">Disponible à la vente</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Indisponible</span>
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td class="fw-bold">Avis clients:</td>
+                <td>
+                  <i class="fa fa-star" style="color: #ffc107;"></i>
+                  <i class="fa fa-star" style="color: #ffc107;"></i>
+                  <i class="fa fa-star" style="color: #ffc107;"></i>
+                  <i class="fa fa-star" style="color: #ffc107;"></i>
+                  <i class="fa fa-star-half-o" style="color: #ffc107;"></i>
+                  4.5/5 (324 avis)
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Reviews -->
+          <div class="reviews-content p-4 bg-light rounded-3">
+            <h3 class="mb-4">💬 Avis des clients (4.5/5 - 324 avis)</h3>
+            
+            <div class="review-item p-3 border-bottom">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <strong>Marie D.</strong>
+                  <div class="stars">
+                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                  </div>
+                </div>
+                <small class="text-muted">Il y a 2 jours</small>
+              </div>
+              <p class="mb-0">Excellent produit! J'ai vu les résultats après 3 semaines d'utilisation. Très satisfaite!</p>
+            </div>
+
+            <div class="review-item p-3">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <strong>Jean P.</strong>
+                  <div class="stars">
+                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                  </div>
+                </div>
+                <small class="text-muted">Il y a 1 semaine</small>
+              </div>
+              <p class="mb-0">Bon rapport qualité-prix. Livraison rapide et bien emballé.</p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </section><!-- /Product Details Section -->
+  </section>
 </main>
 
 <script>
   function decreaseQuantity() {
     const input = document.getElementById('quantity');
-    if (input.value > 1) {
+    if (input && input.value > 1) {
       input.value--;
     }
   }
 
   function increaseQuantity(max) {
     const input = document.getElementById('quantity');
-    if (input.value < max) {
+    if (input && input.value < max) {
       input.value++;
     }
   }
 
   function ajouterAuPanierDirectly(productId, productName) {
-    const quantity = document.getElementById('quantity').value;
-    fetch('/cart/add?id=' + productId + '&quantity=' + quantity, {
+    const quantityInput = document.getElementById('quantity');
+    const quantity = quantityInput ? quantityInput.value : 1;
+    fetch(window.location.origin + '/cart/add?id=' + productId + '&quantity=' + quantity, {
       method: 'GET',
       headers: {
         'X-Requested-With': 'XMLHttpRequest'
@@ -360,7 +400,15 @@
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        alert(quantity + ' x ' + productName + ' ajouté au panier!');
+        // Remplir le modal avec les infos du produit
+        document.getElementById('cartSuccessImage').src = document.querySelector('.product-image-wrapper img').src;
+        document.getElementById('cartSuccessName').textContent = productName;
+        document.getElementById('cartSuccessPrice').textContent = 'Prix unitaire : ' + data.price + ' €';
+        document.getElementById('cartSuccessDetails').textContent = data.details || '';
+        document.getElementById('cartSuccessQuantity').textContent = 'Quantité : ' + quantity;
+        document.getElementById('cartSuccessMessage').textContent = data.cartMessage || 'Il y a ' + data.cartCount + ' articles dans votre panier.';
+        document.getElementById('cartSuccessTotal').textContent = 'Total : ' + data.cartTotal + ' €';
+        document.getElementById('cartSuccessModal').style.display = 'block';
       } else {
         alert('Erreur: ' + (data.message || 'Impossible d\'ajouter au panier'));
       }
@@ -371,11 +419,11 @@
     });
   }
 
-  function achatExpress() {
-    const quantity = document.getElementById('quantity').value;
-    alert('Redirection vers le paiement avec ' + quantity + ' article(s)...');
-    // TODO: Rediriger vers checkout
+  function closeCartSuccessModal() {
+    document.getElementById('cartSuccessModal').style.display = 'none';
   }
+
+  // (Supprimé: alert Redirection vers le paiement...)
 
   function toggleWishlist() {
     alert('Article ajouté aux favoris!');
@@ -383,19 +431,8 @@
 </script>
 
 <style>
-  .product-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #333;
-  }
-
-  .price-main {
-    font-weight: 700;
-  }
-
-  .quantity-selector input {
-    font-size: 1.2rem;
-    font-weight: bold;
+  .product-details {
+    padding: 40px 0;
   }
 
   .benefit-item {
@@ -407,34 +444,17 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   }
 
+  .badge-item {
+    padding: 10px;
+  }
+
   .stars {
     display: inline-flex;
     gap: 0.2rem;
   }
 
-  .nav-link {
-    color: #666;
-    border: none;
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s ease;
-  }
-
-  .nav-link.active {
-    color: #0d6efd;
-    border-bottom-color: #0d6efd;
-  }
-
-  .tab-content {
-    animation: fadeIn 0.3s ease-in;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  .review-item {
+    border-bottom: 1px solid #ddd;
   }
 </style>
 {% endblock %}

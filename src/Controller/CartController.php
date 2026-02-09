@@ -50,18 +50,18 @@ class CartController extends AbstractController
         if ($id === null) {
             $id = $request->query->getInt('id');
         }
-        
+
         if (!$id) {
             $errorResponse = [
                 'success' => false,
                 'message' => 'ID produit manquant'
             ];
-            
+
             // Si c'est une requête AJAX, retourner JSON
             if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
                 return new JsonResponse($errorResponse);
             }
-            
+
             throw $this->createNotFoundException('Produit non trouvé');
         }
 
@@ -72,11 +72,11 @@ class CartController extends AbstractController
                 'success' => false,
                 'message' => 'Produit non trouvé'
             ];
-            
+
             if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
                 return new JsonResponse($errorResponse);
             }
-            
+
             throw $this->createNotFoundException('Produit non trouvé');
         }
 
@@ -88,13 +88,21 @@ class CartController extends AbstractController
 
         $this->cartService->addToCart($produit, $quantity);
 
-        // Si c'est une requête AJAX, retourner JSON
+        // Si c'est une requête AJAX, retourner JSON enrichi
         if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            // Construction de l'URL de l'image (relative)
+            $imageName = strtolower(str_replace([' ', 'é', 'è', 'ê', 'à'], ['-', 'e', 'e', 'e', 'a'], $produit->getNom())) . '.jpg';
+            $imageUrl = '/assets/img/products/' . $imageName;
             return new JsonResponse([
                 'success' => true,
                 'message' => 'Produit ajouté au panier',
                 'cartCount' => $this->cartService->getCartCount(),
                 'cartTotal' => $this->cartService->getCartTotal(),
+                'price' => $produit->getPrix(),
+                'name' => $produit->getNom(),
+                'image' => $imageUrl,
+                'details' => 'Catégorie : ' . $produit->getCategorie(),
+                'cartMessage' => 'Il y a ' . $this->cartService->getCartCount() . ' articles dans votre panier.',
             ]);
         }
 

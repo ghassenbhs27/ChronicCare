@@ -19,7 +19,9 @@
     {% block stylesheets %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
-{% block body %}{% endblock %}
+{% block body %}
+    {% block content %}{% endblock %}
+{% endblock %}
 
 <!-- Vendor JS Files -->
 <script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
