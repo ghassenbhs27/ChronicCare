@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le commentaire - Forum Chronic Care{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main forum-form-page">
+    <div class="container">
+      <nav aria-label="Fil d'Ariane" class="forum-breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('publication_index') }}">Forum</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('publication_show', {id: publication.id}) }}">{{ publication.titre|slice(0, 40) }}{% if publication.titre|length > 40 %}…{% endif %}</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Modifier le commentaire</li>
+        </ol>
+      </nav>
+
+      <div class="forum-form-card">
+        <header class="forum-form-header">
+          <h1 class="forum-form-title">Modifier le commentaire</h1>
+          <p class="text-muted small mb-0">Publication : {{ publication.titre }}</p>
+        </header>
+        <div class="forum-form-body">
+          <form method="post">
+            <input type="hidden" name="_token" value="{{ csrf_token('commentaire_edit_' ~ commentaire.id) }}">
+            <div class="mb-4">
+              <label for="contenu" class="form-label">Commentaire <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="contenu" name="contenu" rows="5" required minlength="3">{{ commentaire.contenu }}</textarea>
+            </div>
+            <div class="forum-form-actions">
+              <a href="{{ path('publication_show', {id: publication.id}) }}#comments" class="btn btn-outline-secondary"><i class="bi bi-x-lg me-1"></i> Annuler</a>
+              <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

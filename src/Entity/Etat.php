@@ -19,7 +19,7 @@ class Etat
     // =========================
 
     #[ORM\ManyToOne(inversedBy: 'etats')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?User $utilisateur = null;
 
     // =========================
@@ -52,7 +52,7 @@ class Etat
         return $this->utilisateur;
     }
 
-    public function setUtilisateur(User $utilisateur): self
+    public function setUtilisateur(?User $utilisateur): self
     {
         $this->utilisateur = $utilisateur;
         return $this;

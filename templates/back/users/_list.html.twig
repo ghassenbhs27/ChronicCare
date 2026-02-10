@@ -1,0 +1,117 @@
+{# Fragment liste uniquement (pour actualisation AJAX) #}
+<div class="card-body p-0">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 40px;"></th>
+          <th>
+            <a href="{{ path('app_user_index', { q: search ?? '', role: roleFilter ?? '', status: statusFilter ?? '', sort: 'nom', order: (currentSort == 'nom' and currentOrder == 'ASC') ? 'DESC' : 'ASC', page: 1 }) }}" class="text-dark text-decoration-none user-list-link">
+              Nom <i class="bi bi-arrow-up-short"></i>
+            </a>
+          </th>
+          <th>Email</th>
+          <th>Rôle</th>
+          <th>Statut</th>
+          <th>Dernière activité</th>
+          <th class="text-end" style="width: 80px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          {% set _firstRole = user.roles|filter(r => r != 'ROLE_USER')|first %}
+          {% set mainRole = (_firstRole is defined and _firstRole != null) ? _firstRole : (user.roles|length > 0 ? 'ROLE_USER' : 'no_role') %}
+          {% if mainRole == 'no_role' %}{% set roleLabel = 'Sans rôle' %}
+          {% elseif mainRole == 'ROLE_ADMIN' %}{% set roleLabel = 'Admin' %}
+          {% elseif mainRole == 'ROLE_COACH' %}{% set roleLabel = 'Coach' %}
+          {% elseif mainRole == 'ROLE_PATIENT' %}{% set roleLabel = 'Patient' %}
+          {% elseif mainRole == 'ROLE_USER' %}{% set roleLabel = 'User' %}
+          {% else %}{% set roleLabel = mainRole %}{% endif %}
+          {% set _updated = user.updatedAt %}
+          {% set _created = user.createdAt %}
+          {% set lastDate = (_updated is defined and _updated != null) ? _updated : _created %}
+          {% set isActive = user.isActive %}
+          {% set initials = (user.prenom|slice(0,1) ~ user.nom|slice(0,1))|upper %}
+          <tr>
+            <td><input type="checkbox" class="form-check-input" aria-label="Sélectionner"></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span class="rounded-circle bg-primary bg-opacity-25 text-primary d-inline-flex align-items-center justify-content-center fw-bold small" style="width: 36px; height: 36px;">{{ initials }}</span>
+                <div>
+                  <span class="fw-medium">{{ user.prenom }} {{ user.nom }}</span>
+                  <span class="text-muted small d-block">ID: {{ user.id }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="small">{{ user.email }}</td>
+            <td>
+              {% if mainRole == 'no_role' %}
+                <span class="badge bg-warning text-dark">{{ roleLabel }}</span>
+              {% elseif mainRole == 'ROLE_ADMIN' %}
+                <span class="badge bg-danger">{{ roleLabel }}</span>
+              {% elseif mainRole == 'ROLE_COACH' %}
+                <span class="badge bg-info">{{ roleLabel }}</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ roleLabel }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if isActive %}
+                <span class="badge bg-success">Actif</span>
+              {% else %}
+                <span class="badge bg-secondary">Inactif</span>
+              {% endif %}
+            </td>
+            <td class="small text-muted">
+              {% if lastDate %}
+                {{ lastDate|date('d/m/Y H:i') }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="dropdown">
+                <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="dropdown">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="{{ path('app_user_edit', { id: user.id }) }}"><i class="bi bi-pencil me-2"></i> Modifier</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <form method="post" action="{{ path('app_user_delete', { id: user.id }) }}" class="d-inline" onsubmit="return confirm('Supprimer cet utilisateur ?');">
+                      <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                      <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i> Supprimer</button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="text-center text-muted py-4">Aucun utilisateur trouvé.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card-footer bg-white border-0 d-flex flex-wrap justify-content-between align-items-center py-2 px-3">
+  <span class="small text-muted">
+    {% if users.getTotalItemCount > 0 %}
+      Affichage {{ users.getItemNumberPerPage * (users.getCurrentPageNumber - 1) + 1 }}
+      à {{ min(users.getItemNumberPerPage * users.getCurrentPageNumber, users.getTotalItemCount) }}
+      sur {{ users.getTotalItemCount }} résultat(s)
+    {% else %}
+      0 résultat
+    {% endif %}
+  </span>
+  {% if users.getTotalItemCount > 0 %}
+    <div class="d-flex align-items-center gap-1">
+      {{ knp_pagination_render(users, null, {}, {
+        'align': 'right',
+        'size': 'small',
+        'routeParams': { q: search ?? '', role: roleFilter ?? '', status: statusFilter ?? '', sort: currentSort ?? 'createdAt', order: currentOrder ?? 'DESC' }
+      }) }}
+    </div>
+  {% endif %}
+</div>
+<div id="list-state" data-sort="{{ currentSort ?? 'createdAt' }}" data-order="{{ currentOrder ?? 'DESC' }}" style="display:none" aria-hidden="true"></div>

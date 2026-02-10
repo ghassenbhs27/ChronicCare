@@ -1,0 +1,116 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes activités - Chronic Care{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main">
+    <div class="container py-5">
+      <nav aria-label="Fil d'Ariane" class="mb-3">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('suivi_front_dashboard') }}">Mon suivi</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Activités</li>
+        </ol>
+      </nav>
+
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <h1 class="mb-1">Mes activités</h1>
+          <p class="text-muted mb-0 small">Enregistrez et consultez vos activités physiques (type, durée, calories).</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a class="btn btn-primary" href="{{ path('front_activite_new') }}"><i class="bi bi-plus-lg me-1"></i> Nouvelle activité</a>
+          <a class="btn btn-outline-secondary" href="{{ path('suivi_front_dashboard') }}"><i class="bi bi-grid me-1"></i> Tableau de bord</a>
+        </div>
+      </div>
+
+      {% for label, messages in app.flashes %}
+        {% for message in messages %}
+          <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+          </div>
+        {% endfor %}
+      {% endfor %}
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center gap-2">
+              <div class="rounded-2 bg-primary bg-opacity-10 text-primary p-2"><i class="bi bi-activity"></i></div>
+              <div>
+                <div class="fw-bold">{{ stats.totalActivites|default(0) }}</div>
+                <div class="text-muted small">Total activités</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center gap-2">
+              <div class="rounded-2 bg-success bg-opacity-10 text-success p-2"><i class="bi bi-clock"></i></div>
+              <div>
+                <div class="fw-bold">{{ stats.totalDuree|default(0) }} min</div>
+                <div class="text-muted small">Durée totale</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center gap-2">
+              <div class="rounded-2 bg-warning bg-opacity-10 text-warning p-2"><i class="bi bi-fire"></i></div>
+              <div>
+                <div class="fw-bold">{{ stats.totalCalories|default(0) }}</div>
+                <div class="text-muted small">Calories</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="mb-0">Liste des activités</h6>
+        </div>
+        <div class="card-body">
+          <form method="get" class="row g-2 mb-3">
+            <div class="col-md-6"><input type="text" name="q" value="{{ q ?? '' }}" class="form-control form-control-sm" placeholder="Rechercher (type...)"></div>
+            <div class="col-md-3"><select name="sort" class="form-select form-select-sm"><option value="dateActivite" {{ (sort|default('')) == 'dateActivite' ? 'selected' : '' }}>Date</option><option value="type" {{ (sort|default('')) == 'type' ? 'selected' : '' }}>Type</option></select></div>
+            <div class="col-md-3"><button class="btn btn-primary btn-sm w-100" type="submit">Filtrer</button></div>
+          </form>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Type</th><th>Durée</th><th>Calories</th><th>Date</th><th class="text-end">Actions</th></tr>
+              </thead>
+              <tbody>
+                {% for a in activites %}
+                  <tr>
+                    <td><span class="badge bg-light text-dark">{{ a.type }}</span></td>
+                    <td>{{ a.duree }} min</td>
+                    <td>{{ a.calories }}</td>
+                    <td>{{ a.dateActivite ? a.dateActivite|date('d/m/Y') : '—' }}</td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-primary" href="{{ path('front_activite_show', {id: a.id}) }}">Voir</a>
+                      <a class="btn btn-sm btn-outline-secondary" href="{{ path('front_activite_edit', {id: a.id}) }}">Modifier</a>
+                      <form class="d-inline" method="post" action="{{ path('front_activite_delete', {id: a.id}) }}" onsubmit="return confirm('Supprimer cette activité ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ a.id) }}">
+                        <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="5" class="text-center text-muted py-4">Aucune activité. <a href="{{ path('front_activite_new') }}">Ajouter une activité</a></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

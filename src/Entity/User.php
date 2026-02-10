@@ -1,17 +1,18 @@
 <?php
-
 namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
+#[UniqueEntity(fields: ['email'], message: 'Il existe déjà un compte avec cet email')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -19,46 +20,64 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 100)]
-    private string $nom;
-
-    #[ORM\Column(length: 100)]
-    private string $prenom;
-
-    #[ORM\Column(length: 180, unique: true)]
-    private string $email;
-
-    #[ORM\Column(length: 255)]
-    private string $password;
-
-    #[ORM\Column(type: Types::JSON)]
-    private array $roles = [];
-
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $telephone = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $dateNaissance = null;
+    #[ORM\Column(length: 180, unique: true)]
+    #[Assert\NotBlank(message: "L'email est obligatoire.")]
+    #[Assert\Email(message: "L'email '{{ value }}' n'est pas valide.")]
+    private ?string $email = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $adresse = null;
+    #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: "Le nom est obligatoire.")]
+    #[Assert\Length(min: 2, max: 50, minMessage: "Le nom doit contenir au moins 2 caractères.", maxMessage: "Le nom ne peut pas dépasser 50 caractères.")]
+    private ?string $nom = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $maladieChronique = null;
+    #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: "Le prénom est obligatoire.")]
+    #[Assert\Length(min: 2, max: 50, minMessage: "Le prénom doit contenir au moins 2 caractères.", maxMessage: "Le prénom ne peut pas dépasser 50 caractères.")]
+    private ?string $prenom = null;
+
+    #[ORM\Column(length: 10)]
+    #[Assert\NotBlank(message: "Le genre est obligatoire.")]
+    #[Assert\Choice(choices: ['Homme', 'Femme'], message: "Le genre doit être 'Homme' ou 'Femme'.")]
+    private ?string $genre = null;
 
     #[ORM\Column]
-    private bool $isActive = true;
+    private array $roles = [];
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $createdAt;
+    /**
+     * @var string The hashed password
+     * ✅ PAS de contraintes ici car le champ est mapped => false dans le formulaire
+     * La validation se fait dans UserType.php
+     */
+    #[ORM\Column]
+    private ?string $password = null;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    // =========================
-    // RELATIONS
-    // =========================
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isActive = false;
 
+    #[ORM\Column(length: 64, nullable: true, unique: true)]
+    private ?string $verificationToken = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $verificationTokenExpiresAt = null;
+
+    /**
+     * @var Collection<int, Evenement>
+     */
+    #[ORM\OneToMany(targetEntity: Evenement::class, mappedBy: 'coach')]
+    private Collection $evenements;
+
+    /**
+     * @var Collection<int, Etat>
+     */
     #[ORM\OneToMany(mappedBy: 'utilisateur', targetEntity: Etat::class, orphanRemoval: true)]
     private Collection $etats;
 
@@ -71,20 +90,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Commande>
      */
-    #[ORM\OneToMany(targetEntity: Commande::class, mappedBy: 'utilisateur', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Commande::class, mappedBy: 'utilisateur')]
     private Collection $commandes;
-
-    /**
-     * @var Collection<int, RDV>
-     */
-    #[ORM\OneToMany(targetEntity: RDV::class, mappedBy: 'patient', orphanRemoval: true)]
-    private Collection $rDVs;
-
-    /**
-     * @var Collection<int, Evenement>
-     */
-    #[ORM\OneToMany(targetEntity: Evenement::class, mappedBy: 'coach')]
-    private Collection $evenements;
 
     /**
      * @var Collection<int, Publication>
@@ -92,213 +99,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Publication::class, mappedBy: 'auteur')]
     private Collection $publications;
 
-    /**
-     * @var Collection<int, Commentaire>
-     */
-    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'auteur')]
-    private Collection $commentaires;
-
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->isActive = true;
-        $this->roles = ['ROLE_PATIENT'];
+        $this->evenements = new ArrayCollection();
         $this->etats = new ArrayCollection();
         $this->activites = new ArrayCollection();
         $this->commandes = new ArrayCollection();
-        $this->rDVs = new ArrayCollection();
-        $this->evenements = new ArrayCollection();
         $this->publications = new ArrayCollection();
-        $this->commentaires = new ArrayCollection();
     }
 
-    // =========================
-    // IDENTITÉ
-    // =========================
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function __toString(): string
-    {
-        return $this->prenom . ' ' . $this->nom;
-    }
-
-    // =========================
-    // AUTHENTIFICATION
-    // =========================
-
-    public function getUserIdentifier(): string
-    {
-        return $this->email;
-    }
-
-    public function getPassword(): string
-    {
-        return $this->password;
-    }
-
-    public function setPassword(string $password): self
-    {
-        $this->password = $password;
-        return $this;
-    }
-
-    public function getRoles(): array
-    {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_USER';
-        return array_unique($roles);
-    }
-
-    public function setRoles(array $roles): self
-    {
-        $this->roles = $roles;
-        return $this;
-    }
-
-    public function eraseCredentials(): void
-    {
-        // Nothing to erase
-    }
-
-    // =========================
-    // INFORMATIONS PERSONNELLES
-    // =========================
-
-    public function getNom(): string
-    {
-        return $this->nom;
-    }
-
-    public function setNom(string $nom): self
-    {
-        $this->nom = $nom;
-        return $this;
-    }
-
-    public function getPrenom(): string
-    {
-        return $this->prenom;
-    }
-
-    public function setPrenom(string $prenom): self
-    {
-        $this->prenom = $prenom;
-        return $this;
-    }
-
-    public function getEmail(): string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): self
-    {
-        $this->email = $email;
-        return $this;
-    }
-
-    public function getTelephone(): ?string
-    {
-        return $this->telephone;
-    }
-
-    public function setTelephone(?string $telephone): self
-    {
-        $this->telephone = $telephone;
-        return $this;
-    }
-
-    public function getDateNaissance(): ?\DateTimeInterface
-    {
-        return $this->dateNaissance;
-    }
-
-    public function setDateNaissance(?\DateTimeInterface $dateNaissance): self
-    {
-        $this->dateNaissance = $dateNaissance;
-        return $this;
-    }
-
-    public function getAdresse(): ?string
-    {
-        return $this->adresse;
-    }
-
-    public function setAdresse(?string $adresse): self
-    {
-        $this->adresse = $adresse;
-        return $this;
-    }
-
-    public function getMaladieChronique(): ?string
-    {
-        return $this->maladieChronique;
-    }
-
-    public function setMaladieChronique(?string $maladieChronique): self
-    {
-        $this->maladieChronique = $maladieChronique;
-        return $this;
-    }
-
-    // =========================
-    // STATUT & DATES
-    // =========================
-
-    public function isActive(): bool
-    {
-        return $this->isActive;
-    }
-
-    public function setIsActive(bool $isActive): self
-    {
-        $this->isActive = $isActive;
-        return $this;
-    }
-
-    public function getCreatedAt(): \DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function touchUpdatedAt(): self
-    {
-        $this->updatedAt = new \DateTimeImmutable();
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeImmutable
-    {
-        return $this->updatedAt;
-    }
-
-    // =========================
-    // RELATION ETAT
-    // =========================
-
+    /**
+     * @return Collection<int, Etat>
+     */
     public function getEtats(): Collection
     {
         return $this->etats;
     }
 
-    public function addEtat(Etat $etat): self
+    public function addEtat(Etat $etat): static
     {
         if (!$this->etats->contains($etat)) {
             $this->etats->add($etat);
             $etat->setUtilisateur($this);
         }
-
         return $this;
     }
 
-    public function removeEtat(Etat $etat): self
+    public function removeEtat(Etat $etat): static
     {
         $this->etats->removeElement($etat);
-
         return $this;
     }
 
@@ -316,14 +146,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $this->activites->add($activite);
             $activite->setUtilisateur($this);
         }
-
         return $this;
     }
 
     public function removeActivite(Activite $activite): static
     {
         $this->activites->removeElement($activite);
-
         return $this;
     }
 
@@ -341,64 +169,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $this->commandes->add($commande);
             $commande->setUtilisateur($this);
         }
-
         return $this;
     }
 
     public function removeCommande(Commande $commande): static
     {
         $this->commandes->removeElement($commande);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, RDV>
-     */
-    public function getRDVs(): Collection
-    {
-        return $this->rDVs;
-    }
-
-    public function addRDV(RDV $rDV): static
-    {
-        if (!$this->rDVs->contains($rDV)) {
-            $this->rDVs->add($rDV);
-            $rDV->setPatient($this);
-        }
-
-        return $this;
-    }
-
-    public function removeRDV(RDV $rDV): static
-    {
-        $this->rDVs->removeElement($rDV);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Evenement>
-     */
-    public function getEvenements(): Collection
-    {
-        return $this->evenements;
-    }
-
-    public function addEvenement(Evenement $evenement): static
-    {
-        if (!$this->evenements->contains($evenement)) {
-            $this->evenements->add($evenement);
-            $evenement->setCoach($this);
-        }
-
-        return $this;
-    }
-
-    public function removeEvenement(Evenement $evenement): static
-    {
-        $this->evenements->removeElement($evenement);
-
         return $this;
     }
 
@@ -416,39 +192,191 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $this->publications->add($publication);
             $publication->setAuteur($this);
         }
-
         return $this;
     }
 
     public function removePublication(Publication $publication): static
     {
         $this->publications->removeElement($publication);
+        return $this;
+    }
 
+    public function getTelephone(): ?string
+    {
+        return $this->telephone;
+    }
+
+    public function setTelephone(?string $telephone): self
+    {
+        $this->telephone = $telephone;
         return $this;
     }
 
     /**
-     * @return Collection<int, Commentaire>
+     * @return Collection<int, Evenement>
      */
-    public function getCommentaires(): Collection
+    public function getEvenements(): Collection
     {
-        return $this->commentaires;
+        return $this->evenements;
     }
 
-    public function addCommentaire(Commentaire $commentaire): static
+    public function addEvenement(Evenement $evenement): static
     {
-        if (!$this->commentaires->contains($commentaire)) {
-            $this->commentaires->add($commentaire);
-            $commentaire->setAuteur($this);
+        if (!$this->evenements->contains($evenement)) {
+            $this->evenements->add($evenement);
+            $evenement->setCoach($this);
         }
-
         return $this;
     }
 
-    public function removeCommentaire(Commentaire $commentaire): static
+    public function removeEvenement(Evenement $evenement): static
     {
-        $this->commentaires->removeElement($commentaire);
+        $this->evenements->removeElement($evenement);
+        return $this;
+    }
 
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): self
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+    public function getNom(): ?string
+    {
+        return $this->nom;
+    }
+
+    public function setNom(string $nom): self
+    {
+        $this->nom = $nom;
+        return $this;
+    }
+
+    public function getPrenom(): ?string
+    {
+        return $this->prenom;
+    }
+
+    public function setPrenom(string $prenom): self
+    {
+        $this->prenom = $prenom;
+        return $this;
+    }
+
+    public function getGenre(): ?string
+    {
+        return $this->genre;
+    }
+
+    public function setGenre(string $genre): self
+    {
+        $this->genre = $genre;
+        return $this;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        if ($roles !== []) {
+            $roles[] = 'ROLE_USER';
+        }
+        return array_unique($roles);
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
+        return $this;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password ?? '';
+    }
+
+    public function setPassword(string $password): self
+    {
+        $this->password = $password;
+        return $this;
+    }
+
+    public function eraseCredentials(): void
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): self
+    {
+        $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function getFullName(): string
+    {
+        return $this->prenom . ' ' . $this->nom;
+    }
+
+    public function getVerificationToken(): ?string
+    {
+        return $this->verificationToken;
+    }
+
+    public function setVerificationToken(?string $verificationToken): self
+    {
+        $this->verificationToken = $verificationToken;
+        return $this;
+    }
+
+    public function getVerificationTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->verificationTokenExpiresAt;
+    }
+
+    public function setVerificationTokenExpiresAt(?\DateTimeImmutable $verificationTokenExpiresAt): self
+    {
+        $this->verificationTokenExpiresAt = $verificationTokenExpiresAt;
         return $this;
     }
 }

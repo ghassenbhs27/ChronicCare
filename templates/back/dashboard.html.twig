@@ -1,0 +1,402 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Dashboard - Chronic Care{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Bienvenue ! Voici ce qui se passe.{% endblock %}
+
+{% block body %}
+<div class="dashboard-admin">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="dashboard-title mb-1">Dashboard</h1>
+      <p class="dashboard-subtitle text-muted mb-0">Bienvenue ! Voici ce qui se passe.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ path('app_user_new') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Nouvel utilisateur
+      </a>
+      <button type="button" class="btn btn-light border btn-dashboard-refresh" title="Actualiser" aria-label="Actualiser">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+      <a href="{{ path('admin_statistics_index') }}" class="btn btn-light border" title="Statistiques">
+        <i class="bi bi-gear"></i>
+      </a>
+    </div>
+  </div>
+
+  {# 4 cartes KPI - liées à vos entités #}
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 dashboard-kpi" data-kpi="total_users">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Utilisateurs</p>
+              <h3 class="mb-0 fw-bold kpi-value">{{ total_users|number_format(0, '', ' ') }}</h3>
+              <small class="text-success kpi-change"><i class="bi bi-arrow-up-short"></i> <span>{{ users_percent }}%</span></small>
+            </div>
+            <div class="kpi-icon bg-primary bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-people text-primary"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 dashboard-kpi" data-kpi="total_rdv">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Rendez-vous</p>
+              <h3 class="mb-0 fw-bold kpi-value">{{ total_rdv|number_format(0, '', ' ') }}</h3>
+              <small class="text-muted kpi-change">Total</small>
+            </div>
+            <div class="kpi-icon bg-success bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-calendar-check text-success"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 dashboard-kpi" data-kpi="total_activites">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Activités</p>
+              <h3 class="mb-0 fw-bold kpi-value">{{ total_activites|number_format(0, '', ' ') }}</h3>
+              <small class="text-muted kpi-change">Suivi patients</small>
+            </div>
+            <div class="kpi-icon bg-warning bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-activity text-warning"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 dashboard-kpi" data-kpi="total_evenements">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Événements</p>
+              <h3 class="mb-0 fw-bold kpi-value">{{ total_evenements|number_format(0, '', ' ') }}</h3>
+              <small class="text-muted kpi-change">Forum : {{ total_publications }}</small>
+            </div>
+            <div class="kpi-icon bg-info bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-calendar-event text-info"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Ligne 2: Activités par jour (7j) + Activité récente #}
+  <div class="row g-3 mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Activités patients (7 derniers jours)</h5>
+          <div class="chart-container" style="height: 260px;">
+            <canvas id="chartActivitesByDay"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Activité récente</h5>
+          <div class="dashboard-activity list-group list-group-flush overflow-auto" id="dashboardActivity" style="max-height: 380px;">
+            {% for a in activities %}
+            <div class="list-group-item list-group-item-action border-0 px-0 py-2">
+              <div class="d-flex align-items-start gap-2">
+                <span class="activity-icon activity-{{ a.color }} rounded-circle flex-shrink-0">
+                  <i class="bi bi-{{ a.icon }}"></i>
+                </span>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="fw-medium">{{ a.label }}</div>
+                  <small class="text-muted">{{ a.detail }}</small>
+                  <div class="small text-muted">{{ a.time_ago }}</div>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <p class="text-muted small mb-0">Aucune activité récente.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Ligne 3: Inscriptions (7j) + RDV par statut #}
+  <div class="row g-3 mb-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Inscriptions (7 derniers jours)</h5>
+          <div class="chart-container" style="height: 220px;">
+            <canvas id="chartUserGrowth"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">RDV par statut</h5>
+          <div class="chart-container d-flex align-items-center justify-content-center" style="height: 220px;">
+            <canvas id="chartRdvStatus"></canvas>
+          </div>
+          <div class="d-flex flex-wrap justify-content-center gap-3 mt-2" id="rdvStatusLegend"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Ligne 4: Derniers RDV + Indicateur engagement #}
+  <div class="row g-3 mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Derniers rendez-vous</h5>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Patient</th>
+                  <th>Professionnel</th>
+                  <th>Date RDV</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardRecentRdv">
+                {% for r in recent_rdv %}
+                <tr>
+                  <td class="fw-semibold">{{ r.patient.fullName }}</td>
+                  <td>{{ r.professionnel.fullName }}</td>
+                  <td>{{ r.dateRdv|date('d/m/Y H:i') }}</td>
+                  <td><span class="badge {{ r.statut == 'termine' ? 'bg-success' : (r.statut == 'annule' ? 'bg-danger' : 'bg-secondary') }}">{{ r.statut }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-muted text-center py-4">Aucun RDV.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+          <h5 class="card-title mb-3">Engagement suivi</h5>
+          <div class="position-relative mb-2" style="width: 140px; height: 140px;">
+            <canvas id="chartStorage" width="140" height="140"></canvas>
+            <div class="position-absolute top-50 start-50 translate-middle text-center">
+              <span class="fw-bold fs-4 storage-value">{{ storage_percent }}</span>%
+            </div>
+          </div>
+          <p class="text-muted small mb-0">Activités & états / utilisateurs</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="mb-3">Accès rapides</h6>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{{ path('app_user_index') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-people me-1"></i> Utilisateurs</a>
+            <a href="{{ path('admin_activite_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-activity me-1"></i> Activités</a>
+            <a href="{{ path('admin_etat_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-heart-pulse me-1"></i> États suivi</a>
+            <a href="{{ path('admin_statistics_index') }}" class="btn btn-outline-info btn-sm"><i class="bi bi-bar-chart me-1"></i> Statistiques</a>
+            <a href="{{ path('index') }}" class="btn btn-outline-dark btn-sm"><i class="bi bi-house me-1"></i> Retour au site</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+  const DATA = {{ {
+    user_growth_labels: user_growth_labels,
+    user_growth_data: user_growth_data,
+    activites_by_day_labels: activites_by_day_labels,
+    activites_by_day_data: activites_by_day_data,
+    rdv_status_distribution: rdv_status_distribution,
+    storage_percent: storage_percent,
+    total_users: total_users,
+    users_percent: users_percent,
+    total_rdv: total_rdv,
+    total_activites: total_activites,
+    total_evenements: total_evenements,
+    total_publications: total_publications,
+    activities: activities,
+    recent_rdv_json: recent_rdv_json
+  }|json_encode|raw }};
+
+  const API_URL = '{{ path('admin_dashboard_api') }}';
+  const REFRESH_INTERVAL = 60000;
+
+  let chartActivitesByDay, chartUserGrowth, chartRdvStatus, chartStorage;
+
+  function initCharts() {
+    const opts = { responsive: true, maintainAspectRatio: false };
+
+    chartActivitesByDay = new Chart(document.getElementById('chartActivitesByDay'), {
+      type: 'bar',
+      data: {
+        labels: DATA.activites_by_day_labels,
+        datasets: [{ label: 'Activités', data: DATA.activites_by_day_data, backgroundColor: 'rgba(13, 110, 253, 0.7)', borderRadius: 6 }]
+      },
+      options: { ...opts, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+    });
+
+    chartUserGrowth = new Chart(document.getElementById('chartUserGrowth'), {
+      type: 'bar',
+      data: {
+        labels: DATA.user_growth_labels,
+        datasets: [{ label: 'Inscriptions', data: DATA.user_growth_data, backgroundColor: 'rgba(139, 92, 246, 0.7)', borderRadius: 6 }]
+      },
+      options: { ...opts, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+    });
+
+    const statusColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+    const statusLabels = DATA.rdv_status_distribution.map(x => x.label);
+    const statusData = DATA.rdv_status_distribution.map(x => x.count);
+    const statusBg = statusColors.slice(0, statusLabels.length);
+
+    chartRdvStatus = new Chart(document.getElementById('chartRdvStatus'), {
+      type: 'doughnut',
+      data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: statusBg }] },
+      options: { ...opts, cutout: '65%', plugins: { legend: { display: false } } }
+    });
+
+    const legendEl = document.getElementById('rdvStatusLegend');
+    if (legendEl) {
+      legendEl.innerHTML = '';
+      statusLabels.forEach((l, i) => {
+        const span = document.createElement('span');
+        span.className = 'small';
+        span.innerHTML = '<span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:' + statusBg[i] + '"></span>' + l;
+        legendEl.appendChild(span);
+      });
+    }
+
+    const storageVal = DATA.storage_percent || 0;
+    chartStorage = new Chart(document.getElementById('chartStorage'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Utilisé', 'Libre'],
+        datasets: [{ data: [storageVal, 100 - storageVal], backgroundColor: ['#0ea5e9', '#e5e7eb'] }]
+      },
+      options: { ...opts, cutout: '75%', plugins: { legend: { display: false } } }
+    });
+  }
+
+  function updateFromApi(json) {
+    if (json.total_users != null) {
+      document.querySelector('[data-kpi="total_users"] .kpi-value').textContent = Number(json.total_users).toLocaleString('fr-FR');
+      const ch = document.querySelector('[data-kpi="total_users"] .kpi-change span');
+      if (ch) ch.textContent = json.users_percent + '%';
+    }
+    if (json.total_rdv != null) {
+      document.querySelector('[data-kpi="total_rdv"] .kpi-value').textContent = Number(json.total_rdv).toLocaleString('fr-FR');
+    }
+    if (json.total_activites != null) {
+      document.querySelector('[data-kpi="total_activites"] .kpi-value').textContent = Number(json.total_activites).toLocaleString('fr-FR');
+    }
+    if (json.total_evenements != null) {
+      document.querySelector('[data-kpi="total_evenements"] .kpi-value').textContent = Number(json.total_evenements).toLocaleString('fr-FR');
+    }
+    if (json.storage_percent != null) {
+      document.querySelector('.storage-value').textContent = json.storage_percent;
+      if (chartStorage && chartStorage.data.datasets[0]) {
+        chartStorage.data.datasets[0].data = [json.storage_percent, 100 - json.storage_percent];
+        chartStorage.update();
+      }
+    }
+    if (json.user_growth_data && chartUserGrowth) {
+      chartUserGrowth.data.datasets[0].data = json.user_growth_data;
+      chartUserGrowth.data.labels = json.user_growth_labels;
+      chartUserGrowth.update();
+    }
+    if (json.activites_by_day_data && chartActivitesByDay) {
+      chartActivitesByDay.data.datasets[0].data = json.activites_by_day_data;
+      chartActivitesByDay.data.labels = json.activites_by_day_labels;
+      chartActivitesByDay.update();
+    }
+    if (json.rdv_status_distribution && json.rdv_status_distribution.length && chartRdvStatus) {
+      chartRdvStatus.data.labels = json.rdv_status_distribution.map(x => x.label);
+      chartRdvStatus.data.datasets[0].data = json.rdv_status_distribution.map(x => x.count);
+      chartRdvStatus.update();
+    }
+    if (json.activities && json.activities.length) {
+      const container = document.getElementById('dashboardActivity');
+      if (container) {
+        container.innerHTML = json.activities.map(a =>
+          '<div class="list-group-item list-group-item-action border-0 px-0 py-2">' +
+          '<div class="d-flex align-items-start gap-2">' +
+          '<span class="activity-icon activity-' + a.color + ' rounded-circle flex-shrink-0"><i class="bi bi-' + a.icon + '"></i></span>' +
+          '<div class="flex-grow-1 min-w-0">' +
+          '<div class="fw-medium">' + a.label + '</div>' +
+          '<small class="text-muted">' + a.detail + '</small>' +
+          '<div class="small text-muted">' + a.time_ago + '</div></div></div></div>'
+        ).join('');
+      }
+    }
+    if (json.recent_rdv_json && json.recent_rdv_json.length) {
+      const tbody = document.getElementById('dashboardRecentRdv');
+      if (tbody) {
+        const statutClass = s => s === 'termine' ? 'bg-success' : (s === 'annule' ? 'bg-danger' : 'bg-secondary');
+        tbody.innerHTML = json.recent_rdv_json.map(r =>
+          '<tr><td class="fw-semibold">' + r.patient + '</td><td>' + r.pro + '</td><td>' + r.date_rdv + '</td>' +
+          '<td><span class="badge ' + statutClass(r.statut) + '">' + r.statut + '</span></td></tr>'
+        ).join('');
+      }
+    }
+  }
+
+  function refreshDashboard() {
+    fetch(API_URL)
+      .then(r => r.json())
+      .then(updateFromApi)
+      .catch(() => {});
+  }
+
+  document.querySelector('.btn-dashboard-refresh')?.addEventListener('click', function() {
+    this.querySelector('i')?.classList.add('spin');
+    refreshDashboard();
+    setTimeout(() => this.querySelector('i')?.classList.remove('spin'), 500);
+  });
+
+  initCharts();
+  setInterval(refreshDashboard, REFRESH_INTERVAL);
+})();
+</script>
+{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .dashboard-title { font-size: 1.5rem; font-weight: 700; color: #111827; }
+    .dashboard-subtitle { font-size: 0.9rem; }
+    .dashboard-admin .card { border-radius: 12px; }
+    .kpi-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+    .activity-icon { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #fff; }
+    .activity-purple { background: #8b5cf6; }
+    .activity-green { background: #22c55e; }
+    .activity-orange { background: #f59e0b; }
+    .activity-blue { background: #3b82f6; }
+    .bi-arrow-clockwise.spin { animation: spin 0.5s linear; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Forum Santé - Chronic Care{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main forum-page">
+    <div class="container">
+      {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show forum-alert mb-4" role="alert">
+          <i class="bi bi-check-circle me-2"></i>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+        </div>
+      {% endfor %}
+
+      <nav aria-label="Fil d'Ariane" class="forum-breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Forum</li>
+        </ol>
+      </nav>
+
+      <header class="forum-hero">
+        <h1 class="forum-hero-title">Forum santé</h1>
+        <p class="forum-hero-sub">
+          Publications des coachs : lisez les articles et participez en commentant. La création de publications est réservée aux coachs et administrateurs.
+        </p>
+      </header>
+
+      <div class="forum-actions-bar">
+        <div class="d-none d-md-block">
+          <span class="text-muted small fw-semibold">{{ publications.getTotalItemCount }} publication(s)</span>
+        </div>
+        {% if is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN') %}
+          <a href="{{ path('publication_new') }}" class="btn btn-primary d-flex align-items-center gap-2">
+            <i class="bi bi-plus-lg"></i> Nouvelle publication
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="forum-search-bar mb-4">
+        <form method="get" action="{{ path('publication_index') }}" class="forum-search-form">
+          <div class="forum-search-input-wrap">
+            <i class="bi bi-search forum-search-icon" aria-hidden="true"></i>
+            <input type="search" name="search" class="form-control forum-search-input" placeholder="Rechercher dans les publications (titre, contenu)…" value="{{ search|default('') }}" autocomplete="off">
+            {% if search|default('') != '' %}
+              <a href="{{ path('publication_index', can_see_drafts ? { categorie: categorie|default(''), statut: statut|default('') } : { categorie: categorie|default('') }) }}" class="forum-search-clear" title="Effacer la recherche" aria-label="Effacer la recherche"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+          </div>
+          <div class="forum-search-filters">
+            <select name="categorie" class="form-select forum-search-select">
+              <option value="">Toutes les catégories</option>
+              <option value="nutrition" {{ (categorie|default('')) == 'nutrition' ? 'selected' }}>Nutrition</option>
+              <option value="exercice" {{ (categorie|default('')) == 'exercice' ? 'selected' }}>Exercice</option>
+              <option value="sante_mentale" {{ (categorie|default('')) == 'sante_mentale' ? 'selected' }}>Santé mentale</option>
+              <option value="bien_etre" {{ (categorie|default('')) == 'bien_etre' ? 'selected' }}>Bien-être</option>
+              <option value="autre" {{ (categorie|default('')) == 'autre' ? 'selected' }}>Autre</option>
+            </select>
+            {% if can_see_drafts %}
+              <select name="statut" class="form-select forum-search-select">
+                <option value="">Tous les statuts</option>
+                <option value="publie" {{ (statut|default('')) == 'publie' ? 'selected' }}>Publié</option>
+                <option value="brouillon" {{ (statut|default('')) == 'brouillon' ? 'selected' }}>Brouillon</option>
+              </select>
+            {% endif %}
+            <button type="submit" class="btn btn-primary forum-search-btn">
+              <i class="bi bi-search me-2"></i>Rechercher
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="row g-4">
+        {% for publication in publications %}
+          <div class="col-lg-6">
+            <article class="card forum-pub-card">
+              <div class="card-body">
+                <div class="forum-pub-header">
+                  <h2 class="forum-pub-title">{{ publication.titre }}</h2>
+                  <span class="forum-pub-badge badge bg-{{ publication.statut == 'publie' ? 'success' : 'warning' }} text-dark">
+                    {{ publication.statut == 'publie' ? 'Publié' : 'Brouillon' }}
+                  </span>
+                </div>
+                <p class="forum-pub-excerpt">{{ publication.contenu|striptags|length > 160 ? (publication.contenu|striptags|slice(0, 160) ~ '…') : publication.contenu|striptags }}</p>
+                <div class="forum-pub-categ">
+                  <span class="forum-categ-badge">
+                    {% if publication.categorie == 'nutrition' %}Nutrition
+                    {% elseif publication.categorie == 'exercice' %}Exercice
+                    {% elseif publication.categorie == 'sante_mentale' %}Santé mentale
+                    {% elseif publication.categorie == 'bien_etre' %}Bien-être
+                    {% else %}Autre{% endif %}
+                  </span>
+                </div>
+                <div class="forum-pub-meta">
+                  <span><i class="bi bi-person"></i> {{ publication.auteur ? publication.auteur.nom : 'Anonyme' }}</span>
+                  <span><i class="bi bi-eye"></i> {{ publication.nbVues|default(0) }}</span>
+                  <span><i class="bi bi-heart"></i> {{ publication.nbLikes|default(0) }}</span>
+                  <span><i class="bi bi-chat-dots"></i> {{ publication.commentaires|length }}</span>
+                </div>
+                <div class="forum-pub-actions">
+                  <a href="{{ path('publication_show', {id: publication.id}) }}" class="btn btn-primary btn-sm">Lire et commenter</a>
+                  {% if is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('publication_edit', {id: publication.id}) }}" class="btn btn-outline-secondary btn-sm">Modifier</a>
+                    <form method="post" action="{{ path('publication_delete', {id: publication.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette publication ?');">
+                      <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ publication.id) }}">
+                      <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </article>
+          </div>
+        {% else %}
+          <div class="col-12">
+            <div class="forum-empty">
+              <i class="bi bi-chat-square-text forum-empty-icon"></i>
+              <h3 class="forum-empty-title">Aucune publication trouvée</h3>
+              <p class="forum-empty-text">Aucune publication ne correspond à vos critères pour le moment.</p>
+              {% if is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('publication_new') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Créer une publication</a>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if publications.getTotalItemCount > 0 %}
+        <div class="d-flex justify-content-center forum-pagination">
+          {{ knp_pagination_render(publications) }}
+        </div>
+      {% endif %}
+    </div>
+  </main>
+{% endblock %}

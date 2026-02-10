@@ -17,8 +17,8 @@ class Publication
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'publications')]
-    #[ORM\JoinColumn(nullable: false)]
-    private User $auteur;
+    #[ORM\JoinColumn(nullable: true)]
+    private ?User $auteur = null;
 
     #[ORM\Column(length: 255)]
     private string $titre;
@@ -59,12 +59,12 @@ class Publication
         return $this->id;
     }
 
-    public function getAuteur(): User
+    public function getAuteur(): ?User
     {
         return $this->auteur;
     }
 
-    public function setAuteur(User $auteur): self
+    public function setAuteur(?User $auteur): self
     {
         $this->auteur = $auteur;
         return $this;
@@ -121,6 +121,18 @@ class Publication
     public function incrementLikes(): void
     {
         $this->nbLikes++;
+    }
+
+    public function setNbVues(int $nbVues): self
+    {
+        $this->nbVues = $nbVues;
+        return $this;
+    }
+
+    public function setNbLikes(int $nbLikes): self
+    {
+        $this->nbLikes = $nbLikes;
+        return $this;
     }
 
     public function getStatut(): string

@@ -1,0 +1,313 @@
+/**
+ * Espace Coach & RDV pro — Design professionnel
+ * Utilise les variables du thème (main.css)
+ */
+:root {
+  --coach-card-radius: 16px;
+  --coach-card-shadow: 0 4px 24px rgba(2, 20, 24, 0.06);
+  --coach-card-shadow-hover: 0 12px 40px rgba(2, 20, 24, 0.1);
+  --coach-border: rgba(2, 20, 24, 0.08);
+  --coach-bg-subtle: #f8fafc;
+  --coach-meta: #64748b;
+}
+
+.coach-page .main,
+.rdv-pro-page .main {
+  padding-top: 1.5rem;
+  padding-bottom: 3rem;
+  min-height: 60vh;
+}
+
+/* Breadcrumb */
+.coach-breadcrumb {
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.coach-breadcrumb .breadcrumb-item a {
+  color: var(--coach-meta);
+  font-weight: 500;
+}
+.coach-breadcrumb .breadcrumb-item.active {
+  color: var(--heading-color);
+  font-weight: 600;
+}
+
+/* Page header */
+.coach-page-header {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--coach-border);
+}
+.coach-page-header .coach-page-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--heading-color);
+  margin-bottom: 0.35rem;
+  letter-spacing: -0.02em;
+}
+.coach-page-header .coach-page-sub {
+  font-size: 0.95rem;
+  color: var(--coach-meta);
+  margin: 0;
+}
+
+/* Cards */
+.coach-card {
+  background: var(--surface-color);
+  border: 1px solid var(--coach-border);
+  border-radius: var(--coach-card-radius);
+  box-shadow: var(--coach-card-shadow);
+  overflow: hidden;
+}
+.coach-card .card-body {
+  padding: 1.5rem;
+}
+
+/* Filter bar */
+.coach-filter-bar {
+  background: var(--surface-color);
+  border: 1px solid var(--coach-border);
+  border-radius: var(--coach-card-radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--coach-card-shadow);
+}
+.coach-filter-bar .form-control,
+.coach-filter-bar .form-select {
+  border-radius: 10px;
+  border-color: var(--coach-border);
+}
+.coach-filter-bar .form-control:focus,
+.coach-filter-bar .form-select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(4, 158, 187, 0.15);
+}
+.coach-filter-bar .btn {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* Event cards list */
+.coach-event-card {
+  background: var(--surface-color);
+  border: 1px solid var(--coach-border);
+  border-radius: var(--coach-card-radius);
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+  box-shadow: var(--coach-card-shadow);
+  height: 100%;
+}
+.coach-event-card:hover {
+  box-shadow: var(--coach-card-shadow-hover);
+  transform: translateY(-2px);
+}
+.coach-event-card .card-body {
+  padding: 1.35rem;
+}
+.coach-event-card .coach-event-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--heading-color);
+  margin-bottom: 0.5rem;
+}
+.coach-event-card .coach-event-meta {
+  font-size: 0.85rem;
+  color: var(--coach-meta);
+  margin-bottom: 0.75rem;
+}
+.coach-event-card .coach-event-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.coach-event-card .coach-event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--coach-border);
+}
+.coach-event-card .coach-event-actions .btn {
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+/* Detail blocks */
+.coach-detail-section {
+  margin-bottom: 1.5rem;
+}
+.coach-detail-section:last-child {
+  margin-bottom: 0;
+}
+.coach-detail-section .section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--heading-color);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.coach-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.coach-info-item {
+  background: var(--coach-bg-subtle);
+  border: 1px solid var(--coach-border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.coach-info-item .label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--coach-meta);
+  margin-bottom: 0.35rem;
+}
+.coach-info-item .value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--heading-color);
+}
+
+/* Tables in coach */
+.coach-card .table {
+  margin-bottom: 0;
+}
+.coach-card .table thead th {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--coach-meta);
+  border-bottom: 1px solid var(--coach-border);
+  padding: 0.85rem 1rem;
+}
+.coach-card .table tbody td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+.coach-card .table tbody tr:hover {
+  background: var(--coach-bg-subtle);
+}
+
+/* RDV pro */
+.rdv-pro-card {
+  background: var(--surface-color);
+  border: 1px solid var(--coach-border);
+  border-radius: var(--coach-card-radius);
+  box-shadow: var(--coach-card-shadow);
+  transition: box-shadow 0.2s ease;
+}
+.rdv-pro-card:hover {
+  box-shadow: var(--coach-card-shadow-hover);
+}
+.rdv-pro-card .rdv-date {
+  font-weight: 700;
+  color: var(--heading-color);
+  font-size: 1rem;
+}
+.rdv-pro-card .rdv-patient {
+  font-weight: 600;
+  color: var(--default-color);
+}
+.rdv-pro-card .rdv-actions .btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+.rdv-status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+}
+.rdv-pro-page .coach-card .table thead th {
+  background: var(--coach-bg-subtle);
+}
+
+/* Forms coach */
+.coach-form-card .form-label {
+  font-weight: 600;
+  color: var(--heading-color);
+  font-size: 0.9rem;
+}
+.coach-form-card .form-control,
+.coach-form-card .form-select {
+  border-radius: 12px;
+  border-color: var(--coach-border);
+}
+.coach-form-card .form-control:focus,
+.coach-form-card .form-select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(4, 158, 187, 0.15);
+}
+.coach-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--coach-border);
+}
+.coach-form-actions .btn {
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+/* Empty state */
+.coach-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: var(--coach-bg-subtle);
+  border-radius: var(--coach-card-radius);
+  border: 1px dashed var(--coach-border);
+}
+.coach-empty .coach-empty-icon {
+  font-size: 3rem;
+  color: var(--coach-meta);
+  opacity: 0.6;
+  margin-bottom: 1rem;
+}
+.coach-empty .coach-empty-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--heading-color);
+  margin-bottom: 0.5rem;
+}
+.coach-empty .coach-empty-text {
+  color: var(--coach-meta);
+  font-size: 0.95rem;
+}
+
+/* Pagination */
+.coach-pagination .page-link {
+  border-radius: 10px;
+  font-weight: 600;
+  border-color: var(--coach-border);
+}
+.coach-pagination .page-item.active .page-link {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Alerts */
+.coach-alert {
+  border-radius: 12px;
+  border: 0;
+}
+
+@media (max-width: 768px) {
+  .coach-page-header .coach-page-title {
+    font-size: 1.4rem;
+  }
+  .coach-info-grid {
+    grid-template-columns: 1fr;
+  }
+}

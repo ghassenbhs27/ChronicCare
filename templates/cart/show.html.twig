@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Panier - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
+
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
+
+<main class="main">
+  <div class="page-title">
+    <div class="container">
+      <h1>Mon panier</h1>
+      <p>{{ count }} article(s)</p>
+    </div>
+  </div>
+
+  <section class="services section light-background">
+    <div class="container">
+      {% if cart is empty %}
+        <div class="alert alert-info">
+          Votre panier est vide.
+          <a href="{{ path('produit_list') }}">Voir le catalogue</a> ou <a href="{{ path('boutique') }}">retour à la boutique</a>.
+        </div>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Prix unitaire</th>
+                <th>Quantité</th>
+                <th>Sous-total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in cart %}
+              <tr>
+                <td>{{ item.nom }}</td>
+                <td>{{ item.prix }} €</td>
+                <td>
+                  <form action="{{ path('cart_update', {id: item.id}) }}" method="post" class="d-inline-flex align-items-center gap-1">
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control form-control-sm" style="width:70px;">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Mettre à jour</button>
+                  </form>
+                </td>
+                <td>{{ (item.prix * item.quantity)|number_format(2, ',', ' ') }} €</td>
+                <td>
+                  <a href="{{ path('cart_remove', {id: item.id}) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-md-8"></div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-body">
+                <h5>Total: <strong>{{ total|number_format(2, ',', ' ') }} €</strong></h5>
+                {% if app.user %}
+                  <a href="{{ path('commande_create') }}" class="btn btn-success w-100 mt-3">Passer la commande</a>
+                {% else %}
+                  <a href="{{ path('app_login') }}" class="btn btn-primary w-100 mt-3">Connexion pour commander</a>
+                {% endif %}
+                <a href="{{ path('cart_clear') }}" class="btn btn-outline-danger w-100 mt-2">Vider le panier</a>
+                <a href="{{ path('produit_list') }}" class="btn btn-outline-secondary w-100 mt-2">Continuer les achats</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+</main>
+
+{% include 'partials/_footer.html.twig' %}
+{% endblock %}

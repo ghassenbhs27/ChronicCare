@@ -2,27 +2,80 @@ security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+    
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+        
         main:
             lazy: true
-            provider: users_in_memory
+            provider: app_user_provider
+            user_checker: App\Security\UserChecker
 
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                default_target_path: index  # Redirection après connexion
+                enable_csrf: true
+            
+            logout:
+                path: app_logout
+                target: app_login  # Redirection après déconnexion
+            
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800  # 1 semaine en secondes
+                path: /
+                always_remember_me: false
 
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
-
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
+        # Routes publiques (accessibles sans connexion)
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/register/success, roles: PUBLIC_ACCESS }
+        - { path: ^/verify-email, roles: PUBLIC_ACCESS }
+        - { path: ^/resend-verification, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/evenements, roles: PUBLIC_ACCESS }
+        - { path: ^/evenements/\d+$, roles: PUBLIC_ACCESS }
+        - { path: ^/products, roles: PUBLIC_ACCESS }
+        - { path: ^/cart, roles: PUBLIC_ACCESS }
+        - { path: ^/boutique, roles: PUBLIC_ACCESS }
+        
+        # Routes coach (événements, exercices)
+        - { path: ^/coach, roles: ROLE_COACH }
+        
+        # Routes admin
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/admin/users, roles: ROLE_ADMIN }
+        
+        # Routes suivi admin
+        - { path: ^/suivi/etat, roles: ROLE_ADMIN }
+
+        # Routes forum et RDV publiques
+        - { path: ^/publication, roles: PUBLIC_ACCESS }
+        - { path: ^/commentaire, roles: PUBLIC_ACCESS }
+        - { path: ^/professionnels, roles: PUBLIC_ACCESS }
+
+        # Routes RDV patient (ROLE_USER)
+        - { path: ^/patient/rdvs?, roles: ROLE_USER }
+        - { path: ^/commandes, roles: ROLE_USER }
+
+        # Routes RDV pro (ROLE_COACH) : liste, accepter, annuler, note de consultation
+        - { path: ^/pro/, roles: ROLE_COACH }
+
+        # Statistiques (coach et patient)
+        - { path: ^/statistiques, roles: IS_AUTHENTICATED_FULLY }
+        
+        # Décommentez si besoin d'autres protections
         # - { path: ^/profile, roles: ROLE_USER }
 
 when@test:

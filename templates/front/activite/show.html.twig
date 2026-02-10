@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Activité{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main">
+<div class="container py-5">
+  <h1 class="mb-4">{{ activite.type }}</h1>
+  <p><strong>Durée :</strong> {{ activite.duree }} min</p>
+  <p><strong>Calories :</strong> {{ activite.calories }}</p>
+  <p><strong>Date :</strong> {{ activite.dateActivite ? activite.dateActivite|date('d/m/Y') : '' }}</p>
+  <a class="btn btn-primary" href="{{ path('front_activite_edit', {id: activite.id}) }}">Éditer</a>
+  <a class="btn btn-outline-secondary" href="{{ path('front_activite_index') }}">Retour</a>
+</div>
+  </main>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Statistiques participants événements - Chronic Care{% endblock %}
+{% block page_title %}Statistiques participants{% endblock %}
+{% block page_subtitle %}Courbes et répartition par événement{% endblock %}
+
+{% block body %}
+<div class="container-fluid stats-wrap py-2">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <a href="{{ path('admin_evenement_index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Liste des événements
+    </a>
+    <a href="{{ path('admin_evenement_export_all_participants') }}" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-download me-1"></i> Export tous participants
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="chart-card">
+        <div class="chart-title mb-3">
+          <i class="bi bi-graph-up me-2"></i> Inscriptions par jour (30 derniers jours)
+        </div>
+        <canvas id="chartByDay" height="120"></canvas>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="chart-card h-100">
+        <div class="chart-title mb-3">
+          <i class="bi bi-bar-chart me-2"></i> Participants par événement (top 15)
+        </div>
+        <canvas id="chartByEvent" height="200"></canvas>
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Détail participants par événement</h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Événement</th>
+                <th class="text-end">Nombre de participants</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in participants_by_event %}
+                <tr>
+                  <td>{{ row.titre }}</td>
+                  <td class="text-end fw-semibold">{{ row.total }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="2" class="text-center text-muted py-4">Aucune donnée.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    (function() {
+      const labelsDay = {{ labels_day|json_encode|raw }};
+      const dataDay   = {{ data_day|json_encode|raw }};
+      const labelsEvent = {{ labels_event|json_encode|raw }};
+      const dataEvent   = {{ data_event|json_encode|raw }};
+
+      if (document.getElementById('chartByDay')) {
+        new Chart(document.getElementById('chartByDay'), {
+          type: 'line',
+          data: {
+            labels: labelsDay,
+            datasets: [{
+              label: 'Inscriptions',
+              data: dataDay,
+              tension: 0.35,
+              fill: true,
+              backgroundColor: 'rgba(37, 99, 235, 0.1)',
+              borderColor: '#2563eb',
+              pointRadius: 2,
+              pointHoverRadius: 4
+            }]
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { maxRotation: 0 } },
+              y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.06)' } }
+            }
+          }
+        });
+      }
+
+      if (document.getElementById('chartByEvent') && labelsEvent.length) {
+        new Chart(document.getElementById('chartByEvent'), {
+          type: 'bar',
+          data: {
+            labels: labelsEvent,
+            datasets: [{ label: 'Participants', data: dataEvent, backgroundColor: 'rgba(25, 135, 84, 0.7)' }]
+          },
+          options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.06)' } },
+              y: { grid: { display: false } }
+            }
+          }
+        });
+      }
+    })();
+  </script>
+{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .chart-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      border: 1px solid #e5e7eb;
+      padding: 1.25rem;
+    }
+    .chart-title { font-weight: 600; display: flex; align-items: center; }
+  </style>
+{% endblock %}

@@ -15,7 +15,7 @@ class Activite
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'activites')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?User $utilisateur = null;
 
     #[ORM\Column(length: 100)]
@@ -27,8 +27,8 @@ class Activite
     #[ORM\Column]
     private int $calories;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private \DateTimeInterface $dateActivite;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $dateActivite;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
@@ -55,7 +55,7 @@ class Activite
         return $this->utilisateur;
     }
 
-    public function setUtilisateur(User $utilisateur): self
+    public function setUtilisateur(?User $utilisateur): self
     {
         $this->utilisateur = $utilisateur;
         return $this;
@@ -94,12 +94,12 @@ class Activite
         return $this;
     }
 
-    public function getDateActivite(): \DateTimeInterface
+    public function getDateActivite(): \DateTimeImmutable
     {
         return $this->dateActivite;
     }
 
-    public function setDateActivite(\DateTimeInterface $dateActivite): self
+    public function setDateActivite(\DateTimeImmutable $dateActivite): self
     {
         $this->dateActivite = $dateActivite;
         return $this;

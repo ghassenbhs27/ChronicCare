@@ -1,0 +1,20 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Edit User - Chronic Care{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+{% block page_subtitle %}Update user information{% endblock %}
+
+{% block body %}
+<div class="container" style="max-width: 600px;">
+  {% for label, messages in app.flashes %}
+    {% for message in messages %}
+      <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endfor %}
+
+  {% include 'back/users/_form_modal.html.twig' with { form: form, modal_title: 'Edit User' } %}
+</div>
+{% endblock %}

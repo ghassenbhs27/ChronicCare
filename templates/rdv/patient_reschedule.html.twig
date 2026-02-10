@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Replanifier - Chronic Care{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main py-5">
+    <div class="container">
+      <a href="{{ path('patient_rdv_list') }}" class="btn btn-link mb-3">&larr; Retour</a>
+
+      <div class="card">
+        <div class="card-body">
+          <h2 class="mb-4">Replanifier le rendez-vous</h2>
+          {{ form_start(form) }}
+            <div class="mb-3">
+              {{ form_label(form.dateRdv) }}
+              {{ form_widget(form.dateRdv, { attr: { class: 'form-control' } }) }}
+              {{ form_errors(form.dateRdv) }}
+            </div>
+            <button class="btn btn-primary" type="submit">Replanifier</button>
+          {{ form_end(form) }}
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

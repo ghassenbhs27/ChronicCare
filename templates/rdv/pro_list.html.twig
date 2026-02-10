@@ -1,0 +1,131 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes rendez-vous pro - Chronic Care{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link href="{{ asset('assets/css/coach.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body_class %}rdv-pro-page{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main">
+    <div class="container">
+      <nav aria-label="Fil d'Ariane" class="coach-breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Mes RDV pro</li>
+        </ol>
+      </nav>
+
+      <header class="coach-page-header mb-4">
+        <h1 class="coach-page-title"><i class="bi bi-calendar2-week me-2"></i>Mes rendez-vous pro</h1>
+        <p class="coach-page-sub">Consultez et gérez les rendez-vous demandés par les patients. Acceptez ou annulez les demandes.</p>
+      </header>
+
+      {% if demoMode %}
+        <div class="alert alert-warning coach-alert mb-4"><i class="bi bi-info-circle me-2"></i>Mode démo : affichage des rendez-vous.</div>
+      {% endif %}
+
+      <div class="coach-filter-bar mb-4">
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-12 col-md-4">
+            <label class="form-label small fw-bold text-uppercase text-muted">Recherche</label>
+            <input type="text" name="q" value="{{ filters.q ?? '' }}" class="form-control" placeholder="Patient, date…">
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small fw-bold text-uppercase text-muted">Statut</label>
+            <select name="status" class="form-select">
+              <option value="all" {{ (filters.status ?? 'all') == 'all' ? 'selected' : '' }}>Tous</option>
+              <option value="en_attente" {{ (filters.status ?? '') == 'en_attente' ? 'selected' : '' }}>En attente</option>
+              <option value="confirme" {{ (filters.status ?? '') == 'confirme' ? 'selected' : '' }}>Confirmé</option>
+              <option value="annule" {{ (filters.status ?? '') == 'annule' ? 'selected' : '' }}>Annulé</option>
+              <option value="termine" {{ (filters.status ?? '') == 'termine' ? 'selected' : '' }}>Terminé</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small fw-bold text-uppercase text-muted">Tri</label>
+            <select name="sort" class="form-select">
+              <option value="date_asc" {{ (filters.sort ?? 'date_asc') == 'date_asc' ? 'selected' : '' }}>Date croissante</option>
+              <option value="date_desc" {{ (filters.sort ?? '') == 'date_desc' ? 'selected' : '' }}>Date décroissante</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-2 d-flex gap-2">
+            <button class="btn btn-primary flex-grow-1" type="submit"><i class="bi bi-search me-1"></i> Filtrer</button>
+            <a class="btn btn-outline-secondary" href="{{ path('pro_rdv_list') }}" title="Réinitialiser"><i class="bi bi-arrow-counterclockwise"></i></a>
+          </div>
+        </form>
+      </div>
+
+      {% for label, messages in app.flashes %}
+        {% for message in messages %}
+          <div class="alert alert-{{ label }} coach-alert mb-4">{{ message }}</div>
+        {% endfor %}
+      {% endfor %}
+
+      {% if rdvs is empty %}
+        <div class="coach-empty">
+          <i class="bi bi-calendar-x coach-empty-icon"></i>
+          <h2 class="coach-empty-title">Aucun rendez-vous</h2>
+          <p class="coach-empty-text">Aucun rendez-vous ne correspond à vos critères pour le moment.</p>
+        </div>
+      {% else %}
+        {% set status_badges = {
+          'en_attente': 'rdv-status-badge bg-warning text-dark',
+          'confirme': 'rdv-status-badge bg-success',
+          'annule': 'rdv-status-badge bg-secondary',
+          'termine': 'rdv-status-badge bg-primary'
+        } %}
+        <div class="coach-card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Date et heure</th>
+                    <th>Patient</th>
+                    <th>Statut</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for rdv in rdvs %}
+                    <tr>
+                      <td>
+                        <span class="rdv-date">{{ rdv.dateRdv|date('d/m/Y') }}</span>
+                        <span class="text-muted small d-block">{{ rdv.dateRdv|date('H:i') }}</span>
+                      </td>
+                      <td>
+                        <span class="rdv-patient">{{ rdv.patient.prenom }} {{ rdv.patient.nom }}</span>
+                        <span class="text-muted small d-block">{{ rdv.patient.email }}</span>
+                      </td>
+                      <td><span class="{{ status_badges[rdv.statut] ?? 'rdv-status-badge bg-light text-dark' }}">{{ rdv.statut }}</span></td>
+                      <td class="text-end">
+                        <a href="{{ path('pro_rdv_note', { id: rdv.id }) }}" class="btn btn-sm btn-outline-primary rdv-actions" title="Note de consultation"><i class="bi bi-journal-text me-1"></i> Note</a>
+                        {% if rdv.statut == 'en_attente' %}
+                          <form method="post" action="{{ path('pro_rdv_accept', { id: rdv.id }) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('accept_rdv_' ~ rdv.id) }}">
+                            <button class="btn btn-sm btn-success rdv-actions" type="submit"><i class="bi bi-check-lg me-1"></i> Accepter</button>
+                          </form>
+                        {% endif %}
+                        {% if rdv.statut != 'annule' and rdv.statut != 'termine' %}
+                          <form method="post" action="{{ path('pro_rdv_cancel', { id: rdv.id }) }}" class="d-inline" onsubmit="return confirm('Annuler ce rendez-vous ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('cancel_rdv_' ~ rdv.id) }}">
+                            <button class="btn btn-sm btn-outline-danger rdv-actions" type="submit"><i class="bi bi-x-lg me-1"></i> Annuler</button>
+                          </form>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+{% endblock %}

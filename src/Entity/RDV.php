@@ -9,12 +9,17 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: RDVRepository::class)]
 class RDV
 {
+    public const STATUT_EN_ATTENTE = 'en_attente';
+    public const STATUT_CONFIRME = 'confirme';
+    public const STATUT_ANNULE = 'annule';
+    public const STATUT_TERMINE = 'termine';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'rDVs')]
+    #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private User $patient;
 
