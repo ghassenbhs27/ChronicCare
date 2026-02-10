@@ -51,7 +51,7 @@ final class FrontController extends AbstractController
         if ($keyword) {
             $produits = $produitRepository->searchByKeyword($keyword);
         } elseif ($priceMin || $priceMax) {
-            $produits = $produitRepository->findByPriceRange((float)$priceMin, (float)$priceMax);
+            $produits = $produitRepository->findByPriceRange((float) $priceMin, (float) $priceMax);
         } else {
             $produits = $produitRepository->findAllActive();
         }
