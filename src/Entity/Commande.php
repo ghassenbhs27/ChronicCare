@@ -38,6 +38,9 @@ class Commande
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $adresse = null;
+
     /**
      * @var Collection<int, LigneCommande>
      */
@@ -127,6 +130,17 @@ class Commande
     {
         $this->ligneCommandes->removeElement($ligneCommande);
 
+        return $this;
+    }
+
+    public function getAdresse(): ?string
+    {
+        return $this->adresse;
+    }
+
+    public function setAdresse(?string $adresse): self
+    {
+        $this->adresse = $adresse;
         return $this;
     }
 }
