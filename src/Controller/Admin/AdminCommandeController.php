@@ -32,8 +32,12 @@ class AdminCommandeController extends AbstractController
     {
         $commandes = $this->commandeRepository->findAll();
 
+        // Pass default values for 'statut', 'tri', and 'direction' to avoid Twig errors
         return $this->render('admin/commande/list.html.twig', [
             'commandes' => $commandes,
+            'statut' => '',
+            'tri' => 'createdAt',
+            'direction' => 'DESC',
         ]);
     }
 
@@ -133,14 +137,14 @@ class AdminCommandeController extends AbstractController
 
         if ($statut) {
             $qb->andWhere('c.statut = :statut')
-               ->setParameter('statut', $statut);
+                ->setParameter('statut', $statut);
         }
 
         // Gestion du tri sur utilisateur (nom/prenom)
         if ($tri === 'utilisateur') {
             $qb->leftJoin('c.utilisateur', 'u')
-               ->addSelect('u')
-               ->orderBy('u.nom', $direction);
+                ->addSelect('u')
+                ->orderBy('u.nom', $direction);
         } else {
             $qb->orderBy('c.' . $tri, $direction);
         }

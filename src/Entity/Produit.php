@@ -17,11 +17,12 @@ class Produit
 
     #[ORM\Column(length: 200)]
     #[Assert\NotBlank(message: 'Le nom du produit ne peut pas être vide')]
-    #[Assert\Length(max: 200, maxMessage: 'Le nom ne peut pas dépasser 200 caractères')]
+    #[Assert\Length(min: 2, max: 200, minMessage: 'Le nom doit contenir au moins 2 caractères', maxMessage: 'Le nom ne peut pas dépasser 200 caractères')]
     private string $nom;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'La description ne peut pas être vide')]
+    #[Assert\Length(min: 10, minMessage: 'La description doit contenir au moins 10 caractères')]
     private string $description;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
@@ -36,6 +37,7 @@ class Produit
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'La catégorie ne peut pas être vide')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'La catégorie doit contenir au moins 2 caractères', maxMessage: 'La catégorie ne peut pas dépasser 100 caractères')]
     private string $categorie;
 
     #[ORM\Column]

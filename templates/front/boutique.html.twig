@@ -142,6 +142,21 @@
         <div class="container">
           <h1>Notre boutique</h1>
           <p>Découvrez notre sélection de produits pour la santé et le bien-être : suppléments nutritionnels, équipements de monitoring, et bien plus encore.</p>
+          <!-- Barre de recherche et tri -->
+          <form method="get" action="{{ path('boutique') }}" class="row mb-4 align-items-end">
+            <div class="col-md-4 mb-2">
+              <input type="text" name="keyword" class="form-control" placeholder="Rechercher par nom..." value="{{ keyword|default('') }}">
+            </div>
+            <div class="col-md-3 mb-2">
+              <input type="number" name="priceMin" class="form-control" placeholder="Prix min" min="0" value="{{ priceMin|default('') }}">
+            </div>
+            <div class="col-md-3 mb-2">
+              <input type="number" name="priceMax" class="form-control" placeholder="Prix max" min="0" value="{{ priceMax|default('') }}">
+            </div>
+            <div class="col-md-2 mb-2">
+              <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+            </div>
+          </form>
         </div>
       </div><!-- End Page Title -->
 
@@ -222,9 +237,9 @@
                                 <i class="fa fa-arrow-right"></i>
                               </a>
                               {% if produit.stock > 0 %}
-                                <button onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom }}')" class="btn btn-sm btn-success" style="padding: 0.5rem 1rem; font-size: 0.9em;">
+                                <a href="/cart/" class="btn btn-sm btn-success" style="padding: 0.5rem 1rem; font-size: 0.9em;">
                                   <i class="fa fa-shopping-cart"></i> Panier
-                                </button>
+                                </a>
                               {% endif %}
                             </div>
                           </div>
