@@ -17,26 +17,25 @@ class EtatFrontType extends AbstractType
         $builder
             ->add('type', TextType::class, [
                 'trim' => true,
-                'label' => 'type',
+                'label' => 'Type',
                 'attr' => ['class' => 'form-control'],
                 'label_attr' => ['class' => 'form-label fw-semibold'],
             ])
             ->add('valeur', NumberType::class, [
-                'label' => 'valeur',
+                'label' => 'Valeur',
                 'scale' => 2,
                 'attr' => ['class' => 'form-control', 'step' => '0.01'],
                 'label_attr' => ['class' => 'form-label fw-semibold'],
             ])
             ->add('unite', TextType::class, [
                 'trim' => true,
-                'label' => 'unite',
+                'label' => 'Unité',
                 'attr' => ['class' => 'form-control'],
                 'label_attr' => ['class' => 'form-label fw-semibold'],
             ])
             ->add('dateReleve', DateType::class, [
-                'label' => 'date_releve',
+                'label' => 'Date relevé',
                 'widget' => 'single_text',
-                'input' => 'datetime_immutable',
                 'attr' => ['class' => 'form-control'],
                 'label_attr' => ['class' => 'form-label fw-semibold'],
             ]);

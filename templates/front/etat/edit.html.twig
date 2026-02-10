@@ -1,78 +1,18 @@
 {% extends 'base.html.twig' %}
-{% form_theme form 'bootstrap_5_layout.html.twig' %}
 
-{% block title %}Mon suivi - Modifier releve{% endblock %}
-
-{% block stylesheets %}
-  {{ parent() }}
-  <style>
-    .header-spacer { height: 80px; }
-    @media (max-width: 768px) { .header-spacer { height: 110px; } }
-    .panel {
-      background: var(--surface-color);
-      border-radius: 18px;
-      padding: 1.5rem;
-      border: 1px solid color-mix(in srgb, var(--default-color), transparent 86%);
-      box-shadow: 0 16px 30px rgba(16, 24, 40, 0.08);
-    }
-    .panel .form-control,
-    .panel .form-select {
-      border-radius: 12px;
-    }
-    .panel .form-label {
-      font-weight: 600;
-      margin-bottom: 0.35rem;
-    }
-  </style>
-{% endblock %}
+{% block title %}Modifier état{% endblock %}
 
 {% block body %}
-<header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
-    <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0"><h1 class="sitename">Chronic Care</h1></a>
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{{ path('index') }}">Accueil</a></li>
-        <li><a href="{{ path('suivi_front_dashboard') }}" class="active">Mon suivi</a></li>
-      </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-    </nav>
-    <a class="btn-getstarted" href="{{ path('front_etat_index') }}">Liste etats</a>
-  </div>
-</header>
+  {% include 'partials/_navbar.html.twig' %}
 
-<div class="header-spacer"></div>
-
-<main class="main">
-  <section class="section light-background">
-    <div class="container">
-      <div class="panel">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h4 mb-0">Modifier releve</h2>
-          <a class="btn btn-outline-secondary" href="{{ path('front_etat_show', {id: etat.id}) }}">Retour</a>
-        </div>
-        {% for message in app.flashes('danger') %}
-          <div class="alert alert-danger">{{ message }}</div>
-        {% endfor %}
-
-        {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
-          {{ form_errors(form) }}
-          <div class="row g-3">
-            <div class="col-md-6">{{ form_row(form.type) }}</div>
-            <div class="col-md-3">{{ form_row(form.valeur) }}</div>
-            <div class="col-md-3">{{ form_row(form.unite) }}</div>
-            <div class="col-md-6">{{ form_row(form.dateReleve) }}</div>
-          </div>
-          <div class="mt-3">
-            <button class="btn btn-primary">Mettre a jour</button>
-          </div>
-        {{ form_end(form) }}
-        <form method="post" action="{{ path('front_etat_delete', {id: etat.id}) }}" onsubmit="return confirm('Supprimer cet etat ?');" class="mt-2">
-          <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ etat.id) }}">
-          <button class="btn btn-outline-danger">Delete</button>
-        </form>
-      </div>
-    </div>
-  </section>
-</main>
+  <main class="main">
+<div class="container py-5">
+  <h1 class="mb-4">Modifier le relevé</h1>
+  {{ form_start(form) }}
+    {{ form_widget(form) }}
+    <button class="btn btn-primary" type="submit">Enregistrer</button>
+    <a class="btn btn-outline-secondary" href="{{ path('front_etat_index') }}">Annuler</a>
+  {{ form_end(form) }}
+</div>
+  </main>
 {% endblock %}

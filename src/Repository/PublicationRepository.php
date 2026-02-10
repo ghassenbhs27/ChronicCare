@@ -16,6 +16,43 @@ class PublicationRepository extends ServiceEntityRepository
         parent::__construct($registry, Publication::class);
     }
 
+    public function countAll(): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * @return Publication[]
+     */
+    public function findRecent(int $limit = 8): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.auteur', 'a')
+            ->addSelect('a')
+            ->orderBy('p.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** @return array<string, int> */
+    public function countByStatut(): array
+    {
+        $rows = $this->createQueryBuilder('p')
+            ->select('p.statut AS statut', 'COUNT(p.id) AS total')
+            ->groupBy('p.statut')
+            ->getQuery()
+            ->getArrayResult();
+        $out = [];
+        foreach ($rows as $row) {
+            $out[$row['statut']] = (int) $row['total'];
+        }
+        return $out;
+    }
+
     //    /**
     //     * @return Publication[] Returns an array of Publication objects
     //     */

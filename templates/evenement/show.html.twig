@@ -1,0 +1,118 @@
+{% extends 'coach/base.html.twig' %}
+
+{% block page_title %}Détail événement{% endblock %}
+
+{% block content %}
+<nav aria-label="Fil d'Ariane" class="coach-breadcrumb">
+  <ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('evenement_index') }}">Mes événements</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ evenement.titre|length > 40 ? evenement.titre|slice(0, 40) ~ '…' : evenement.titre }}</li>
+  </ol>
+</nav>
+
+<div class="coach-card mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+      <h1 class="coach-page-title mb-0">{{ evenement.titre }}</h1>
+      <div class="d-flex gap-2">
+        <a class="btn btn-primary" href="{{ path('evenement_edit', { id: evenement.id }) }}"><i class="bi bi-pencil me-1"></i> Modifier</a>
+        <a class="btn btn-outline-secondary" href="{{ path('evenement_index') }}"><i class="bi bi-arrow-left me-1"></i> Retour</a>
+      </div>
+    </div>
+
+    <div class="coach-detail-section">
+      <div class="coach-info-grid">
+        <div class="coach-info-item">
+          <div class="label">Date début</div>
+          <div class="value">{{ evenement.dateDebut ? evenement.dateDebut|date('d/m/Y H:i') : '—' }}{% if holiday_debut %} <span class="text-muted small">({{ holiday_debut }})</span>{% endif %}</div>
+        </div>
+        <div class="coach-info-item">
+          <div class="label">Date fin</div>
+          <div class="value">{{ evenement.dateFin ? evenement.dateFin|date('d/m/Y H:i') : '—' }}{% if holiday_fin %} <span class="text-muted small">({{ holiday_fin }})</span>{% endif %}</div>
+        </div>
+        <div class="coach-info-item" style="grid-column: 1 / -1;">
+          <div class="label">Lieu</div>
+          <div class="value">{{ evenement.lieu }}</div>
+        </div>
+        <div class="coach-info-item" style="grid-column: 1 / -1;">
+          <div class="label">Description</div>
+          <div class="value" style="font-weight: 400;">{{ evenement.description ?: '—' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="coach-card mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+      <h2 class="section-title mb-0"><i class="bi bi-lightning"></i> Exercices liés</h2>
+      <a class="btn btn-primary btn-sm" href="{{ path('exercice_new') }}"><i class="bi bi-plus me-1"></i> Ajouter un exercice</a>
+    </div>
+    {% if exercices is empty %}
+      <p class="text-muted mb-0">Aucun exercice associé.</p>
+    {% else %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Durée</th>
+              <th>Répétitions</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for exercice in exercices %}
+              <tr>
+                <td>{{ exercice.nom }}</td>
+                <td>{{ exercice.duree }} min</td>
+                <td>{{ exercice.repetitions ?? '—' }}</td>
+                <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ path('exercice_show', { id: exercice.id }) }}">Voir</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="coach-card">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+      <h2 class="section-title mb-0"><i class="bi bi-people"></i> Inscriptions ({{ inscriptions|length }})</h2>
+      <a class="btn btn-outline-success btn-sm" href="{{ path('evenement_inscriptions_csv', { id: evenement.id }) }}"><i class="bi bi-download me-1"></i> Exporter CSV</a>
+    </div>
+    {% if inscriptions is empty %}
+      <p class="text-muted mb-0">Aucune inscription pour le moment.</p>
+    {% else %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Prénom</th>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Date inscription</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inscription in inscriptions %}
+              <tr>
+                <td>{{ inscription.prenom }}</td>
+                <td>{{ inscription.nom }}</td>
+                <td>{{ inscription.email }}</td>
+                <td>{{ inscription.telephone ?? '—' }}</td>
+                <td>{{ inscription.createdAt|date('d/m/Y H:i') }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

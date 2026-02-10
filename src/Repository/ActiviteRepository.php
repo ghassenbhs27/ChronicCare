@@ -7,6 +7,9 @@ use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Activite>
+ */
 class ActiviteRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -14,21 +17,23 @@ class ActiviteRepository extends ServiceEntityRepository
         parent::__construct($registry, Activite::class);
     }
 
-    public function searchAndSort(?string $q, string $sort='dateActivite', string $dir='DESC'): array
+    public function searchAndSort(?string $q, string $sort = 'dateActivite', string $dir = 'DESC'): array
     {
-        $allowedSort = ['id','type','duree','calories','dateActivite','createdAt'];
-        if (!in_array($sort, $allowedSort, true)) $sort = 'dateActivite';
+        $allowedSort = ['id', 'type', 'duree', 'calories', 'dateActivite', 'createdAt'];
+        if (!in_array($sort, $allowedSort, true)) {
+            $sort = 'dateActivite';
+        }
         $dir = strtoupper($dir) === 'ASC' ? 'ASC' : 'DESC';
 
         $qb = $this->createQueryBuilder('a')
-            ->leftJoin('a.utilisateur','u')->addSelect('u');
+            ->leftJoin('a.utilisateur', 'u')->addSelect('u');
 
         if ($q) {
             $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q')
-               ->setParameter('q', '%'.mb_strtolower(trim($q)).'%');
+                ->setParameter('q', '%' . mb_strtolower(trim($q)) . '%');
         }
 
-        return $qb->orderBy('a.'.$sort, $dir)->getQuery()->getResult();
+        return $qb->orderBy('a.' . $sort, $dir)->getQuery()->getResult();
     }
 
     public function findByUserWithSearchSort(User $user, ?string $q, string $sort = 'dateActivite', string $dir = 'DESC'): array
@@ -45,10 +50,50 @@ class ActiviteRepository extends ServiceEntityRepository
 
         if ($q) {
             $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q')
-                ->setParameter('q', '%'.mb_strtolower(trim($q)).'%');
+                ->setParameter('q', '%' . mb_strtolower(trim($q)) . '%');
         }
 
-        return $qb->orderBy('a.'.$sort, $dir)->getQuery()->getResult();
+        return $qb->orderBy('a.' . $sort, $dir)->getQuery()->getResult();
+    }
+
+    /** @return array<array{date: string, total: int}> */
+    public function getCountByDayLastDays(int $days = 7): array
+    {
+        $since = (new \DateTimeImmutable())->modify("-{$days} days");
+        return $this->createQueryBuilder('a')
+            ->select('DATE(a.dateActivite) AS date', 'COUNT(a.id) AS total')
+            ->andWhere('a.dateActivite >= :since')
+            ->setParameter('since', $since)
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    /**
+     * Activités par jour sur les N derniers jours, pour les patients uniquement
+     * (utilisateurs avec ROLE_USER, sans ROLE_COACH ni ROLE_ADMIN).
+     * @return array<array{date: string, total: int}>
+     */
+    public function getCountByDayLastDaysForPatients(int $days = 7): array
+    {
+        $since = (new \DateTimeImmutable())->modify("-{$days} days");
+        return $this->createQueryBuilder('a')
+            ->select('DATE(a.dateActivite) AS date', 'COUNT(a.id) AS total')
+            ->innerJoin('a.utilisateur', 'u')
+            ->andWhere('a.dateActivite >= :since')
+            ->andWhere('a.utilisateur IS NOT NULL')
+            ->andWhere('u.roles LIKE :roleUser')
+            ->andWhere('u.roles NOT LIKE :coach')
+            ->andWhere('u.roles NOT LIKE :admin')
+            ->setParameter('since', $since)
+            ->setParameter('roleUser', '%ROLE_USER%')
+            ->setParameter('coach', '%ROLE_COACH%')
+            ->setParameter('admin', '%ROLE_ADMIN%')
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
     }
 
     public function getGlobalStats(): array
@@ -101,7 +146,7 @@ class ActiviteRepository extends ServiceEntityRepository
 
     public function getInactivityAnomalies(int $days = 7): array
     {
-        $cutoff = (new \DateTimeImmutable('today'))->modify('-'.$days.' days');
+        $cutoff = (new \DateTimeImmutable('today'))->modify('-' . $days . ' days');
 
         return $this->getEntityManager()->createQueryBuilder()
             ->select('u.id AS userId')
@@ -139,4 +184,64 @@ class ActiviteRepository extends ServiceEntityRepository
             'moyenneDuree' => (float) ($row['moyenneDuree'] ?? 0),
         ];
     }
+
+    /** @return array<array{date: string, total: int, duree: int, calories: int}> */
+    public function getActivitesByDayForUser(User $user, int $days = 30): array
+    {
+        $since = (new \DateTimeImmutable())->modify("-{$days} days");
+        return $this->createQueryBuilder('a')
+            ->select('DATE(a.dateActivite) AS date')
+            ->addSelect('COUNT(a.id) AS total')
+            ->addSelect('COALESCE(SUM(a.duree), 0) AS duree')
+            ->addSelect('COALESCE(SUM(a.calories), 0) AS calories')
+            ->andWhere('a.utilisateur = :user')
+            ->andWhere('a.dateActivite >= :since')
+            ->setParameter('user', $user)
+            ->setParameter('since', $since)
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    /** @return array<array{type: string, nb: int, duree: int, calories: int}> */
+    public function getActivitesByTypeForUser(User $user): array
+    {
+        return $this->createQueryBuilder('a')
+            ->select('a.type AS type')
+            ->addSelect('COUNT(a.id) AS nb')
+            ->addSelect('COALESCE(SUM(a.duree), 0) AS duree')
+            ->addSelect('COALESCE(SUM(a.calories), 0) AS calories')
+            ->andWhere('a.utilisateur = :user')
+            ->setParameter('user', $user)
+            ->groupBy('a.type')
+            ->orderBy('nb', 'DESC')
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    //    /**
+    //     * @return Activite[] Returns an array of Activite objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('a')
+    //            ->andWhere('a.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('a.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+
+    //    public function findOneBySomeField($value): ?Activite
+    //    {
+    //        return $this->createQueryBuilder('a')
+    //            ->andWhere('a.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
 }

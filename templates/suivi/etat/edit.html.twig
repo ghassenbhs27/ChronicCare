@@ -1,19 +1,15 @@
-{% extends 'base.html.twig' %}
-{% form_theme form 'bootstrap_5_layout.html.twig' %}
+{% extends 'back/base.html.twig' %}
 
-{% block title %}Administration - Modifier etat{% endblock %}
+{% block page_title %}Modifier état{% endblock %}
 
 {% block body %}
-<div class="container py-4">
-  <h1 class="mb-3">Modifier etat</h1>
-  {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
-    {{ form_row(form.type) }}
-    {{ form_row(form.valeur) }}
-    {{ form_row(form.unite) }}
-    {{ form_row(form.dateReleve) }}
-    {{ form_row(form.utilisateur) }}
-    <button class="btn btn-primary">Mettre a jour</button>
-    <a class="btn btn-outline-secondary" href="{{ path('admin_etat_index') }}">Retour</a>
-  {{ form_end(form) }}
+<div class="card shadow-sm">
+  <div class="card-body">
+    {{ form_start(form) }}
+      {{ form_widget(form) }}
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+      <a class="btn btn-outline-secondary" href="{{ path('admin_etat_index') }}">Annuler</a>
+    {{ form_end(form) }}
+  </div>
 </div>
 {% endblock %}

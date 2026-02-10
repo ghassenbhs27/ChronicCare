@@ -11,10 +11,17 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
 class Evenement
 {
+    public const STATUT_EN_ATTENTE = 'en_attente';
+    public const STATUT_VALIDE = 'valide';
+    public const STATUT_REFUSE = 'refuse';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\Column(length: 20)]
+    private string $statut = self::STATUT_VALIDE;
 
     #[ORM\ManyToOne(inversedBy: 'evenements')]
     #[ORM\JoinColumn(nullable: false)]
@@ -124,6 +131,27 @@ class Evenement
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getStatut(): string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(string $statut): self
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
+    public function isEnAttente(): bool
+    {
+        return $this->statut === self::STATUT_EN_ATTENTE;
+    }
+
+    public function isValide(): bool
+    {
+        return $this->statut === self::STATUT_VALIDE;
     }
 
     /**

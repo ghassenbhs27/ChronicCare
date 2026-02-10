@@ -36,12 +36,10 @@ class ActiviteFrontController extends AbstractController
         $minutesProgress = $goalMinutes > 0 ? min(100, (int) round(($stats['totalDuree'] / $goalMinutes) * 100)) : 0;
         $caloriesProgress = $goalCalories > 0 ? min(100, (int) round(($stats['totalCalories'] / $goalCalories) * 100)) : 0;
 
-        {
-            return $this->render(
-                'front/activite/index.html.twig',
-                compact('activites', 'q', 'sort', 'dir', 'stats', 'goalMinutes', 'goalCalories', 'minutesProgress', 'caloriesProgress')
-            );
-        }
+        return $this->render(
+            'front/activite/index.html.twig',
+            compact('activites', 'q', 'sort', 'dir', 'stats', 'goalMinutes', 'goalCalories', 'minutesProgress', 'caloriesProgress')
+        );
     }
 
     #[Route('/new', name: 'front_activite_new', methods: ['GET', 'POST'])]
@@ -60,12 +58,12 @@ class ActiviteFrontController extends AbstractController
             $this->applyCaloriesEstimation($activite);
             $em->persist($activite);
             $em->flush();
-            $this->addFlash('success', 'Activite enregistree avec succes.');
+            $this->addFlash('success', 'Activité enregistrée avec succès.');
 
             return $this->redirectToRoute('front_activite_index');
         }
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('danger', 'Enregistrement impossible: verifiez les champs.');
+            $this->addFlash('danger', 'Enregistrement impossible : vérifiez les champs.');
         }
 
         return $this->render('front/activite/new.html.twig', [
@@ -79,7 +77,7 @@ class ActiviteFrontController extends AbstractController
     {
         $patient = $this->resolvePatient($userRepository, $em);
         if ($activite->getUtilisateur()?->getId() !== $patient->getId()) {
-            throw $this->createAccessDeniedException('Cette activite ne vous appartient pas.');
+            throw $this->createAccessDeniedException('Cette activité ne vous appartient pas.');
         }
 
         return $this->render('front/activite/show.html.twig', compact('activite'));
@@ -94,7 +92,7 @@ class ActiviteFrontController extends AbstractController
     ): Response {
         $patient = $this->resolvePatient($userRepository, $em);
         if ($activite->getUtilisateur()?->getId() !== $patient->getId()) {
-            throw $this->createAccessDeniedException('Cette activite ne vous appartient pas.');
+            throw $this->createAccessDeniedException('Cette activité ne vous appartient pas.');
         }
 
         $form = $this->createForm(ActiviteType::class, $activite);
@@ -103,12 +101,12 @@ class ActiviteFrontController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->applyCaloriesEstimation($activite);
             $em->flush();
-            $this->addFlash('success', 'Activite mise a jour avec succes.');
+            $this->addFlash('success', 'Activité mise à jour avec succès.');
 
             return $this->redirectToRoute('front_activite_index');
         }
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('danger', 'Modification impossible: verifiez les champs.');
+            $this->addFlash('danger', 'Modification impossible : vérifiez les champs.');
         }
 
         return $this->render('front/activite/edit.html.twig', [
@@ -126,15 +124,15 @@ class ActiviteFrontController extends AbstractController
     ): Response {
         $patient = $this->resolvePatient($userRepository, $em);
         if ($activite->getUtilisateur()?->getId() !== $patient->getId()) {
-            throw $this->createAccessDeniedException('Cette activite ne vous appartient pas.');
+            throw $this->createAccessDeniedException('Cette activité ne vous appartient pas.');
         }
 
-        if ($this->isCsrfTokenValid('delete'.$activite->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $activite->getId(), $request->request->get('_token'))) {
             $em->remove($activite);
             $em->flush();
-            $this->addFlash('success', 'Activite supprimee avec succes.');
+            $this->addFlash('success', 'Activité supprimée avec succès.');
         } else {
-            $this->addFlash('danger', 'Token CSRF invalide: suppression refusee.');
+            $this->addFlash('danger', 'Token CSRF invalide : suppression refusée.');
         }
 
         return $this->redirectToRoute('front_activite_index');
@@ -156,7 +154,7 @@ class ActiviteFrontController extends AbstractController
         $user = new User();
         $user->setNom('Patient');
         $user->setPrenom('Temporaire');
-        $user->setEmail('patient-activite-'.$stamp.'@local.chroniccare');
+        $user->setEmail('patient-activite-' . $stamp . '@local.chroniccare');
         $user->setPassword('temporary-password');
         $user->setRoles(['ROLE_PATIENT']);
         $em->persist($user);

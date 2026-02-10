@@ -1,0 +1,115 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ produit.nom }} - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
+
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
+
+<main class="main">
+  <div id="cartSuccessModal" class="modal" tabindex="-1" style="display:none; position:fixed; z-index:1050; background:rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Produit ajouté au panier</h5>
+          <button type="button" class="btn-close" onclick="document.getElementById('cartSuccessModal').style.display='none'"></button>
+        </div>
+        <div class="modal-body d-flex align-items-center gap-3">
+          <img id="cartSuccessImage" src="" alt="" style="width:80px; height:80px; object-fit:contain;">
+          <div>
+            <div id="cartSuccessName" class="fw-bold"></div>
+            <div id="cartSuccessMessage" class="text-success small"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('cartSuccessModal').style.display='none'">Continuer</button>
+          <a href="{{ path('cart_show') }}" class="btn btn-success">Voir le panier</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-title">
+    <div class="breadcrumbs">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('boutique') }}">Boutique</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('produit_list') }}">Catalogue</a></li>
+          <li class="breadcrumb-item active">{{ produit.nom }}</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <section class="product-details section py-5">
+    <div class="container">
+      <div class="row g-5 align-items-center">
+        <div class="col-lg-5">
+          <div class="bg-light rounded-3 p-4 d-flex align-items-center justify-content-center" style="min-height:350px;">
+            <img src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" class="img-fluid" style="max-height:320px; object-fit:contain;" onerror="this.style.display='none'; this.nextElementSibling?.classList.remove('d-none')">
+            <div class="d-none text-center text-muted display-4">{{ produit.nom|slice(0, 2) }}</div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <h1 class="mb-2">{{ produit.nom }}</h1>
+          <span class="badge bg-primary mb-3">{{ produit.categorie }}</span>
+          <div class="mb-4">
+            <h2 class="text-primary">{{ produit.prix }} €</h2>
+            <small class="text-muted">TVA incluse</small>
+          </div>
+          {% if produit.stock > 10 %}
+            <div class="alert alert-success py-2"><i class="bi bi-check-circle"></i> {{ produit.stock }} en stock</div>
+          {% elseif produit.stock > 0 %}
+            <div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle"></i> Stock limité: {{ produit.stock }} unité(s)</div>
+          {% else %}
+            <div class="alert alert-danger py-2"><i class="bi bi-x-circle"></i> Rupture de stock</div>
+          {% endif %}
+
+          {% if produit.stock > 0 %}
+          <div class="mb-4">
+            <label class="form-label">Quantité</label>
+            <div class="input-group" style="width:140px;">
+              <button type="button" class="btn btn-outline-secondary" onclick="var i=document.getElementById('qty'); if(i.value>1)i.value--">−</button>
+              <input type="number" id="qty" class="form-control text-center" value="1" min="1" max="{{ produit.stock }}">
+              <button type="button" class="btn btn-outline-secondary" onclick="var i=document.getElementById('qty'); if(i.value<{{ produit.stock }})i.value++">+</button>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mb-4">
+            <button type="button" class="btn btn-success btn-lg" onclick="addToCart({{ produit.id }}, document.getElementById('qty').value)">
+              <i class="bi bi-cart-plus"></i> Ajouter au panier
+            </button>
+            {% if app.user %}
+              <a href="{{ path('cart_show') }}" class="btn btn-outline-primary btn-lg">Voir le panier</a>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <div class="p-4 bg-light rounded-3">
+            <h5>Description</h5>
+            <p class="mb-0">{{ produit.description }}</p>
+          </div>
+          <a href="{{ path('produit_list') }}" class="btn btn-link mt-3"><i class="bi bi-arrow-left"></i> Retour au catalogue</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+function addToCart(id, qty) {
+  fetch('{{ path('cart_add') }}?id=' + id + '&quantity=' + (qty || 1), {
+    headers: {'X-Requested-With': 'XMLHttpRequest'}
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      document.getElementById('cartSuccessImage').src = data.image || '';
+      document.getElementById('cartSuccessName').textContent = data.name || '';
+      document.getElementById('cartSuccessMessage').textContent = data.cartMessage || '';
+      document.getElementById('cartSuccessModal').style.display = 'block';
+    } else alert(data.message || 'Erreur');
+  }).catch(() => alert('Erreur'));
+}
+</script>
+
+{% include 'partials/_footer.html.twig' %}
+{% endblock %}

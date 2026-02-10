@@ -1,0 +1,20 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Add New User - Chronic Care{% endblock %}
+{% block page_title %}Add New User{% endblock %}
+{% block page_subtitle %}Create a new user account{% endblock %}
+
+{% block body %}
+<div class="container" style="max-width: 600px;">
+  {% for label, messages in app.flashes %}
+    {% for message in messages %}
+      <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endfor %}
+
+  {% include 'back/users/_form_modal.html.twig' with { form: form, modal_title: 'Add New User' } %}
+</div>
+{% endblock %}

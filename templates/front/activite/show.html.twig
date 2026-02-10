@@ -1,66 +1,18 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mon suivi - Detail activite{% endblock %}
-
-{% block stylesheets %}
-  {{ parent() }}
-  <style>
-    .header-spacer { height: 80px; }
-    @media (max-width: 768px) { .header-spacer { height: 110px; } }
-    .panel {
-      background: var(--surface-color);
-      border-radius: 18px;
-      padding: 1.5rem;
-      border: 1px solid color-mix(in srgb, var(--default-color), transparent 86%);
-      box-shadow: 0 16px 30px rgba(16, 24, 40, 0.08);
-    }
-  </style>
-{% endblock %}
+{% block title %}Activité{% endblock %}
 
 {% block body %}
-<header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
-    <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0"><h1 class="sitename">Chronic Care</h1></a>
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{{ path('index') }}">Accueil</a></li>
-        <li><a href="{{ path('suivi_front_dashboard') }}" class="active">Mon suivi</a></li>
-      </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-    </nav>
-    <a class="btn-getstarted" href="{{ path('front_activite_index') }}">Liste activites</a>
-  </div>
-</header>
+  {% include 'partials/_navbar.html.twig' %}
 
-<div class="header-spacer"></div>
-
-<main class="main">
-  <section class="section light-background">
-    <div class="container">
-      <div class="panel">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h4 mb-0">Detail activite</h2>
-          <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ path('front_activite_index') }}">Retour</a>
-            <a class="btn btn-primary" href="{{ path('front_activite_edit', {id: activite.id}) }}">Modifier</a>
-          </div>
-        </div>
-        <table class="table table-striped align-middle mb-0">
-          <tbody>
-            <tr><th>ID</th><td>{{ activite.id }}</td></tr>
-            <tr><th>Type</th><td>{{ activite.type }}</td></tr>
-            <tr><th>Duree</th><td>{{ activite.duree }} min</td></tr>
-            <tr><th>Calories</th><td>{{ activite.calories }}</td></tr>
-            <tr><th>Date activite</th><td>{{ activite.dateActivite ? activite.dateActivite|date('Y-m-d') : '' }}</td></tr>
-            <tr><th>Notes</th><td>{{ activite.notes ?: '-' }}</td></tr>
-          </tbody>
-        </table>
-        <form method="post" action="{{ path('front_activite_delete', {id: activite.id}) }}" onsubmit="return confirm('Supprimer cette activite ?');" class="mt-3">
-          <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ activite.id) }}">
-          <button class="btn btn-outline-danger">Delete</button>
-        </form>
-      </div>
-    </div>
-  </section>
-</main>
+  <main class="main">
+<div class="container py-5">
+  <h1 class="mb-4">{{ activite.type }}</h1>
+  <p><strong>Durée :</strong> {{ activite.duree }} min</p>
+  <p><strong>Calories :</strong> {{ activite.calories }}</p>
+  <p><strong>Date :</strong> {{ activite.dateActivite ? activite.dateActivite|date('d/m/Y') : '' }}</p>
+  <a class="btn btn-primary" href="{{ path('front_activite_edit', {id: activite.id}) }}">Éditer</a>
+  <a class="btn btn-outline-secondary" href="{{ path('front_activite_index') }}">Retour</a>
+</div>
+  </main>
 {% endblock %}

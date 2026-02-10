@@ -1,0 +1,243 @@
+{% extends 'back/base.html.twig' %}
+
+{% block page_title %}Vue globale - États de santé{% endblock %}
+{% block page_subtitle %}Synthèse des états de santé des patients{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+
+  <div class="alert alert-light border mb-4 small" role="region" aria-label="Définition">
+    <strong>Qu’est-ce que l’état de santé ?</strong><br>
+    Ce sont les <strong>relevés</strong> enregistrés par les <strong>patients</strong> : indicateurs comme le poids, la glycémie, la tension artérielle, la température, etc. Chaque relevé contient un type, une valeur et une unité, avec la date du jour. Cette vue ne concerne que les patients (pas les coachs ni les admins).
+  </div>
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <h2 class="mb-0">Vue globale des états de santé (patients)</h2>
+    <a href="{{ path('admin_etat_index') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-list-ul me-1"></i> Liste des relevés
+    </a>
+  </div>
+
+  {# 4 KPI #}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-primary bg-opacity-10 text-primary p-2">
+            <i class="bi bi-heart-pulse fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.totalEtats|default(0) }}</div>
+            <div class="text-muted small">Total relevés</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-success bg-opacity-10 text-success p-2">
+            <i class="bi bi-people fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ nbPatients|default(0) }}</div>
+            <div class="text-muted small">Patients avec suivi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-warning bg-opacity-10 text-warning p-2">
+            <i class="bi bi-tags fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.nbTypes|default(0) }}</div>
+            <div class="text-muted small">Types de suivi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-danger bg-opacity-10 text-danger p-2">
+            <i class="bi bi-exclamation-triangle fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ valueAnomalies|length }}</div>
+            <div class="text-muted small">Alertes valeurs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Courbe + Répartition par type #}
+  <div class="row g-3 mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-2">
+          <h6 class="mb-0">Relevés par jour (7 derniers jours)</h6>
+        </div>
+        <div class="card-body">
+          <canvas id="chartEtatByDay" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-2">
+          <h6 class="mb-0">Répartition par type</h6>
+        </div>
+        <div class="card-body">
+          {% for row in trendByType %}
+            <div class="d-flex justify-content-between align-items-center small mb-2">
+              <span>{{ row.type }}</span>
+              <span class="badge bg-light text-dark">{{ row.nb }}</span>
+            </div>
+            <div class="progress mb-2" style="height: 6px;">
+              <div class="progress-bar" style="width: {{ (globalStats.totalEtats > 0 ? (row.nb / globalStats.totalEtats * 100) : 0)|round(1) }}%;"></div>
+            </div>
+          {% else %}
+            <p class="text-muted small mb-0">Aucune donnée</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Alertes #}
+  <div class="row g-3 mb-4">
+    {% if valueAnomalies|length > 0 %}
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm border-danger">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-2">
+          <h6 class="mb-0 text-danger">Valeurs hors norme</h6>
+          <span class="badge bg-danger">{{ valueAnomalies|length }}</span>
+        </div>
+        <div class="card-body py-2">
+          <ul class="list-unstyled mb-0 small">
+            {% for a in valueAnomalies|slice(0, 8) %}
+              <li class="py-1 border-bottom border-light">
+                <strong>{{ a.prenom }} {{ a.nom }}</strong> — {{ a.type }}: {{ a.valeur }} {{ a.unite }}
+                <span class="text-muted">({{ a.dateReleve is defined and a.dateReleve ? a.dateReleve|date('d/m/Y') : '' }})</span>
+              </li>
+            {% endfor %}
+          </ul>
+          {% if valueAnomalies|length > 8 %}
+            <p class="text-muted small mb-0 mt-2">+ {{ valueAnomalies|length - 8 }} autre(s)</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if inactivityAlerts|length > 0 %}
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm border-warning">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-2">
+          <h6 class="mb-0 text-warning">Pas de relevé récent (7 j)</h6>
+          <span class="badge bg-warning text-dark">{{ inactivityAlerts|length }}</span>
+        </div>
+        <div class="card-body py-2">
+          <ul class="list-unstyled mb-0 small">
+            {% for a in inactivityAlerts|slice(0, 8) %}
+              <li class="py-1 border-bottom border-light">
+                <strong>{{ a.prenom }} {{ a.nom }}</strong>
+                {% if a.lastReleve %}
+                  <span class="text-muted">Dernier: {{ a.lastReleve|date('d/m/Y') }}</span>
+                {% else %}
+                  <span class="text-muted">Aucun relevé</span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {# Synthèse par patient #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+      <h6 class="mb-0">État de santé par patient</h6>
+      <a href="{{ path('admin_etat_index') }}" class="btn btn-outline-secondary btn-sm">Voir tous les relevés</a>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Patient</th>
+              <th>Nb relevés</th>
+              <th>Moyenne valeur</th>
+              <th>Derniers indicateurs</th>
+              <th class="text-end">Fiche</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in derniersParPatient %}
+              <tr>
+                <td>
+                  <span class="fw-medium">{{ p.prenom }} {{ p.nom }}</span>
+                </td>
+                <td>{{ p.nb }}</td>
+                <td>{{ p.moyenneValeur|number_format(1) }}</td>
+                <td class="small">
+                  {% for type, val in p.derniersParType|slice(0, 4) %}
+                    <span class="badge bg-light text-dark me-1">{{ type }}: {{ val.valeur }} {{ val.unite }}</span>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endfor %}
+                </td>
+                <td class="text-end">
+                  <a href="{{ path('admin_etat_index') }}" class="btn btn-sm btn-outline-primary">Relevés</a>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5" class="text-center text-muted py-4">Aucun patient avec des relevés.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+  var labels = {{ chartLabels|default([])|json_encode|raw }};
+  var data = {{ chartData|default([])|json_encode|raw }};
+  var ctx = document.getElementById('chartEtatByDay');
+  if (ctx && labels.length) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Relevés',
+          data: data,
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

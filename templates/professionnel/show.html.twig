@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ professionnel.prenom }} {{ professionnel.nom }} - Chronic Care{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main py-5">
+    <div class="container">
+      <a href="{{ path('professionnels_list') }}" class="btn btn-outline-secondary mb-3">&larr; Retour</a>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="mb-2">{{ professionnel.prenom }} {{ professionnel.nom }}</h2>
+          <p class="text-muted">{{ professionnel.email }}</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h5>Créneaux disponibles</h5>
+          {% if slots is empty %}
+            <p class="text-muted mb-0">Aucun créneau disponible prochainement.</p>
+          {% else %}
+            <ul class="list-group list-group-flush">
+              {% for slot in slots|slice(0, 10) %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  {{ slot|date('d/m/Y H:i') }}
+                  {% if app.user and is_granted('ROLE_USER') %}
+                    <a class="btn btn-primary btn-sm" href="{{ path('patient_rdv_new', { id: professionnel.id }) }}">Prendre RDV</a>
+                  {% else %}
+                    <a class="btn btn-primary btn-sm" href="{{ path('connexion') }}">Se connecter pour réserver</a>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

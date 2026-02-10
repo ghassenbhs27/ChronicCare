@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Suivi {{ commande.numeroCommande }} - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
+
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
+
+<main class="main">
+  <div class="page-title">
+    <div class="container">
+      <h1>Suivi de commande</h1>
+      <p>Commande {{ commande.numeroCommande }}</p>
+    </div>
+  </div>
+
+  <section class="services section light-background">
+    <div class="container">
+      <div class="card">
+        <div class="card-body">
+          <p><strong>Statut:</strong> <span class="badge bg-primary">{{ commande.statut }}</span></p>
+          <p><strong>Total:</strong> {{ commande.total }} €</p>
+          <p><strong>Date:</strong> {{ commande.createdAt|date('d/m/Y H:i') }}</p>
+          <a href="{{ path('commande_history') }}" class="btn btn-outline-secondary">Retour</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include 'partials/_footer.html.twig' %}
+{% endblock %}

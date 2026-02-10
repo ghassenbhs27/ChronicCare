@@ -37,7 +37,7 @@ class EtatType extends AbstractType
             ->add('utilisateur', EntityType::class, [
                 'class' => User::class,
                 'required' => false,
-                'choice_label' => 'id', // change to 'email' or 'nom' if exists
+                'choice_label' => fn (User $u) => $u->getFullName(),
                 'attr' => ['class' => 'form-select'],
                 'label_attr' => ['class' => 'form-label fw-semibold'],
             ]);

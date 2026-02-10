@@ -53,12 +53,12 @@ class EtatFrontController extends AbstractController
 
             $em->persist($etat);
             $em->flush();
-            $this->addFlash('success', 'Etat ajoute avec succes.');
+            $this->addFlash('success', 'État ajouté avec succès.');
 
             return $this->redirectToRoute('front_etat_index');
         }
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('danger', 'Enregistrement impossible: verifiez les champs.');
+            $this->addFlash('danger', 'Enregistrement impossible : vérifiez les champs.');
         }
 
         return $this->render('front/etat/new.html.twig', [
@@ -81,11 +81,12 @@ class EtatFrontController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $em->flush();
-            $this->addFlash('success', 'Etat modifie avec succes.');
+            $this->addFlash('success', 'État modifié avec succès.');
+
             return $this->redirectToRoute('front_etat_index');
         }
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('danger', 'Modification impossible: verifiez les champs.');
+            $this->addFlash('danger', 'Modification impossible : vérifiez les champs.');
         }
 
         return $this->render('front/etat/edit.html.twig', [
@@ -97,12 +98,12 @@ class EtatFrontController extends AbstractController
     #[Route('/{id}', name: 'front_etat_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(Request $request, Etat $etat, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$etat->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $etat->getId(), $request->request->get('_token'))) {
             $em->remove($etat);
             $em->flush();
-            $this->addFlash('success', 'Etat supprime avec succes.');
+            $this->addFlash('success', 'État supprimé avec succès.');
         } else {
-            $this->addFlash('danger', 'Token CSRF invalide: suppression refusee.');
+            $this->addFlash('danger', 'Token CSRF invalide : suppression refusée.');
         }
 
         return $this->redirectToRoute('front_etat_index');
@@ -116,7 +117,7 @@ class EtatFrontController extends AbstractController
         $dir = $request->query->get('dir', 'DESC');
         $etats = $repo->searchAndSort($q, $sort, $dir);
 
-        $rows = ["ID;Type;Valeur;Unite;Date Releve;Utilisateur"];
+        $rows = ['ID;Type;Valeur;Unite;Date Releve;Utilisateur'];
         foreach ($etats as $etat) {
             $rows[] = implode(';', [
                 $etat->getId(),
@@ -128,11 +129,11 @@ class EtatFrontController extends AbstractController
             ]);
         }
 
-        $content = "\xEF\xBB\xBF".implode("\n", $rows);
+        $content = "\xEF\xBB\xBF" . implode("\n", $rows);
         $response = new Response($content);
         $disposition = $response->headers->makeDisposition(
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            'etat-export-'.date('Ymd-His').'.csv'
+            'etat-export-' . date('Ymd-His') . '.csv'
         );
         $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
         $response->headers->set('Content-Disposition', $disposition);
@@ -149,9 +150,9 @@ class EtatFrontController extends AbstractController
         $etats = $repo->searchAndSort($q, $sort, $dir);
 
         $widths = [6, 34, 14, 16, 18];
-        $lines = ['Export Etats - '.date('Y-m-d H:i')];
+        $lines = ['Export États - ' . date('Y-m-d H:i')];
         $lines[] = $this->pdfTableLine($widths);
-        $lines[] = $this->pdfTableRow(['ID', 'Type', 'Valeur', 'Unite', 'Date releve'], $widths);
+        $lines[] = $this->pdfTableRow(['ID', 'Type', 'Valeur', 'Unite', 'Date relevé'], $widths);
         $lines[] = $this->pdfTableLine($widths);
         foreach ($etats as $etat) {
             $lines[] = $this->pdfTableRow(
@@ -171,7 +172,7 @@ class EtatFrontController extends AbstractController
         $response = new Response($pdfContent);
         $disposition = $response->headers->makeDisposition(
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            'etat-export-'.date('Ymd-His').'.pdf'
+            'etat-export-' . date('Ymd-His') . '.pdf'
         );
         $response->headers->set('Content-Type', 'application/pdf');
         $response->headers->set('Content-Disposition', $disposition);
@@ -185,7 +186,7 @@ class EtatFrontController extends AbstractController
         $user = new User();
         $user->setNom('Patient');
         $user->setPrenom('Temporaire');
-        $user->setEmail('patient-temp-'.$stamp.'@local.chroniccare');
+        $user->setEmail('patient-temp-' . $stamp . '@local.chroniccare');
         $user->setPassword('temporary-password');
         $user->setRoles(['ROLE_PATIENT']);
         $em->persist($user);
@@ -199,46 +200,46 @@ class EtatFrontController extends AbstractController
         $value = $value ?? '';
         $escaped = str_replace('"', '""', $value);
 
-        return '"'.$escaped.'"';
+        return '"' . $escaped . '"';
     }
 
     private function generateSimplePdf(array $lines): string
     {
-        $contentLines = ["BT", "/F1 10 Tf"];
+        $contentLines = ['BT', '/F1 10 Tf'];
         $y = 800;
         foreach ($lines as $line) {
             if ($y < 40) {
                 break;
             }
             $safeLine = $this->escapePdfText($line);
-            $contentLines[] = sprintf("1 0 0 1 40 %d Tm (%s) Tj", $y, $safeLine);
+            $contentLines[] = sprintf('1 0 0 1 40 %d Tm (%s) Tj', $y, $safeLine);
             $y -= 14;
         }
-        $contentLines[] = "ET";
+        $contentLines[] = 'ET';
         $stream = implode("\n", $contentLines);
 
         $objects = [
-            1 => "<< /Type /Catalog /Pages 2 0 R >>",
-            2 => "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            3 => "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
-            4 => "<< /Length ".strlen($stream)." >>\nstream\n".$stream."\nendstream",
-            5 => "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>",
+            1 => '<< /Type /Catalog /Pages 2 0 R >>',
+            2 => '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+            3 => '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+            4 => '<< /Length ' . strlen($stream) . ' >>' . "\nstream\n" . $stream . "\nendstream",
+            5 => '<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>',
         ];
 
         $pdf = "%PDF-1.4\n";
         $offsets = [0];
         foreach ($objects as $id => $body) {
             $offsets[$id] = strlen($pdf);
-            $pdf .= $id." 0 obj\n".$body."\nendobj\n";
+            $pdf .= $id . " 0 obj\n" . $body . "\nendobj\n";
         }
         $xrefOffset = strlen($pdf);
-        $pdf .= "xref\n0 ".(count($objects) + 1)."\n";
+        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
         $pdf .= "0000000000 65535 f \n";
         for ($i = 1; $i <= count($objects); $i++) {
             $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
         }
-        $pdf .= "trailer\n<< /Size ".(count($objects) + 1)." /Root 1 0 R >>\n";
-        $pdf .= "startxref\n".$xrefOffset."\n%%EOF";
+        $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . ' /Root 1 0 R >>' . "\n";
+        $pdf .= 'startxref' . "\n" . $xrefOffset . "\n%%EOF";
 
         return $pdf;
     }
@@ -261,7 +262,7 @@ class EtatFrontController extends AbstractController
             $cells[] = str_pad($text, $width, ' ');
         }
 
-        return '|'.implode('|', $cells).'|';
+        return '|' . implode('|', $cells) . '|';
     }
 
     private function pdfTableLine(array $widths): string
@@ -271,6 +272,6 @@ class EtatFrontController extends AbstractController
             $widths
         );
 
-        return '+'.implode('+', $segments).'+';
+        return '+' . implode('+', $segments) . '+';
     }
 }

@@ -1,0 +1,88 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}{{ evenement.titre }} - Chronic Care{% endblock %}
+{% block page_title %}{{ evenement.titre }}{% endblock %}
+{% block page_subtitle %}Détail événement, participants et export{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <a href="{{ path('admin_evenement_index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Liste des événements
+    </a>
+    <div class="d-flex gap-2">
+      {% if evenement.isEnAttente %}
+        <form action="{{ path('admin_evenement_valider', { id: evenement.id }) }}" method="post" class="d-inline">
+          <input type="hidden" name="_token" value="{{ csrf_token('valider_evenement_' ~ evenement.id) }}">
+          <button type="submit" class="btn btn-success btn-sm">Valider</button>
+        </form>
+        <form action="{{ path('admin_evenement_refuser', { id: evenement.id }) }}" method="post" class="d-inline">
+          <input type="hidden" name="_token" value="{{ csrf_token('refuser_evenement_' ~ evenement.id) }}">
+          <button type="submit" class="btn btn-outline-danger btn-sm">Refuser</button>
+        </form>
+      {% endif %}
+      <a href="{{ path('admin_evenement_export_participants', { id: evenement.id }) }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-download me-1"></i> Export liste participants (CSV)
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4 mb-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Statut</p>
+          {% if evenement.statut == 'en_attente' %}
+            <span class="badge bg-warning text-dark">En attente</span>
+          {% elseif evenement.statut == 'valide' %}
+            <span class="badge bg-success">Validé</span>
+          {% else %}
+            <span class="badge bg-secondary">Refusé</span>
+          {% endif %}
+          <hr>
+          <p class="mb-1"><strong>Coach</strong> {{ evenement.coach ? evenement.coach.fullName : '—' }}</p>
+          <p class="mb-1"><strong>Lieu</strong> {{ evenement.lieu }}</p>
+          <p class="mb-1"><strong>Début</strong> {{ evenement.dateDebut|date('d/m/Y H:i') }}</p>
+          <p class="mb-0"><strong>Fin</strong> {{ evenement.dateFin|date('d/m/Y H:i') }}</p>
+          <hr>
+          <p class="small text-muted mb-0">{{ evenement.description }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-people me-2"></i>Participants ({{ inscriptions|length }})</h5>
+          <a href="{{ path('admin_evenement_export_participants', { id: evenement.id }) }}" class="btn btn-sm btn-outline-success">Export CSV</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Prénom</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Inscription</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for i in inscriptions %}
+                <tr>
+                  <td>{{ i.prenom }}</td>
+                  <td>{{ i.nom }}</td>
+                  <td>{{ i.email }}</td>
+                  <td>{{ i.telephone ?? '—' }}</td>
+                  <td class="small">{{ i.createdAt|date('d/m/Y H:i') }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Aucun participant.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

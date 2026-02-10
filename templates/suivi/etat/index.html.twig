@@ -1,221 +1,188 @@
-{% extends 'base.html.twig' %}
+{% extends 'back/base.html.twig' %}
 
-{% block title %}Administration - Analyse Etats{% endblock %}
-
-{% block stylesheets %}
-  {{ parent() }}
-  <style>
-    .header-spacer { height: 80px; }
-    @media (max-width: 768px) { .header-spacer { height: 110px; } }
-    .auth-section { position: relative; overflow: hidden; }
-    .auth-section::before,
-    .auth-section::after { content: ""; position: absolute; border-radius: 999px; z-index: 0; }
-    .auth-section::before {
-      width: 320px; height: 320px; top: -140px; right: -140px;
-      background: color-mix(in srgb, var(--accent-color), transparent 85%);
-    }
-    .auth-section::after {
-      width: 240px; height: 240px; bottom: -120px; left: -110px;
-      background: color-mix(in srgb, var(--heading-color), transparent 90%);
-    }
-    .auth-card {
-      position: relative; z-index: 1; background: var(--surface-color);
-      border-radius: 20px; padding: 2rem;
-      border: 1px solid color-mix(in srgb, var(--default-color), transparent 85%);
-      box-shadow: 0 20px 40px rgba(16, 24, 40, 0.08);
-    }
-    .kpi {
-      border: 1px solid color-mix(in srgb, var(--default-color), transparent 84%);
-      border-radius: 12px; padding: .9rem; height: 100%;
-    }
-  </style>
-{% endblock %}
+{% block page_title %}États de santé (patients){% endblock %}
+{% block page_subtitle %}Relevés de suivi des patients uniquement{% endblock %}
 
 {% block body %}
-<header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
-    <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0"><h1 class="sitename">Chronic Care</h1></a>
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{{ path('index') }}">Accueil</a></li>
-        <li><a href="{{ path('admin_activite_index') }}">Activites</a></li>
-        <li><a href="{{ path('admin_etat_index') }}" class="active">Etats</a></li>
-      </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-    </nav>
-    <div class="d-flex gap-2 align-items-center">
-      <a class="btn-getstarted" href="{{ path('index') }}">Retour site</a>
-      <a class="btn-getstarted" href="{{ path('admin_etat_new') }}">Nouvel etat</a>
-    </div>
-  </div>
-</header>
+<div class="container-fluid">
 
-<div class="header-spacer"></div>
+  <p class="text-muted small mb-3">
+    <strong>État de santé</strong> = relevé enregistré par un patient (poids, glycémie, tension, température…). Seuls les relevés des comptes <strong>patients</strong> sont affichés ici.
+  </p>
 
-<main class="main">
-  <section class="auth-section section light-background">
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-12">
-          <div class="auth-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h2 class="mb-0">Analyse des Etats de Sante</h2>
-            </div>
-
-            <form method="get" class="row g-2 mb-3">
-              <div class="col-md-6">
-                <input type="text" name="q" value="{{ q ?? '' }}" class="form-control" placeholder="Rechercher (type, unite)...">
-              </div>
-              <div class="col-md-3">
-                {% set s = sort ?? 'dateReleve' %}
-                <select name="sort" class="form-select">
-                  <option value="dateReleve" {{ s == 'dateReleve' ? 'selected' : '' }}>Date releve</option>
-                  <option value="type" {{ s == 'type' ? 'selected' : '' }}>Type</option>
-                  <option value="valeur" {{ s == 'valeur' ? 'selected' : '' }}>Valeur</option>
-                  <option value="unite" {{ s == 'unite' ? 'selected' : '' }}>Unite</option>
-                  <option value="id" {{ s == 'id' ? 'selected' : '' }}>ID</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                {% set d = dir ?? 'DESC' %}
-                <select name="dir" class="form-select">
-                  <option value="DESC" {{ d == 'DESC' ? 'selected' : '' }}>DESC</option>
-                  <option value="ASC" {{ d == 'ASC' ? 'selected' : '' }}>ASC</option>
-                </select>
-              </div>
-              <div class="col-12">
-                <button class="btn btn-primary" type="submit">Filtrer</button>
-                <a class="btn btn-outline-secondary" href="{{ path('admin_etat_index') }}">Reset</a>
-              </div>
-            </form>
-
-            <div class="row g-3 mb-4">
-              <div class="col-md-4"><div class="kpi"><div class="text-muted small">Etats enregistres</div><div class="h4 mb-0">{{ globalStats.totalEtats|default(0) }}</div></div></div>
-              <div class="col-md-4"><div class="kpi"><div class="text-muted small">Moyenne des valeurs</div><div class="h4 mb-0">{{ globalStats.moyenneValeur|default(0)|number_format(2, '.', ' ') }}</div></div></div>
-              <div class="col-md-4"><div class="kpi"><div class="text-muted small">Types suivis</div><div class="h4 mb-0">{{ globalStats.nbTypes|default(0) }}</div></div></div>
-            </div>
-
-            <div class="row g-3 mb-4">
-              <div class="col-lg-6">
-                <h5 class="mb-2">Tendances par type</h5>
-                <div class="table-responsive">
-                  <table class="table table-sm table-striped align-middle">
-                    <thead><tr><th>Type</th><th>Nb</th><th>Moyenne</th><th>Min</th><th>Max</th></tr></thead>
-                    <tbody>
-                    {% for row in trendByType %}
-                      <tr>
-                        <td>{{ row.type }}</td>
-                        <td>{{ row.nb }}</td>
-                        <td>{{ row.moyenne|number_format(2, '.', ' ') }}</td>
-                        <td>{{ row.minValeur|number_format(2, '.', ' ') }}</td>
-                        <td>{{ row.maxValeur|number_format(2, '.', ' ') }}</td>
-                      </tr>
-                    {% else %}
-                      <tr><td colspan="5">Aucune tendance.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div class="col-lg-6">
-                <h5 class="mb-2">Comparaison utilisateurs</h5>
-                <div class="table-responsive">
-                  <table class="table table-sm table-striped align-middle">
-                    <thead><tr><th>Utilisateur</th><th>Nb</th><th>Moyenne</th></tr></thead>
-                    <tbody>
-                    {% for row in userComparison %}
-                      <tr>
-                        <td>{{ row.userId ? (row.prenom ~ ' ' ~ row.nom ~ ' (#' ~ row.userId ~ ')') : 'Non associe' }}</td>
-                        <td>{{ row.nb }}</td>
-                        <td>{{ row.moyenneValeur|number_format(2, '.', ' ') }}</td>
-                      </tr>
-                    {% else %}
-                      <tr><td colspan="3">Aucune comparaison.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            <div class="row g-3 mb-4">
-              <div class="col-lg-6">
-                <h5 class="mb-2">Anomalies de valeurs detectees</h5>
-                <div class="table-responsive">
-                  <table class="table table-sm table-striped align-middle">
-                    <thead><tr><th>ID</th><th>Type</th><th>Valeur</th><th>Utilisateur</th></tr></thead>
-                    <tbody>
-                    {% for row in valueAnomalies %}
-                      <tr>
-                        <td>#{{ row.id }}</td>
-                        <td>{{ row.type }}</td>
-                        <td>{{ row.valeur|number_format(2, '.', ' ') }} {{ row.unite }}</td>
-                        <td>{{ row.userId ? (row.prenom ~ ' ' ~ row.nom) : 'Non associe' }}</td>
-                      </tr>
-                    {% else %}
-                      <tr><td colspan="4">Aucune anomalie.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div class="col-lg-6">
-                <h5 class="mb-2">Inactivite > 7 jours</h5>
-                <div class="table-responsive">
-                  <table class="table table-sm table-striped align-middle">
-                    <thead><tr><th>Utilisateur</th><th>Dernier releve</th></tr></thead>
-                    <tbody>
-                    {% for row in inactivityAlerts %}
-                      <tr>
-                        <td>{{ row.prenom ~ ' ' ~ row.nom ~ ' (#' ~ row.userId ~ ')' }}</td>
-                        <td>{{ row.lastReleve ? row.lastReleve|date('Y-m-d') : 'Aucun releve' }}</td>
-                      </tr>
-                    {% else %}
-                      <tr><td colspan="2">Aucune inactivite detectee.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            <h5 class="mb-2">Liste des etats</h5>
-            <div class="table-responsive">
-              <table class="table table-striped align-middle mb-0">
-                <thead>
-                  <tr>
-                    <th>ID</th><th>Type</th><th>Valeur</th><th>Unite</th><th>Date releve</th><th>Utilisateur</th><th class="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for e in etats %}
-                    <tr>
-                      <td>{{ e.id }}</td>
-                      <td>{{ e.type }}</td>
-                      <td>{{ e.valeur }}</td>
-                      <td>{{ e.unite }}</td>
-                      <td>{{ e.dateReleve ? e.dateReleve|date('Y-m-d') : '' }}</td>
-                      <td>{{ e.utilisateur ? e.utilisateur.id : '' }}</td>
-                      <td class="text-end">
-                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_etat_show', {id: e.id}) }}">Voir</a>
-                        <a class="btn btn-sm btn-outline-primary" href="{{ path('admin_etat_edit', {id: e.id}) }}">Edit</a>
-                        <form method="post" action="{{ path('admin_etat_delete', {id: e.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer cet etat ?');">
-                          <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ e.id) }}">
-                          <button class="btn btn-sm btn-outline-danger">Delete</button>
-                        </form>
-                      </td>
-                    </tr>
-                  {% else %}
-                    <tr><td colspan="7">Aucun etat.</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-
+  {# Stats courtes (4 KPI) #}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-primary bg-opacity-10 text-primary p-2">
+            <i class="bi bi-heart-pulse fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.totalEtats|default(0) }}</div>
+            <div class="text-muted small">Total relevés</div>
           </div>
         </div>
       </div>
     </div>
-  </section>
-</main>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-success bg-opacity-10 text-success p-2">
+            <i class="bi bi-graph-up fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.moyenneValeur|default(0)|number_format(1) }}</div>
+            <div class="text-muted small">Moyenne valeur</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-warning bg-opacity-10 text-warning p-2">
+            <i class="bi bi-tags fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.nbTypes|default(0) }}</div>
+            <div class="text-muted small">Types de suivi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-info bg-opacity-10 text-info p-2">
+            <i class="bi bi-calendar-week fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ chartData|default([])|reduce((a,b) => a + b, 0) }}</div>
+            <div class="text-muted small">Relevés (7 j)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Courbe : relevés par jour (7j) #}
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-2">
+          <h6 class="mb-0">Relevés par jour (7 derniers jours)</h6>
+        </div>
+        <div class="card-body">
+          <canvas id="chartEtatByDay" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-2">
+          <h6 class="mb-0">Par type</h6>
+        </div>
+        <div class="card-body">
+          {% for row in trendByType %}
+            <div class="d-flex justify-content-between align-items-center small mb-2">
+              <span>{{ row.type }}</span>
+              <span class="badge bg-light text-dark">{{ row.nb }} (moy. {{ row.moyenne|number_format(1) }})</span>
+            </div>
+            <div class="progress mb-2" style="height: 6px;">
+              <div class="progress-bar" style="width: {{ (globalStats.totalEtats > 0 ? (row.nb / globalStats.totalEtats * 100) : 0)|round(1) }}%;"></div>
+            </div>
+          {% else %}
+            <p class="text-muted small mb-0">Aucune donnée</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Liste + filtres #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <form method="get" class="row g-2 mb-3">
+        <div class="col-md-6"><input type="text" name="q" value="{{ q ?? '' }}" class="form-control form-control-sm" placeholder="Rechercher (type, unité)..."></div>
+        <div class="col-md-2"><select name="sort" class="form-select form-select-sm">
+          <option value="dateReleve" {{ (sort ?? '') == 'dateReleve' ? 'selected' : '' }}>Date</option>
+          <option value="type" {{ (sort ?? '') == 'type' ? 'selected' : '' }}>Type</option>
+          <option value="valeur" {{ (sort ?? '') == 'valeur' ? 'selected' : '' }}>Valeur</option>
+        </select></div>
+        <div class="col-md-2"><select name="dir" class="form-select form-select-sm">
+          <option value="DESC" {{ (dir ?? 'DESC') == 'DESC' ? 'selected' : '' }}>Desc</option>
+          <option value="ASC" {{ (dir ?? '') == 'ASC' ? 'selected' : '' }}>Asc</option>
+        </select></div>
+        <div class="col-md-2">
+          <button class="btn btn-primary btn-sm" type="submit">Filtrer</button>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ path('admin_etat_new') }}"><i class="bi bi-plus"></i></a>
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+          <thead class="table-light"><tr><th>ID</th><th>Type</th><th>Valeur</th><th>Unité</th><th>Date</th><th>Utilisateur</th><th></th></tr></thead>
+          <tbody>
+          {% for e in etats %}
+            <tr>
+              <td>{{ e.id }}</td>
+              <td>{{ e.type }}</td>
+              <td>{{ e.valeur }}</td>
+              <td>{{ e.unite }}</td>
+              <td>{{ e.dateReleve ? e.dateReleve|date('d/m/Y') : '-' }}</td>
+              <td>{{ e.utilisateur ? (e.utilisateur.prenom ~ ' ' ~ e.utilisateur.nom) : '-' }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="{{ path('admin_etat_show', {id: e.id}) }}">Voir</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_etat_edit', {id: e.id}) }}">Éditer</a>
+                <form class="d-inline" method="post" action="{{ path('admin_etat_delete', {id: e.id}) }}" onsubmit="return confirm('Supprimer ?');">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ e.id) }}">
+                  <button class="btn btn-sm btn-outline-danger">Supp.</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7" class="text-center text-muted">Aucun relevé.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+  var labels = {{ chartLabels|default([])|json_encode|raw }};
+  var data = {{ chartData|default([])|json_encode|raw }};
+  var ctx = document.getElementById('chartEtatByDay');
+  if (ctx && labels.length) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Relevés',
+          data: data,
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+})();
+</script>
 {% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commander - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
+
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
+
+<main class="main">
+  <div class="page-title">
+    <div class="container">
+      <h1>Finaliser la commande</h1>
+    </div>
+  </div>
+
+  <section class="services section light-background">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="card mb-4">
+            <div class="card-header"><h5 class="mb-0">Récapitulatif</h5></div>
+            <div class="card-body">
+              <table class="table table-sm">
+                <thead><tr><th>Produit</th><th>Qté</th><th>Prix</th><th>Total</th></tr></thead>
+                <tbody>
+                  {% for item in cart %}
+                  <tr>
+                    <td>{{ item.nom }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.prix }} €</td>
+                    <td>{{ (item.prix * item.quantity)|number_format(2, ',', ' ') }} €</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <form method="post" class="card">
+            <input type="hidden" name="_token" value="{{ csrf_token('checkout') }}">
+            <div class="card-header"><h5 class="mb-0">Livraison & Paiement</h5></div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label">Adresse de livraison <span class="text-danger">*</span></label>
+                <textarea name="adresse" class="form-control" rows="2" required placeholder="Rue, code postal, ville..."></textarea>
+              </div>
+              <hr>
+              <h6>Paiement</h6>
+              <div class="mb-3">
+                <label class="form-label">Nom sur la carte</label>
+                <input type="text" name="cardHolder" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Numéro de carte</label>
+                <input type="text" name="cardNumber" class="form-control" placeholder="1234 5678 9012 3456" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">CVV</label>
+                <input type="text" name="cvv" class="form-control" placeholder="123" maxlength="4" required>
+              </div>
+              <button type="submit" class="btn btn-success btn-lg w-100">Payer {{ total|number_format(2, ',', ' ') }} €</button>
+            </div>
+          </form>
+        </div>
+        <div class="col-lg-4">
+          <div class="card sticky-top">
+            <div class="card-body">
+              <h5>Total: {{ total|number_format(2, ',', ' ') }} €</h5>
+              <a href="{{ path('cart_show') }}" class="btn btn-outline-secondary w-100 mt-2">Modifier le panier</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include 'partials/_footer.html.twig' %}
+{% endblock %}

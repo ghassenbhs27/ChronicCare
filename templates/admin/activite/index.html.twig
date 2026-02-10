@@ -1,290 +1,178 @@
-{% extends 'base.html.twig' %}
+{% extends 'back/base.html.twig' %}
 
-{% block title %}Administration - Activites{% endblock %}
-
-{% block stylesheets %}
-  {{ parent() }}
-  <style>
-    .header-spacer {
-      height: 80px;
-    }
-
-    @media (max-width: 768px) {
-      .header-spacer {
-        height: 110px;
-      }
-    }
-
-    .auth-section {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .auth-section::before,
-    .auth-section::after {
-      content: "";
-      position: absolute;
-      border-radius: 999px;
-      z-index: 0;
-    }
-
-    .auth-section::before {
-      width: 320px;
-      height: 320px;
-      top: -140px;
-      right: -140px;
-      background: color-mix(in srgb, var(--accent-color), transparent 85%);
-    }
-
-    .auth-section::after {
-      width: 240px;
-      height: 240px;
-      bottom: -120px;
-      left: -110px;
-      background: color-mix(in srgb, var(--heading-color), transparent 90%);
-    }
-
-    .auth-card {
-      position: relative;
-      z-index: 1;
-      background: var(--surface-color);
-      border-radius: 20px;
-      padding: 2rem;
-      border: 1px solid color-mix(in srgb, var(--default-color), transparent 85%);
-      box-shadow: 0 20px 40px rgba(16, 24, 40, 0.08);
-    }
-
-    .admin-title {
-      margin: 0;
-      color: var(--heading-color);
-    }
-  </style>
-{% endblock %}
+{% block page_title %}Activités{% endblock %}
+{% block page_subtitle %}Statistiques et liste des activités{% endblock %}
 
 {% block body %}
-<header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
-    <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0">
-      <svg class="my-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g id="iconCarrier">
-          <path d="M22 22L2 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-          <path d="M17 22V6C17 4.11438 17 3.17157 16.4142 2.58579C15.8284 2 14.8856 2 13 2H11C9.11438 2 8.17157 2 7.58579 2.58579C7 3.17157 7 4.11438 7 6V22" stroke="currentColor" stroke-width="1.5"></path>
-          <path opacity="0.5" d="M21 22V8.5C21 7.09554 21 6.39331 20.6629 5.88886C20.517 5.67048 20.3295 5.48298 20.1111 5.33706C19.6067 5 18.9045 5 17.5 5" stroke="currentColor" stroke-width="1.5"></path>
-          <path opacity="0.5" d="M3 22V8.5C3 7.09554 3 6.39331 3.33706 5.88886C3.48298 5.67048 3.67048 5.48298 3.88886 5.33706C4.39331 5 5.09554 5 6.5 5" stroke="currentColor" stroke-width="1.5"></path>
-          <path d="M12 22V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-        </g>
-      </svg>
-      <h1 class="sitename">Chronic Care</h1>
-    </a>
+<div class="container-fluid">
 
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{{ path('index') }}">Accueil</a></li>
-        <li><a href="{{ path('admin_activite_index') }}" class="active">Activites</a></li>
-        <li><a href="{{ path('admin_etat_index') }}">Etats</a></li>
-      </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-    </nav>
-
-    <div class="d-flex gap-2 align-items-center">
-      <a class="btn-getstarted" href="{{ path('index') }}">Retour site</a>
-      <a class="btn-getstarted" href="{{ path('admin_activite_new') }}">Nouvelle activite</a>
-    </div>
-  </div>
-</header>
-
-<div class="header-spacer"></div>
-
-<main class="main">
-  <section class="auth-section section light-background">
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-12">
-          <div class="auth-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h2 class="admin-title">Gestion des Activites</h2>
-            </div>
-
-            <form method="get" class="row g-2 mb-3">
-              <div class="col-md-6">
-                <input type="text" name="q" value="{{ q ?? '' }}" class="form-control" placeholder="Rechercher (type, notes)...">
-              </div>
-              <div class="col-md-3">
-                {% set s = sort ?? 'dateActivite' %}
-                <select name="sort" class="form-select">
-                  <option value="dateActivite" {{ s == 'dateActivite' ? 'selected' : '' }}>Date activite</option>
-                  <option value="type" {{ s == 'type' ? 'selected' : '' }}>Type</option>
-                  <option value="duree" {{ s == 'duree' ? 'selected' : '' }}>Duree</option>
-                  <option value="calories" {{ s == 'calories' ? 'selected' : '' }}>Calories</option>
-                  <option value="createdAt" {{ s == 'createdAt' ? 'selected' : '' }}>Cree le</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                {% set d = dir ?? 'DESC' %}
-                <select name="dir" class="form-select">
-                  <option value="DESC" {{ d == 'DESC' ? 'selected' : '' }}>DESC</option>
-                  <option value="ASC" {{ d == 'ASC' ? 'selected' : '' }}>ASC</option>
-                </select>
-              </div>
-              <div class="col-12">
-                <button class="btn btn-primary" type="submit">Filtrer</button>
-                <a class="btn btn-outline-secondary" href="{{ path('admin_activite_index') }}">Reset</a>
-              </div>
-              <div class="col-12">
-                <a class="btn btn-outline-success" href="{{ path('admin_activite_export_excel', { q: q ?? '', sort: s, dir: d }) }}">Export Excel</a>
-                <a class="btn btn-outline-dark" href="{{ path('admin_activite_export_pdf', { q: q ?? '', sort: s, dir: d }) }}">Export PDF</a>
-              </div>
-            </form>
-
-            <div class="row g-3 mb-4">
-              <div class="col-md-3">
-                <div class="border rounded-3 p-3 h-100">
-                  <div class="text-muted small">Activites totales</div>
-                  <div class="h4 mb-0">{{ globalStats.totalActivites|default(0) }}</div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="border rounded-3 p-3 h-100">
-                  <div class="text-muted small">Duree moyenne</div>
-                  <div class="h4 mb-0">{{ globalStats.moyenneDuree|default(0)|number_format(1, '.', ' ') }} min</div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="border rounded-3 p-3 h-100">
-                  <div class="text-muted small">Calories moyennes</div>
-                  <div class="h4 mb-0">{{ globalStats.moyenneCalories|default(0)|number_format(1, '.', ' ') }}</div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="border rounded-3 p-3 h-100">
-                  <div class="text-muted small">Calories totales</div>
-                  <div class="h4 mb-0">{{ globalStats.totalCalories|default(0) }}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="row g-3 mb-4">
-              <div class="col-lg-6">
-                <h5 class="mb-2">Tendances par type d'activite</h5>
-                <div class="table-responsive">
-                  <table class="table table-sm table-striped align-middle">
-                    <thead>
-                      <tr>
-                        <th>Type</th>
-                        <th>Nb</th>
-                        <th>Duree moy.</th>
-                        <th>Calories moy.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for row in trendByType %}
-                        <tr>
-                          <td>{{ row.type }}</td>
-                          <td>{{ row.nb }}</td>
-                          <td>{{ row.moyenneDuree|number_format(1, '.', ' ') }} min</td>
-                          <td>{{ row.moyenneCalories|number_format(1, '.', ' ') }}</td>
-                        </tr>
-                      {% else %}
-                        <tr><td colspan="4">Aucune tendance disponible.</td></tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div class="col-lg-6">
-                <h5 class="mb-2">Comparaison utilisateurs</h5>
-                <div class="table-responsive">
-                  <table class="table table-sm table-striped align-middle">
-                    <thead>
-                      <tr>
-                        <th>Utilisateur</th>
-                        <th>Nb</th>
-                        <th>Duree totale</th>
-                        <th>Calories totales</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for row in userComparison %}
-                        <tr>
-                          <td>{{ row.userId ? (row.prenom ~ ' ' ~ row.nom ~ ' (#' ~ row.userId ~ ')') : 'Non associe' }}</td>
-                          <td>{{ row.nb }}</td>
-                          <td>{{ row.totalDuree }} min</td>
-                          <td>{{ row.totalCalories }}</td>
-                        </tr>
-                      {% else %}
-                        <tr><td colspan="4">Aucune comparaison disponible.</td></tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            <h5 class="mb-2">Detection d'inactivite anormale (7 jours)</h5>
-            <div class="table-responsive mb-4">
-              <table class="table table-sm table-striped align-middle">
-                <thead>
-                  <tr>
-                    <th>Utilisateur</th>
-                    <th>Derniere activite</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for row in inactivityAlerts %}
-                    <tr>
-                      <td>{{ row.prenom ~ ' ' ~ row.nom ~ ' (#' ~ row.userId ~ ')' }}</td>
-                      <td>{{ row.lastActivity ? row.lastActivity|date('Y-m-d') : 'Aucune activite' }}</td>
-                    </tr>
-                  {% else %}
-                    <tr><td colspan="2">Aucune inactivite detectee.</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-
-            <div class="table-responsive">
-              <table class="table table-striped align-middle mb-0">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Type</th>
-                    <th>Duree</th>
-                    <th>Calories</th>
-                    <th>Date</th>
-                    <th>Utilisateur</th>
-                    <th>Cree le</th>
-                    <th class="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for a in activites %}
-                    <tr>
-                      <td>{{ a.id }}</td>
-                      <td>{{ a.type }}</td>
-                      <td>{{ a.duree }} min</td>
-                      <td>{{ a.calories }}</td>
-                      <td>{{ a.dateActivite ? a.dateActivite|date('Y-m-d') : '' }}</td>
-                      <td>{{ a.utilisateur ? a.utilisateur.id : '' }}</td>
-                      <td>{{ a.createdAt ? a.createdAt|date('Y-m-d H:i') : '' }}</td>
-                      <td class="text-end">
-                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_activite_show', {id: a.id}) }}">Voir</a>
-                        <a class="btn btn-sm btn-outline-primary" href="{{ path('admin_activite_edit', {id: a.id}) }}">Edit</a>
-                        <form method="post" action="{{ path('admin_activite_delete', {id: a.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer cette activite ?');">
-                          <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ a.id) }}">
-                          <button class="btn btn-sm btn-outline-danger">Delete</button>
-                        </form>
-                      </td>
-                    </tr>
-                  {% else %}
-                    <tr><td colspan="8">Aucune activite.</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+  {# Stats courtes (4 KPI) #}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-primary bg-opacity-10 text-primary p-2">
+            <i class="bi bi-activity fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.totalActivites|default(0) }}</div>
+            <div class="text-muted small">Total activités</div>
           </div>
         </div>
       </div>
     </div>
-  </section>
-</main>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-success bg-opacity-10 text-success p-2">
+            <i class="bi bi-clock fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.moyenneDuree|default(0)|round(0) }} min</div>
+            <div class="text-muted small">Durée moyenne</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-warning bg-opacity-10 text-warning p-2">
+            <i class="bi bi-fire fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.moyenneCalories|default(0)|round(0) }}</div>
+            <div class="text-muted small">Cal. moyenne</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-info bg-opacity-10 text-info p-2">
+            <i class="bi bi-graph-up fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.totalCalories|default(0) }}</div>
+            <div class="text-muted small">Total calories</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Courbe : activités par jour (7j) #}
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-2">
+          <h6 class="mb-0">Activités par jour (7 derniers jours)</h6>
+        </div>
+        <div class="card-body">
+          <canvas id="chartActiviteByDay" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-2">
+          <h6 class="mb-0">Par type</h6>
+        </div>
+        <div class="card-body">
+          {% for row in trendByType %}
+            <div class="d-flex justify-content-between align-items-center small mb-2">
+              <span>{{ row.type }}</span>
+              <span class="badge bg-light text-dark">{{ row.nb }}</span>
+            </div>
+            <div class="progress mb-2" style="height: 6px;">
+              <div class="progress-bar" style="width: {{ (globalStats.totalActivites > 0 ? (row.nb / globalStats.totalActivites * 100) : 0)|round(1) }}%;"></div>
+            </div>
+          {% else %}
+            <p class="text-muted small mb-0">Aucune donnée</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Liste + filtres #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <form method="get" class="row g-2 mb-3">
+        <div class="col-md-6"><input type="text" name="q" value="{{ q ?? '' }}" class="form-control form-control-sm" placeholder="Rechercher (type, notes)..."></div>
+        <div class="col-md-2"><select name="sort" class="form-select form-select-sm"><option value="dateActivite" {{ (sort ?? '') == 'dateActivite' ? 'selected' : '' }}>Date</option><option value="type" {{ (sort ?? '') == 'type' ? 'selected' : '' }}>Type</option><option value="calories" {{ (sort ?? '') == 'calories' ? 'selected' : '' }}>Calories</option></select></div>
+        <div class="col-md-2"><select name="dir" class="form-select form-select-sm"><option value="DESC" {{ (dir ?? 'DESC') == 'DESC' ? 'selected' : '' }}>Desc</option><option value="ASC" {{ (dir ?? '') == 'ASC' ? 'selected' : '' }}>Asc</option></select></div>
+        <div class="col-md-2 d-flex gap-1">
+          <button class="btn btn-primary btn-sm" type="submit">Filtrer</button>
+          <a class="btn btn-outline-success btn-sm" href="{{ path('admin_activite_export_excel', {q: q ?? '', sort: sort ?? 'dateActivite', dir: dir ?? 'DESC'}) }}"><i class="bi bi-file-earmark-excel"></i></a>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ path('admin_activite_new') }}"><i class="bi bi-plus"></i></a>
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+          <thead class="table-light"><tr><th>ID</th><th>Type</th><th>Durée</th><th>Cal.</th><th>Date</th><th>Utilisateur</th><th></th></tr></thead>
+          <tbody>
+          {% for a in activites %}
+            <tr>
+              <td>{{ a.id }}</td>
+              <td>{{ a.type }}</td>
+              <td>{{ a.duree }} min</td>
+              <td>{{ a.calories }}</td>
+              <td>{{ a.dateActivite ? a.dateActivite|date('d/m/Y') : '-' }}</td>
+              <td>{{ a.utilisateur ? a.utilisateur.prenom ~ ' ' ~ a.utilisateur.nom : '-' }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="{{ path('admin_activite_show', {id: a.id}) }}">Voir</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_activite_edit', {id: a.id}) }}">Éditer</a>
+                <form class="d-inline" method="post" action="{{ path('admin_activite_delete', {id: a.id}) }}" onsubmit="return confirm('Supprimer ?');">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ a.id) }}">
+                  <button class="btn btn-sm btn-outline-danger">Supp.</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7" class="text-center text-muted">Aucune activité.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+  var labels = {{ chartLabels|default([])|json_encode|raw }};
+  var data = {{ chartData|default([])|json_encode|raw }};
+  var ctx = document.getElementById('chartActiviteByDay');
+  if (ctx && labels.length) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Activités',
+          data: data,
+          borderColor: 'rgb(99, 102, 241)',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+})();
+</script>
 {% endblock %}
