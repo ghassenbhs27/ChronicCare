@@ -455,31 +455,7 @@
 
     <script>
       function ajouterAuPanier(productId, productName) {
-        fetch('/cart/add?id=' + productId + '&quantity=1', {
-          method: 'GET',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert(productName + ' a été ajouté au panier!');
-            // Mettez à jour le compteur du panier si disponible
-            if (data.cartCount) {
-              const cartCount = document.querySelector('[data-cart-count]');
-              if (cartCount) {
-                cartCount.textContent = data.cartCount;
-              }
-            }
-          } else {
-            alert('Erreur: ' + (data.message || 'Impossible d\'ajouter au panier'));
-          }
-        })
-        .catch(error => {
-          console.error('Erreur:', error);
-          alert('Erreur lors de l\'ajout au panier');
-        });
+        window.location.href = '/cart/';
       }
     </script>
 {% endblock %}
