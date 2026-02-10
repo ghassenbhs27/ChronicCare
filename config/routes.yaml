@@ -3,3 +3,13 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+produit_show:
+    path: /products/{id}
+    controller: App\Controller\ProduitController::show
+    methods: [GET]
+
+produit_list:
+    path: /products
+    controller: App\Controller\ProduitController::list
+    methods: [GET]

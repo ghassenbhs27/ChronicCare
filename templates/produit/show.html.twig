@@ -173,7 +173,7 @@
             </div>
 
             <!-- Back Button -->
-            <a href="{{ path('produit_list') }}" class="btn btn-link mt-4">
+            <a href="{{ path('boutique') }}" class="btn btn-link mt-4">
               <i class="fa fa-arrow-left me-2"></i> Retour au catalogue
             </a>
           </div>
@@ -237,27 +237,27 @@
                 </div>
                 <div class="modal-body">
                   <p>Nos experts vous appelleront et vous préciseront les détails de la commande !</p>
-                  <form>
+                  <form method="post" action="{{ path('produit_quick_order', {id: produit.id}) }}">
                     <div class="mb-3">
                       <label class="form-label">Nom <span class="text-danger">*</span></label>
-                      <input type="text" class="form-control" required>
+                      <input type="text" class="form-control" name="nom" required>
                     </div>
                     <div class="mb-3">
                       <label class="form-label">Prénom</label>
-                      <input type="text" class="form-control">
+                      <input type="text" class="form-control" name="prenom">
                     </div>
                     <div class="mb-3">
                       <label class="form-label">E-mail <span class="text-danger">*</span></label>
-                      <input type="email" class="form-control" required>
+                      <input type="email" class="form-control" name="email" required>
                     </div>
                     <div class="mb-3">
                       <label class="form-label">Téléphone <span class="text-danger">*</span></label>
-                      <input type="tel" class="form-control" required>
+                      <input type="tel" class="form-control" name="telephone" required>
                     </div>
                     <div class="mb-3">
                       <label class="form-label">État</label>
-                      <select class="form-select">
-                        <option>Choisir</option>
+                      <select class="form-select" name="etat">
+                        <option value="">Choisir</option>
                         <option>Tunis</option>
                         <option>Ariana</option>
                         <option>Ben Arous</option>
@@ -266,7 +266,11 @@
                     </div>
                     <div class="mb-3">
                       <label class="form-label">Adresse <span class="text-danger">*</span></label>
-                      <input type="text" class="form-control" required>
+                      <input type="text" class="form-control" name="adresse" required>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" onclick="closeAchatExpressModal()">Annuler</button>
+                      <button type="submit" class="btn btn-success">Commander</button>
                     </div>
                   </form>
                 </div>

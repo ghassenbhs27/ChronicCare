@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\ProduitRepository;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -41,14 +42,28 @@ final class FrontController extends AbstractController
     }
 
     #[Route('/boutique', name: 'boutique')]
-    public function boutique(ProduitRepository $produitRepository): Response
+    public function boutique(Request $request, ProduitRepository $produitRepository): Response
     {
-        $produits = $produitRepository->findAllActive();
+        $keyword = $request->query->get('keyword', '');
+        $priceMin = $request->query->get('priceMin', 0);
+        $priceMax = $request->query->get('priceMax', 999999);
+
+        if ($keyword) {
+            $produits = $produitRepository->searchByKeyword($keyword);
+        } elseif ($priceMin || $priceMax) {
+            $produits = $produitRepository->findByPriceRange((float) $priceMin, (float) $priceMax);
+        } else {
+            $produits = $produitRepository->findAllActive();
+        }
+
         $categories = $produitRepository->findAllCategories();
 
         return $this->render('front/boutique.html.twig', [
             'produits' => $produits,
             'categories' => $categories,
+            'keyword' => $keyword,
+            'priceMin' => $priceMin,
+            'priceMax' => $priceMax,
         ]);
     }
 
