@@ -1,4 +1,4 @@
-{% extends 'back/base.html.twig' %}
+﻿{% extends 'back/base.html.twig' %}
 
 {% block title %}Dashboard - Chronic Care{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
@@ -24,7 +24,7 @@
     </div>
   </div>
 
-  {# 4 cartes KPI - liées à vos entités #}
+  {# 4 cartes KPI - liÃ©es Ã  vos entitÃ©s #}
   <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
       <div class="card border-0 shadow-sm h-100 dashboard-kpi" data-kpi="total_users">
@@ -63,7 +63,7 @@
         <div class="card-body">
           <div class="d-flex align-items-center justify-content-between">
             <div>
-              <p class="text-muted small mb-1">Activités</p>
+              <p class="text-muted small mb-1">ActivitÃ©s</p>
               <h3 class="mb-0 fw-bold kpi-value">{{ total_activites|number_format(0, '', ' ') }}</h3>
               <small class="text-muted kpi-change">Suivi patients</small>
             </div>
@@ -79,7 +79,7 @@
         <div class="card-body">
           <div class="d-flex align-items-center justify-content-between">
             <div>
-              <p class="text-muted small mb-1">Événements</p>
+              <p class="text-muted small mb-1">Ã‰vÃ©nements</p>
               <h3 class="mb-0 fw-bold kpi-value">{{ total_evenements|number_format(0, '', ' ') }}</h3>
               <small class="text-muted kpi-change">Forum : {{ total_publications }}</small>
             </div>
@@ -91,46 +91,50 @@
       </div>
     </div>
   </div>
-
-  {# Ligne 2: Activités par jour (7j) + Activité récente #}
+  {# Ligne 2: Notifications inscriptions + Activites par jour #}
   <div class="row g-3 mb-4">
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="card-title mb-0">Nouvelles inscriptions</h5>
+            <span class="badge bg-warning text-dark" id="pendingApprovalsCount">{{ pending_approvals_count }}</span>
+          </div>
+          <div class="list-group list-group-flush overflow-auto" id="dashboardPendingApprovals" style="max-height: 260px;">
+            {% for p in pending_approvals %}
+              <div class="list-group-item border-0 px-0 py-2">
+                <div class="d-flex align-items-start gap-2">
+                  <span class="activity-icon activity-orange rounded-circle flex-shrink-0">
+                    <i class="bi bi-person-plus"></i>
+                  </span>
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="fw-medium">{{ p.full_name }}</div>
+                    <small class="text-muted d-block">{{ p.role_label }} - {{ p.email }}</small>
+                    <div class="small text-muted">{{ p.created_at }} ({{ p.time_ago }})</div>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <p class="text-muted small mb-0">Aucune demande en attente.</p>
+            {% endfor %}
+          </div>
+          <a href="{{ path('app_user_index', { status: 'pending' }) }}" class="btn btn-sm btn-outline-primary mt-3">
+            Voir toutes les demandes
+          </a>
+        </div>
+      </div>
+    </div>
     <div class="col-lg-8">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
-          <h5 class="card-title mb-3">Activités patients (7 derniers jours)</h5>
+          <h5 class="card-title mb-3">Activites patients (7 derniers jours)</h5>
           <div class="chart-container" style="height: 260px;">
             <canvas id="chartActivitesByDay"></canvas>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-lg-4">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Activité récente</h5>
-          <div class="dashboard-activity list-group list-group-flush overflow-auto" id="dashboardActivity" style="max-height: 380px;">
-            {% for a in activities %}
-            <div class="list-group-item list-group-item-action border-0 px-0 py-2">
-              <div class="d-flex align-items-start gap-2">
-                <span class="activity-icon activity-{{ a.color }} rounded-circle flex-shrink-0">
-                  <i class="bi bi-{{ a.icon }}"></i>
-                </span>
-                <div class="flex-grow-1 min-w-0">
-                  <div class="fw-medium">{{ a.label }}</div>
-                  <small class="text-muted">{{ a.detail }}</small>
-                  <div class="small text-muted">{{ a.time_ago }}</div>
-                </div>
-              </div>
-            </div>
-            {% else %}
-            <p class="text-muted small mb-0">Aucune activité récente.</p>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
-
   {# Ligne 3: Inscriptions (7j) + RDV par statut #}
   <div class="row g-3 mb-4">
     <div class="col-lg-7">
@@ -199,7 +203,7 @@
               <span class="fw-bold fs-4 storage-value">{{ storage_percent }}</span>%
             </div>
           </div>
-          <p class="text-muted small mb-0">Activités & états / utilisateurs</p>
+          <p class="text-muted small mb-0">ActivitÃ©s & Ã©tats / utilisateurs</p>
         </div>
       </div>
     </div>
@@ -209,11 +213,11 @@
     <div class="col-12">
       <div class="card border-0 shadow-sm">
         <div class="card-body">
-          <h6 class="mb-3">Accès rapides</h6>
+          <h6 class="mb-3">AccÃ¨s rapides</h6>
           <div class="d-flex flex-wrap gap-2">
             <a href="{{ path('app_user_index') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-people me-1"></i> Utilisateurs</a>
-            <a href="{{ path('admin_activite_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-activity me-1"></i> Activités</a>
-            <a href="{{ path('admin_etat_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-heart-pulse me-1"></i> États suivi</a>
+            <a href="{{ path('admin_activite_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-activity me-1"></i> ActivitÃ©s</a>
+            <a href="{{ path('admin_etat_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-heart-pulse me-1"></i> Ã‰tats suivi</a>
             <a href="{{ path('admin_statistics_index') }}" class="btn btn-outline-info btn-sm"><i class="bi bi-bar-chart me-1"></i> Statistiques</a>
             <a href="{{ path('index') }}" class="btn btn-outline-dark btn-sm"><i class="bi bi-house me-1"></i> Retour au site</a>
           </div>
@@ -240,7 +244,9 @@
     total_evenements: total_evenements,
     total_publications: total_publications,
     activities: activities,
-    recent_rdv_json: recent_rdv_json
+    recent_rdv_json: recent_rdv_json,
+    pending_approvals: pending_approvals,
+    pending_approvals_count: pending_approvals_count
   }|json_encode|raw }};
 
   const API_URL = '{{ path('admin_dashboard_api') }}';
@@ -255,7 +261,7 @@
       type: 'bar',
       data: {
         labels: DATA.activites_by_day_labels,
-        datasets: [{ label: 'Activités', data: DATA.activites_by_day_data, backgroundColor: 'rgba(13, 110, 253, 0.7)', borderRadius: 6 }]
+        datasets: [{ label: 'ActivitÃ©s', data: DATA.activites_by_day_data, backgroundColor: 'rgba(13, 110, 253, 0.7)', borderRadius: 6 }]
       },
       options: { ...opts, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
     });
@@ -295,7 +301,7 @@
     chartStorage = new Chart(document.getElementById('chartStorage'), {
       type: 'doughnut',
       data: {
-        labels: ['Utilisé', 'Libre'],
+        labels: ['UtilisÃ©', 'Libre'],
         datasets: [{ data: [storageVal, 100 - storageVal], backgroundColor: ['#0ea5e9', '#e5e7eb'] }]
       },
       options: { ...opts, cutout: '75%', plugins: { legend: { display: false } } }
@@ -353,6 +359,29 @@
         ).join('');
       }
     }
+    if (json.pending_approvals_count != null) {
+      const counter = document.getElementById('pendingApprovalsCount');
+      if (counter) counter.textContent = json.pending_approvals_count;
+    }
+    if (json.pending_approvals) {
+      const container = document.getElementById('dashboardPendingApprovals');
+      if (container) {
+        if (!json.pending_approvals.length) {
+          container.innerHTML = '<p class="text-muted small mb-0">Aucune demande en attente.</p>';
+        } else {
+          container.innerHTML = json.pending_approvals.map(p =>
+            '<div class="list-group-item border-0 px-0 py-2">' +
+            '<div class="d-flex align-items-start gap-2">' +
+            '<span class="activity-icon activity-orange rounded-circle flex-shrink-0"><i class="bi bi-person-plus"></i></span>' +
+            '<div class="flex-grow-1 min-w-0">' +
+            '<div class="fw-medium">' + p.full_name + '</div>' +
+            '<small class="text-muted d-block">' + p.role_label + ' - ' + p.email + '</small>' +
+            '<div class="small text-muted">' + p.created_at + ' (' + p.time_ago + ')</div>' +
+            '</div></div></div>'
+          ).join('');
+        }
+      }
+    }
     if (json.recent_rdv_json && json.recent_rdv_json.length) {
       const tbody = document.getElementById('dashboardRecentRdv');
       if (tbody) {
@@ -400,3 +429,4 @@
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 {% endblock %}
+

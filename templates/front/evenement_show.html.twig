@@ -1,13 +1,13 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
-{% block title %}{{ evenement.titre }} - Événements{% endblock %}
+{% block title %}{{ evenement.titre }} - Ã‰vÃ©nements{% endblock %}
 
 {% block body %}
   {% include 'partials/_navbar.html.twig' %}
 
   <main class="main py-5 evenement-show-page">
     <div class="container py-3">
-      {# Messages résultat (succès, avertissement, erreur) #}
+      {# Messages rÃ©sultat (succÃ¨s, avertissement, erreur) #}
       {% for label, messages in app.flashes %}
         {% for message in messages %}
           <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show shadow-sm mb-4" role="alert">
@@ -19,14 +19,20 @@
       {% endfor %}
 
       <div class="row g-4 g-lg-5 align-items-stretch">
-        {# Bloc événement #}
+        {# Bloc Ã©vÃ©nement #}
         <div class="col-lg-7">
           <div class="card border-0 shadow-sm h-100 overflow-hidden evenement-detail-card">
             <div class="card-body p-4 p-md-5">
               <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <span class="badge rounded-pill bg-success px-3 py-2">
-                  <i class="bi bi-patch-check-fill me-1"></i> Confirmé par l'administration
-                </span>
+                {% if evenement.isValide %}
+                  <span class="badge rounded-pill bg-success px-3 py-2">
+                    <i class="bi bi-patch-check-fill me-1"></i> Confirme par l'administration
+                  </span>
+                {% else %}
+                  <span class="badge rounded-pill bg-secondary px-3 py-2">
+                    <i class="bi bi-hourglass-split me-1"></i> En attente de validation admin
+                  </span>
+                {% endif %}
                 {% if holiday_debut %}
                   <span class="badge rounded-pill bg-warning text-dark px-3 py-2">
                     <i class="bi bi-calendar-event me-1"></i> {{ holiday_debut }}
@@ -42,7 +48,7 @@
                   </div>
                   <div>
                     <span class="small text-muted text-uppercase fw-semibold">Date et horaire</span>
-                    <p class="mb-0 fw-semibold">{{ evenement.dateDebut|date('d/m/Y') }} · {{ evenement.dateDebut|date('H:i') }} – {{ evenement.dateFin|date('H:i') }}</p>
+                    <p class="mb-0 fw-semibold">{{ evenement.dateDebut|date('d/m/Y') }} Â· {{ evenement.dateDebut|date('H:i') }} â€“ {{ evenement.dateFin|date('H:i') }}</p>
                   </div>
                 </div>
                 <div class="d-flex align-items-center gap-3 p-3 rounded-3 bg-light">
@@ -70,7 +76,7 @@
             <div class="card-header border-0 py-4 px-4 text-white rounded-top-3 evenement-inscription-header">
               <h5 class="card-title mb-0 d-flex align-items-center gap-2">
                 <i class="bi bi-person-plus-fill fs-4"></i>
-                S'inscrire à cet événement
+                S'inscrire Ã  cet Ã©vÃ©nement
               </h5>
             </div>
             <div class="card-body p-4">
@@ -78,14 +84,14 @@
                 <div class="alert alert-success mb-0 d-flex align-items-center gap-3">
                   <i class="bi bi-check-circle-fill fs-2"></i>
                   <div>
-                    <strong>Vous êtes déjà inscrit</strong> à cet événement. Nous vous attendons !
+                    <strong>Vous Ãªtes dÃ©jÃ  inscrit</strong> Ã  cet Ã©vÃ©nement. Nous vous attendons !
                   </div>
                 </div>
               {% else %}
                 <p class="text-muted small mb-4">
-                  Renseignez vos coordonnées pour confirmer votre participation. Si vous êtes connecté, certains champs sont pré-remplis.
+                  Renseignez vos coordonnÃ©es pour confirmer votre participation. Si vous Ãªtes connectÃ©, certains champs sont prÃ©-remplis.
                 </p>
-                {{ form_start(form, { attr: { class: 'evenement-inscription-form' } }) }}
+                {{ form_start(form, { attr: { class: 'evenement-inscription-form', novalidate: 'novalidate' } }) }}
                   {% for child in form %}
                     {% if child.vars.name != '_token' %}
                       <div class="mb-3">
@@ -124,7 +130,7 @@
         if (btn && !btn.disabled) {
           btn.disabled = true;
           var textEl = btn.querySelector('.btn-text');
-          if (textEl) textEl.textContent = 'Envoi en cours…';
+          if (textEl) textEl.textContent = 'Envoi en coursâ€¦';
           var icon = btn.querySelector('i.bi');
           if (icon) { icon.classList.remove('bi-send-fill'); icon.classList.add('bi-hourglass-split'); }
         }

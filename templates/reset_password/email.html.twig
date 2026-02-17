@@ -13,17 +13,17 @@
 </head>
 <body>
 <div class="container">
-    <h1>Réinitialisation du mot de passe</h1>
+    <h1>Reinitialisation du mot de passe</h1>
 
     <p>Bonjour{% if user is defined %} {{ user.prenom }}{% endif %},</p>
 
-    <p>Vous avez demandé la réinitialisation de votre mot de passe sur Chronic Care.</p>
+    <p>Vous avez demande la reinitialisation de votre mot de passe sur Chronic Care.</p>
 
-    <p><strong>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe :</strong></p>
+    <p><strong>Cliquez sur le bouton ci-dessous pour definir un nouveau mot de passe :</strong></p>
 
     <p>
         <a href="{{ resetUrl|default(url('app_reset_password', {token: resetToken.token})) }}" class="btn">
-            Réinitialiser mon mot de passe
+            Reinitialiser mon mot de passe
         </a>
     </p>
 
@@ -35,9 +35,9 @@
     <p class="code">Code alternatif : {{ resetToken.token }}</p>
     <p><small>Ce lien expirera dans {{ resetToken.expirationMessageKey|trans(resetToken.expirationMessageData, 'ResetPasswordBundle') }}.</small></p>
 
-    <p>Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email.</p>
+    <p>Si vous n'avez pas demande cette reinitialisation, vous pouvez ignorer cet email.</p>
 
-    <p class="footer">? L'équipe Chronic Care</p>
+    <p class="footer">L'equipe Chronic Care</p>
 </div>
 </body>
 </html>

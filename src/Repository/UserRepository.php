@@ -78,8 +78,9 @@ class UserRepository extends ServiceEntityRepository
     public function findProfessionnels(?string $search = null): array
     {
         $qb = $this->createQueryBuilder('u')
-            ->andWhere('u.roles LIKE :role')
-            ->setParameter('role', '%"ROLE_COACH"%')
+            ->andWhere('u.roles LIKE :coachRole OR u.roles LIKE :nutritionRole')
+            ->setParameter('coachRole', '%"ROLE_COACH"%')
+            ->setParameter('nutritionRole', '%"ROLE_NUTRITIONNISTE"%')
             ->orderBy('u.nom', 'ASC');
 
         if ($search !== null && trim($search) !== '') {
@@ -99,19 +100,78 @@ class UserRepository extends ServiceEntityRepository
             ->setParameter('admin', '%"ROLE_ADMIN"%')
             ->andWhere('u.roles NOT LIKE :coach')
             ->setParameter('coach', '%"ROLE_COACH"%')
+            ->andWhere('u.roles NOT LIKE :nutrition')
+            ->setParameter('nutrition', '%"ROLE_NUTRITIONNISTE"%')
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }
 
+    /**
+     * @return User[]
+     */
+    public function findPatientsForFollowup(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('(u.roles LIKE :rolePatient OR u.roles LIKE :roleUser)')
+            ->andWhere('u.roles NOT LIKE :admin')
+            ->andWhere('u.roles NOT LIKE :coach')
+            ->andWhere('u.roles NOT LIKE :nutrition')
+            ->setParameter('rolePatient', '%"ROLE_PATIENT"%')
+            ->setParameter('roleUser', '%ROLE_USER%')
+            ->setParameter('admin', '%ROLE_ADMIN%')
+            ->setParameter('coach', '%ROLE_COACH%')
+            ->setParameter('nutrition', '%ROLE_NUTRITIONNISTE%')
+            ->orderBy('u.prenom', 'ASC')
+            ->addOrderBy('u.nom', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findFirstProfessionnel(): ?User
     {
         return $this->createQueryBuilder('u')
-            ->andWhere('u.roles LIKE :role')
-            ->setParameter('role', '%"ROLE_COACH"%')
+            ->andWhere('u.roles LIKE :coachRole OR u.roles LIKE :nutritionRole')
+            ->setParameter('coachRole', '%"ROLE_COACH"%')
+            ->setParameter('nutritionRole', '%"ROLE_NUTRITIONNISTE"%')
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * @return string[]
+     */
+    public function findActiveAdminEmails(): array
+    {
+        $rows = $this->createQueryBuilder('u')
+            ->select('u.email')
+            ->andWhere('u.roles LIKE :adminRole')
+            ->andWhere('u.isActive = true')
+            ->setParameter('adminRole', '%"ROLE_ADMIN"%')
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_values(array_filter(array_map(
+            static fn (array $row): string => (string) ($row['email'] ?? ''),
+            $rows
+        )));
+    }
+
+    /**
+     * @return User[]
+     */
+    public function findPendingProfessionalApprovals(int $limit = 12): array
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.approvalStatus = :pending')
+            ->andWhere('u.requestedRole IN (:roles)')
+            ->setParameter('pending', User::APPROVAL_PENDING)
+            ->setParameter('roles', ['ROLE_COACH', 'ROLE_NUTRITIONNISTE'])
+            ->orderBy('u.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 
     public function findAllSorted(string $sort = 'createdAt', string $order = 'DESC'): array
@@ -168,10 +228,11 @@ class UserRepository extends ServiceEntityRepository
 
         if ($role !== null && $role !== '' && $role !== 'all') {
             if ($role === 'no_role') {
-                $qb->andWhere('u.roles NOT LIKE :r1 AND u.roles NOT LIKE :r2 AND u.roles NOT LIKE :r3')
+                $qb->andWhere('u.roles NOT LIKE :r1 AND u.roles NOT LIKE :r2 AND u.roles NOT LIKE :r3 AND u.roles NOT LIKE :r4')
                     ->setParameter('r1', '%ROLE_PATIENT%')
                     ->setParameter('r2', '%ROLE_COACH%')
-                    ->setParameter('r3', '%ROLE_ADMIN%');
+                    ->setParameter('r3', '%ROLE_ADMIN%')
+                    ->setParameter('r4', '%ROLE_NUTRITIONNISTE%');
             } else {
                 $qb->andWhere('u.roles LIKE :role')->setParameter('role', '%"' . $role . '"%');
             }
@@ -181,6 +242,8 @@ class UserRepository extends ServiceEntityRepository
             $qb->andWhere('u.isActive = true');
         } elseif ($statusFilter === 'inactif' || $statusFilter === '0') {
             $qb->andWhere('u.isActive = false');
+        } elseif (in_array($statusFilter, [User::APPROVAL_PENDING, User::APPROVAL_APPROVED, User::APPROVAL_REJECTED], true)) {
+            $qb->andWhere('u.approvalStatus = :approvalStatus')->setParameter('approvalStatus', $statusFilter);
         }
 
         return $qb->orderBy('u.' . $sort, $order);
@@ -202,10 +265,11 @@ class UserRepository extends ServiceEntityRepository
     {
         return (int) $this->createQueryBuilder('u')
             ->select('COUNT(u.id)')
-            ->andWhere('u.roles NOT LIKE :r1 AND u.roles NOT LIKE :r2 AND u.roles NOT LIKE :r3')
+            ->andWhere('u.roles NOT LIKE :r1 AND u.roles NOT LIKE :r2 AND u.roles NOT LIKE :r3 AND u.roles NOT LIKE :r4')
             ->setParameter('r1', '%ROLE_PATIENT%')
             ->setParameter('r2', '%ROLE_COACH%')
             ->setParameter('r3', '%ROLE_ADMIN%')
+            ->setParameter('r4', '%ROLE_NUTRITIONNISTE%')
             ->getQuery()
             ->getSingleScalarResult();
     }
@@ -222,6 +286,7 @@ class UserRepository extends ServiceEntityRepository
         $counts = [
             'ROLE_PATIENT' => 0,
             'ROLE_COACH' => 0,
+            'ROLE_NUTRITIONNISTE' => 0,
             'ROLE_ADMIN' => 0,
             'OTHER' => 0,
         ];
@@ -275,4 +340,3 @@ class UserRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
-

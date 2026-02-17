@@ -52,7 +52,7 @@
         </div>
         <div class="forum-article-actions">
           <a href="{{ path('publication_index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Retour au forum</a>
-          {% if is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN') %}
+          {% if is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN') %}
             <a href="{{ path('publication_edit', {id: publication.id}) }}" class="btn btn-outline-primary">Modifier</a>
             <form method="post" action="{{ path('publication_delete', {id: publication.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette publication ?');">
               <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ publication.id) }}">
@@ -108,7 +108,7 @@
                 <div class="forum-comment-text">{{ commentaire.contenu|nl2br }}</div>
                 <div class="forum-comment-actions">
                   <span class="small text-muted"><i class="bi bi-heart"></i> {{ commentaire.likeCount }}</span>
-                  {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN')) %}
+                  {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
                     <a href="{{ path('commentaire_edit', {id: commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
                     <form method="post" action="{{ path('commentaire_delete', {id: commentaire.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce commentaire ?');">
                       <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ commentaire.id) }}">

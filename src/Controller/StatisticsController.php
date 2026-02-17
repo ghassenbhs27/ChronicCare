@@ -33,7 +33,7 @@ class StatisticsController extends AbstractController
             return $this->redirectToRoute('admin_dashboard');
         }
 
-        if ($this->isGranted('ROLE_COACH')) {
+        if ($this->isGranted('ROLE_COACH') || $this->isGranted('ROLE_NUTRITIONNISTE')) {
             return $this->coachStatistics(
                 $user,
                 $rdvRepository,

@@ -50,21 +50,39 @@ class HolidayService
         $cacheKey = sprintf('holidays_%s_%d', strtolower($country), $year);
 
         return $this->cache->get($cacheKey, function (ItemInterface $item) use ($year, $country) {
-            $item->expiresAfter(86400);
-
             $url = sprintf('%s/PublicHolidays/%d/%s', $this->holidayApiBase, $year, $country);
 
             try {
-                $response = $this->httpClient->request('GET', $url, [
-                    'timeout' => 5,
-                ]);
+                $response = null;
+                $lastException = null;
+                for ($attempt = 1; $attempt <= 2; ++$attempt) {
+                    try {
+                        $response = $this->httpClient->request('GET', $url, [
+                            'timeout' => 8,
+                            'max_duration' => 15,
+                        ]);
+                        break;
+                    } catch (\Throwable $exception) {
+                        $lastException = $exception;
+                        if ($attempt === 2) {
+                            throw $exception;
+                        }
+                        usleep(200000);
+                    }
+                }
+
+                if ($response === null && $lastException !== null) {
+                    throw $lastException;
+                }
 
                 if ($response->getStatusCode() !== 200) {
+                    $item->expiresAfter(300);
                     return [];
                 }
 
                 $data = $response->toArray(false);
             } catch (\Throwable $exception) {
+                $item->expiresAfter(300);
                 if ($this->logger) {
                     $this->logger->warning('Holiday API request failed', [
                         'error' => $exception->getMessage(),
@@ -85,6 +103,7 @@ class HolidayService
                 }
             }
 
+            $item->expiresAfter(86400);
             return $map;
         });
     }

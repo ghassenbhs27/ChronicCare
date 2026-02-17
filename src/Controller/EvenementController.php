@@ -3,12 +3,15 @@
 namespace App\Controller;
 
 use App\Entity\Evenement;
+use App\Entity\User;
 use App\Form\EvenementFormType;
 use App\Repository\EvenementRepository;
 use App\Repository\InscriptionEvenementRepository;
 use App\Service\EvenementService;
 use App\Service\HolidayService;
+use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -25,6 +28,7 @@ class EvenementController extends AbstractController
         InscriptionEvenementRepository $inscriptionRepository,
         HolidayService $holidayService
     ): Response {
+        $coach = $this->getAuthenticatedUser();
         $q = $request->query->get('q');
         $sort = $request->query->get('sort', 'dateDebut');
         $order = $request->query->get('order', 'DESC');
@@ -32,7 +36,7 @@ class EvenementController extends AbstractController
         $perPage = 10;
 
         $result = $evenementRepository->searchByCoachPaged(
-            $this->getUser(),
+            $coach,
             $q,
             $sort,
             $order,
@@ -68,16 +72,20 @@ class EvenementController extends AbstractController
     public function new(Request $request, EvenementService $evenementService): Response
     {
         $evenement = new Evenement();
+        $evenement->setCoach($this->getAuthenticatedUser());
 
         $form = $this->createForm(EvenementFormType::class, $evenement);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $evenementService->createEvenement($evenement, $this->getUser());
+            try {
+                $evenementService->createEvenement($evenement, $this->getAuthenticatedUser());
+                $this->addFlash('success', 'Evenement cree avec succes.');
 
-            $this->addFlash('success', 'Événement créé avec succès.');
-
-            return $this->redirectToRoute('evenement_index');
+                return $this->redirectToRoute('evenement_index');
+            } catch (InvalidArgumentException $exception) {
+                $form->addError(new FormError($exception->getMessage()));
+            }
         }
 
         return $this->render('evenement/new.html.twig', [
@@ -85,7 +93,7 @@ class EvenementController extends AbstractController
         ]);
     }
 
-    #[Route('/coach/evenements/{id}', name: 'evenement_show', requirements: ['id' => '\d+'])]
+    #[Route('/coach/evenements/{id}', name: 'evenement_show', requirements: ['id' => '\\d+'])]
     public function show(
         Evenement $evenement,
         InscriptionEvenementRepository $inscriptionRepository,
@@ -108,7 +116,7 @@ class EvenementController extends AbstractController
         ]);
     }
 
-    #[Route('/coach/evenements/{id}/edit', name: 'evenement_edit', requirements: ['id' => '\d+'])]
+    #[Route('/coach/evenements/{id}/edit', name: 'evenement_edit', requirements: ['id' => '\\d+'])]
     public function edit(Request $request, Evenement $evenement, EvenementService $evenementService): Response
     {
         $this->assertCoach($evenement);
@@ -117,10 +125,14 @@ class EvenementController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $evenementService->updateEvenement($evenement);
-            $this->addFlash('success', 'Événement mis à jour.');
+            try {
+                $evenementService->updateEvenement($evenement);
+                $this->addFlash('success', 'Evenement mis a jour.');
 
-            return $this->redirectToRoute('evenement_index');
+                return $this->redirectToRoute('evenement_index');
+            } catch (InvalidArgumentException $exception) {
+                $form->addError(new FormError($exception->getMessage()));
+            }
         }
 
         return $this->render('evenement/edit.html.twig', [
@@ -129,20 +141,20 @@ class EvenementController extends AbstractController
         ]);
     }
 
-    #[Route('/coach/evenements/{id}/delete', name: 'evenement_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/coach/evenements/{id}/delete', name: 'evenement_delete', methods: ['POST'], requirements: ['id' => '\\d+'])]
     public function delete(Request $request, Evenement $evenement, EvenementService $evenementService): Response
     {
         $this->assertCoach($evenement);
 
         if ($this->isCsrfTokenValid('delete_evenement_' . $evenement->getId(), (string) $request->request->get('_token'))) {
             $evenementService->deleteEvenement($evenement);
-            $this->addFlash('success', 'Événement supprimé.');
+            $this->addFlash('success', 'Evenement supprime.');
         }
 
         return $this->redirectToRoute('evenement_index');
     }
 
-    #[Route('/coach/evenements/{id}/inscriptions.csv', name: 'evenement_inscriptions_csv', requirements: ['id' => '\d+'])]
+    #[Route('/coach/evenements/{id}/inscriptions.csv', name: 'evenement_inscriptions_csv', requirements: ['id' => '\\d+'])]
     public function exportInscriptionsCsv(
         Evenement $evenement,
         InscriptionEvenementRepository $inscriptionRepository
@@ -189,8 +201,18 @@ class EvenementController extends AbstractController
 
     private function assertCoach(Evenement $evenement): void
     {
-        if ($evenement->getCoach() !== $this->getUser()) {
+        if ($evenement->getCoach() !== $this->getAuthenticatedUser()) {
             throw $this->createNotFoundException();
         }
+    }
+
+    private function getAuthenticatedUser(): User
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
     }
 }

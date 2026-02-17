@@ -26,10 +26,11 @@ class ActiviteRepository extends ServiceEntityRepository
         $dir = strtoupper($dir) === 'ASC' ? 'ASC' : 'DESC';
 
         $qb = $this->createQueryBuilder('a')
-            ->leftJoin('a.utilisateur', 'u')->addSelect('u');
+            ->leftJoin('a.utilisateur', 'u')->addSelect('u')
+            ->leftJoin('a.etat', 'e')->addSelect('e');
 
         if ($q) {
-            $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q')
+            $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q OR LOWER(e.type) LIKE :q OR LOWER(e.unite) LIKE :q')
                 ->setParameter('q', '%' . mb_strtolower(trim($q)) . '%');
         }
 
@@ -45,11 +46,12 @@ class ActiviteRepository extends ServiceEntityRepository
         $dir = strtoupper($dir) === 'ASC' ? 'ASC' : 'DESC';
 
         $qb = $this->createQueryBuilder('a')
+            ->leftJoin('a.etat', 'e')->addSelect('e')
             ->andWhere('a.utilisateur = :user')
             ->setParameter('user', $user);
 
         if ($q) {
-            $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q')
+            $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q OR LOWER(e.type) LIKE :q OR LOWER(e.unite) LIKE :q')
                 ->setParameter('q', '%' . mb_strtolower(trim($q)) . '%');
         }
 

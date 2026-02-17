@@ -1,6 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Statistiques - Espace Coach{% endblock %}
+{% set is_nutritionniste = app.user and ('ROLE_NUTRITIONNISTE' in app.user.roles) %}
+{% set pro_space_label = is_nutritionniste ? 'Espace Nutritionniste' : 'Espace Coach' %}
+{% set pro_stats_label = is_nutritionniste ? 'Statistiques nutritionniste' : 'Statistiques coach' %}
+
+{% block title %}Statistiques - {{ pro_space_label }}{% endblock %}
 
 {% block stylesheets %}
   {{ parent() }}
@@ -25,21 +29,42 @@
       <nav aria-label="Fil d'Ariane" class="forum-breadcrumb">
         <ol class="breadcrumb mb-0">
           <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
-          <li class="breadcrumb-item"><a href="{{ path('evenement_index') }}">Espace Coach</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('evenement_index') }}">{{ pro_space_label }}</a></li>
           <li class="breadcrumb-item active" aria-current="page">Statistiques</li>
         </ol>
       </nav>
 
       <header class="forum-hero text-start">
-        <h1 class="forum-hero-title"><i class="bi bi-bar-chart-line me-2"></i>Statistiques coach</h1>
-        <p class="forum-hero-sub">Vue d’ensemble de vos événements, rendez-vous et inscriptions.</p>
+        <h1 class="forum-hero-title"><i class="bi bi-bar-chart-line me-2"></i>{{ pro_stats_label }}</h1>
+        <p class="forum-hero-sub">Vue d ensemble de vos evenements, rendez-vous et inscriptions.</p>
       </header>
+
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+          <a href="{{ path('front_etat_index') }}" class="stats-kpi text-decoration-none d-block h-100">
+            <div class="stats-kpi-value"><i class="bi bi-heart-pulse"></i></div>
+            <div class="stats-kpi-label">Etats patient</div>
+          </a>
+        </div>
+        <div class="col-12 col-md-4">
+          <a href="{{ path('front_activite_index') }}" class="stats-kpi text-decoration-none d-block h-100">
+            <div class="stats-kpi-value"><i class="bi bi-activity"></i></div>
+            <div class="stats-kpi-label">Activites patient</div>
+          </a>
+        </div>
+        <div class="col-12 col-md-4">
+          <a href="{{ path('pro_rdv_list') }}" class="stats-kpi text-decoration-none d-block h-100">
+            <div class="stats-kpi-value"><i class="bi bi-calendar2-week"></i></div>
+            <div class="stats-kpi-label">Mes RDV pro</div>
+          </a>
+        </div>
+      </div>
 
       <div class="row g-3 mb-4">
         <div class="col-6 col-md-4">
           <div class="stats-kpi">
             <div class="stats-kpi-value">{{ eventsCount }}</div>
-            <div class="stats-kpi-label">Événements créés</div>
+            <div class="stats-kpi-label">Evenements crees</div>
           </div>
         </div>
         <div class="col-6 col-md-4">
@@ -78,7 +103,7 @@
       <div class="row">
         <div class="col-12">
           <div class="stats-chart-card">
-            <h3><i class="bi bi-calendar2-event me-2"></i>Événements par mois</h3>
+            <h3><i class="bi bi-calendar2-event me-2"></i>Evenements par mois</h3>
             <div class="stats-chart-container">
               <canvas id="chartEventsByMonth"></canvas>
             </div>

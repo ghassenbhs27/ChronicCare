@@ -57,6 +57,8 @@ class AdminDashboardController extends AbstractController
             'activities' => $data['activities'],
             'recent_rdv_json' => $data['recent_rdv_json'],
             'storage_percent' => $data['storage_percent'],
+            'pending_approvals' => $data['pending_approvals'],
+            'pending_approvals_count' => $data['pending_approvals_count'],
         ];
         return new JsonResponse($json);
     }
@@ -149,6 +151,26 @@ class AdminDashboardController extends AbstractController
         $recentRdv = $this->rdvRepository->findRecent(15);
         $recentPublications = $this->publicationRepository->findRecent(15);
         $recentInscriptions = $this->inscriptionEvenementRepository->findRecent(15);
+        $pendingApprovals = $this->userRepository->findPendingProfessionalApprovals(12);
+        $pendingApprovalList = [];
+        foreach ($pendingApprovals as $pendingUser) {
+            $created = $pendingUser->getCreatedAt();
+            $requestedRole = $pendingUser->getRequestedRole() ?? 'ROLE_PATIENT';
+            $roleLabel = match ($requestedRole) {
+                'ROLE_COACH' => 'Coach',
+                'ROLE_NUTRITIONNISTE' => 'Nutritionniste',
+                default => 'Utilisateur',
+            };
+
+            $pendingApprovalList[] = [
+                'id' => $pendingUser->getId(),
+                'full_name' => $pendingUser->getFullName(),
+                'email' => (string) $pendingUser->getEmail(),
+                'role_label' => $roleLabel,
+                'created_at' => $created->format('d/m/Y H:i'),
+                'time' => $created->format('U'),
+            ];
+        }
         $activities = [];
         foreach ($recentUsers as $u) {
             $created = $u->getCreatedAt();
@@ -210,6 +232,22 @@ class AdminDashboardController extends AbstractController
             }
             unset($a['time']);
         }
+        unset($a);
+
+        foreach ($pendingApprovalList as &$entry) {
+            $diff = $now->getTimestamp() - (int) $entry['time'];
+            if ($diff < 60) {
+                $entry['time_ago'] = 'A l\'instant';
+            } elseif ($diff < 3600) {
+                $entry['time_ago'] = (int) floor($diff / 60) . ' min';
+            } elseif ($diff < 86400) {
+                $entry['time_ago'] = (int) floor($diff / 3600) . ' h';
+            } else {
+                $entry['time_ago'] = (int) floor($diff / 86400) . ' j';
+            }
+            unset($entry['time']);
+        }
+        unset($entry);
 
         // Derniers RDV (pour le tableau)
         $recentRdvJson = array_map(fn($r) => [
@@ -243,6 +281,8 @@ class AdminDashboardController extends AbstractController
             'recent_rdv' => $recentRdvList,
             'recent_rdv_json' => $recentRdvJson,
             'storage_percent' => $storagePercent,
+            'pending_approvals' => $pendingApprovalList,
+            'pending_approvals_count' => count($pendingApprovalList),
         ];
     }
 }

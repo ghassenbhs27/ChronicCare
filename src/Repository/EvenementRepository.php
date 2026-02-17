@@ -84,8 +84,11 @@ class EvenementRepository extends ServiceEntityRepository
     public function findValidForPublic(): array
     {
         return $this->createQueryBuilder('e')
-            ->andWhere('e.statut = :statut')
-            ->setParameter('statut', Evenement::STATUT_VALIDE)
+            ->andWhere('e.statut IN (:statuts)')
+            ->setParameter('statuts', [
+                Evenement::STATUT_VALIDE,
+                Evenement::STATUT_EN_ATTENTE,
+            ])
             ->orderBy('e.dateDebut', 'ASC')
             ->getQuery()
             ->getResult();

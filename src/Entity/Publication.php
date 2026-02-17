@@ -7,10 +7,15 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PublicationRepository::class)]
 class Publication
 {
+    public const CATEGORIES = ['nutrition', 'exercice', 'sante_mentale', 'bien_etre', 'autre'];
+    public const STATUT_BROUILLON = 'brouillon';
+    public const STATUT_PUBLIE = 'publie';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -21,12 +26,30 @@ class Publication
     private ?User $auteur = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le titre est obligatoire.')]
+    #[Assert\Length(
+        min: 3,
+        max: 255,
+        minMessage: 'Le titre doit contenir au moins {{ limit }} caracteres.',
+        maxMessage: 'Le titre ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $titre;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Le contenu est obligatoire.')]
+    #[Assert\Length(
+        min: 10,
+        max: 10000,
+        minMessage: 'Le contenu doit contenir au moins {{ limit }} caracteres.',
+        maxMessage: 'Le contenu ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $contenu;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Assert\Choice(
+        choices: self::CATEGORIES,
+        message: 'La categorie selectionnee est invalide.'
+    )]
     private ?string $categorie = null;
 
     #[ORM\Column]
@@ -36,6 +59,11 @@ class Publication
     private int $nbLikes = 0;
 
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: 'Le statut est obligatoire.')]
+    #[Assert\Choice(
+        choices: [self::STATUT_BROUILLON, self::STATUT_PUBLIE],
+        message: 'Le statut selectionne est invalide.'
+    )]
     private string $statut;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
@@ -50,7 +78,7 @@ class Publication
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->statut = 'publie';
+        $this->statut = self::STATUT_PUBLIE;
         $this->commentaires = new ArrayCollection();
     }
 

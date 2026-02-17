@@ -35,9 +35,6 @@ class ResetPasswordController extends AbstractController
     ) {
     }
 
-    /**
-     * Display & process form to request a password reset.
-     */
     #[Route('', name: 'app_forgot_password_request', methods: ['GET', 'POST'])]
     public function request(Request $request, MailerInterface $mailer, TranslatorInterface $translator): Response
     {
@@ -45,9 +42,7 @@ class ResetPasswordController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            /** @var string $email */
             $email = (string) $form->get('email')->getData();
-
             return $this->processSendingPasswordResetEmail($email, $mailer, $translator);
         }
 
@@ -56,9 +51,6 @@ class ResetPasswordController extends AbstractController
         ]);
     }
 
-    /**
-     * Page shown after requesting a reset.
-     */
     #[Route('/check-email', name: 'app_check_email', methods: ['GET'])]
     public function checkEmail(): Response
     {
@@ -71,9 +63,6 @@ class ResetPasswordController extends AbstractController
         ]);
     }
 
-    /**
-     * User enters the code received by email.
-     */
     #[Route('/verify', name: 'app_reset_password_verify', methods: ['GET', 'POST'])]
     public function verify(Request $request, TranslatorInterface $translator): Response
     {
@@ -81,7 +70,6 @@ class ResetPasswordController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            /** @var string $code */
             $code = (string) $form->get('code')->getData();
 
             try {
@@ -96,7 +84,6 @@ class ResetPasswordController extends AbstractController
             }
 
             $this->storeTokenInSession($code);
-
             return $this->redirectToRoute('app_reset_password');
         }
 
@@ -105,9 +92,6 @@ class ResetPasswordController extends AbstractController
         ]);
     }
 
-    /**
-     * Validates and process the reset action after the code is verified.
-     */
     #[Route('/reset/{token}', name: 'app_reset_password', methods: ['GET', 'POST'])]
     public function reset(
         Request $request,
@@ -117,7 +101,6 @@ class ResetPasswordController extends AbstractController
     ): Response {
         if ($token) {
             $this->storeTokenInSession($token);
-
             return $this->redirectToRoute('app_reset_password');
         }
 
@@ -127,7 +110,6 @@ class ResetPasswordController extends AbstractController
         }
 
         try {
-            /** @var User $user */
             $user = $this->resetPasswordHelper->validateTokenAndFetchUser($token);
         } catch (ResetPasswordExceptionInterface $e) {
             $this->addFlash('reset_password_error', sprintf(
@@ -144,15 +126,12 @@ class ResetPasswordController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->resetPasswordHelper->removeResetRequest($token);
 
-            /** @var string $plainPassword */
             $plainPassword = (string) $form->get('plainPassword')->getData();
-
             $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
             $this->entityManager->flush();
 
             $this->cleanSessionAfterReset();
-
-            $this->addFlash('success', 'Votre mot de passe a été modifié avec succès.');
+            $this->addFlash('success', 'Votre mot de passe a ete modifie avec succes.');
 
             return $this->redirectToRoute('app_login');
         }
@@ -173,7 +152,6 @@ class ResetPasswordController extends AbstractController
             'email' => $emailFormData,
         ]);
 
-        // Do not reveal whether the email exists
         if (!$user) {
             return $this->redirectToRoute('app_check_email');
         }
@@ -186,12 +164,14 @@ class ResetPasswordController extends AbstractController
 
         $baseUrl = rtrim((string) ($this->getParameter('app_url') ?? ''), '/');
         $resetPath = $this->generateUrl('app_reset_password', ['token' => $resetToken->getToken()]);
-        $resetUrl = $baseUrl !== '' ? $baseUrl . $resetPath : $this->generateUrl('app_reset_password', ['token' => $resetToken->getToken()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $resetUrl = $baseUrl !== ''
+            ? $baseUrl . $resetPath
+            : $this->generateUrl('app_reset_password', ['token' => $resetToken->getToken()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $email = (new TemplatedEmail())
-            ->from(new Address($this->getParameter('mailer_from_address'), $this->getParameter('mailer_from_name')))
+            ->from(new Address((string) $this->getParameter('mailer_from_address'), (string) $this->getParameter('mailer_from_name')))
             ->to((string) $user->getEmail())
-            ->subject('Réinitialisation de votre mot de passe - Chronic Care')
+            ->subject('Reinitialisation de votre mot de passe - Chronic Care')
             ->htmlTemplate('reset_password/email.html.twig')
             ->context([
                 'resetToken' => $resetToken,
@@ -202,13 +182,10 @@ class ResetPasswordController extends AbstractController
         try {
             $mailer->send($email);
         } catch (TransportExceptionInterface $e) {
-            // Avoid 500 error if SMTP is misconfigured; allow user to continue in dev.
             $this->addFlash('reset_password_error', 'Email sending failed. Please try again later.');
         }
 
         $this->setTokenObjectInSession($resetToken);
-
         return $this->redirectToRoute('app_check_email');
     }
 }
-

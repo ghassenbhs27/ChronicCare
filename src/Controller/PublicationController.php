@@ -3,8 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Publication;
-use App\Repository\PublicationRepository;
 use App\Repository\CommentaireRepository;
+use App\Repository\PublicationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/publication')]
 class PublicationController extends AbstractController
@@ -22,36 +23,45 @@ class PublicationController extends AbstractController
         PublicationRepository $repository,
         PaginatorInterface $paginator
     ): Response {
-        $categorie = $request->query->get('categorie');
+        $categorie = trim((string) $request->query->get('categorie', ''));
+        $categorie = in_array($categorie, Publication::CATEGORIES, true) ? $categorie : '';
+
         $search = trim((string) $request->query->get('search', ''));
-        $canSeeDrafts = $this->isGranted('ROLE_COACH') || $this->isGranted('ROLE_ADMIN');
-        $statut = $canSeeDrafts ? $request->query->get('statut', '') : 'publie';
+        $canSeeDrafts = $this->isGranted('ROLE_COACH') || $this->isGranted('ROLE_NUTRITIONNISTE') || $this->isGranted('ROLE_ADMIN');
+
+        $statut = $canSeeDrafts
+            ? trim((string) $request->query->get('statut', ''))
+            : Publication::STATUT_PUBLIE;
+
+        if ($canSeeDrafts && !in_array($statut, ['', Publication::STATUT_BROUILLON, Publication::STATUT_PUBLIE], true)) {
+            $statut = '';
+        }
 
         $qb = $repository->createQueryBuilder('p');
 
-        if ($categorie) {
+        if ($categorie !== '') {
             $qb->andWhere('p.categorie = :categorie')
-               ->setParameter('categorie', $categorie);
+                ->setParameter('categorie', $categorie);
         }
 
         if ($statut !== '') {
             $qb->andWhere('p.statut = :statut')
-               ->setParameter('statut', $statut);
+                ->setParameter('statut', $statut);
         } elseif (!$canSeeDrafts) {
             $qb->andWhere('p.statut = :statut')
-               ->setParameter('statut', 'publie');
+                ->setParameter('statut', Publication::STATUT_PUBLIE);
         }
 
         if ($search !== '') {
             $qb->andWhere('(p.titre LIKE :search OR p.contenu LIKE :search)')
-               ->setParameter('search', '%' . $search . '%');
+                ->setParameter('search', '%' . $search . '%');
         }
 
         $qb->orderBy('p.createdAt', 'DESC');
 
         $publications = $paginator->paginate(
             $qb->getQuery(),
-            $request->query->getInt('page', 1),
+            max(1, $request->query->getInt('page', 1)),
             12
         );
 
@@ -64,7 +74,7 @@ class PublicationController extends AbstractController
         ]);
     }
 
-    #[Route('/show/{id}', name: 'publication_show', requirements: ['id' => '\d+'])]
+    #[Route('/show/{id}', name: 'publication_show', requirements: ['id' => '\\d+'])]
     public function show(
         int $id,
         Request $request,
@@ -75,24 +85,24 @@ class PublicationController extends AbstractController
         $publication = $repository->find($id);
 
         if (!$publication) {
-            throw $this->createNotFoundException('Publication non trouvée');
+            throw $this->createNotFoundException('Publication non trouvee');
         }
 
-        $canSeeDrafts = $this->isGranted('ROLE_COACH') || $this->isGranted('ROLE_ADMIN');
-        if ($publication->getStatut() === 'brouillon' && !$canSeeDrafts) {
-            throw $this->createNotFoundException('Publication non trouvée');
+        $canSeeDrafts = $this->isGranted('ROLE_COACH') || $this->isGranted('ROLE_NUTRITIONNISTE') || $this->isGranted('ROLE_ADMIN');
+        if ($publication->getStatut() === Publication::STATUT_BROUILLON && !$canSeeDrafts) {
+            throw $this->createNotFoundException('Publication non trouvee');
         }
 
         $publication->setNbVues($publication->getNbVues() + 1);
         $em->flush();
 
-        $page = $request->query->getInt('page', 1);
+        $page = max(1, $request->query->getInt('page', 1));
         $limit = 7;
 
         $commentaires = $commentaireRepository->findByPublicationPaginated($id, $page, $limit);
         $totalCommentaires = $commentaireRepository->countByPublication($id);
-        $totalPages = (int) ceil($totalCommentaires / $limit);
-        $canComment = $publication->getStatut() === 'publie';
+        $totalPages = max(1, (int) ceil($totalCommentaires / $limit));
+        $canComment = $publication->getStatut() === Publication::STATUT_PUBLIE;
 
         return $this->render('publication/show.html.twig', [
             'publication' => $publication,
@@ -105,30 +115,52 @@ class PublicationController extends AbstractController
     }
 
     #[Route('/new', name: 'publication_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
-        if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_ADMIN')) {
+        if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Seuls les coachs et administrateurs peuvent publier. Les patients peuvent commenter les publications.');
         }
+
         $publication = new Publication();
         $publication->setTitre('');
         $publication->setContenu('');
-        $publication->setCategorie('nutrition');
-        $publication->setStatut('brouillon');
+        $publication->setCategorie(Publication::CATEGORIES[0]);
+        $publication->setStatut(Publication::STATUT_BROUILLON);
 
         if ($request->isMethod('POST')) {
-            $publication->setTitre($request->request->get('titre'));
-            $publication->setContenu($request->request->get('contenu'));
-            $publication->setCategorie($request->request->get('categorie'));
-            $publication->setStatut($request->request->get('statut', 'brouillon'));
+            if (!$this->isCsrfTokenValid('publication_form', (string) $request->request->get('_token'))) {
+                $this->addFlash('error', 'Jeton de securite invalide.');
+                return $this->redirectToRoute('publication_new');
+            }
+
+            $publication->setTitre(trim((string) $request->request->get('titre', '')));
+            $publication->setContenu(trim((string) $request->request->get('contenu', '')));
+
+            $categorie = trim((string) $request->request->get('categorie', ''));
+            $publication->setCategorie(in_array($categorie, Publication::CATEGORIES, true) ? $categorie : null);
+
+            $statut = trim((string) $request->request->get('statut', Publication::STATUT_BROUILLON));
+            $publication->setStatut(in_array($statut, [Publication::STATUT_BROUILLON, Publication::STATUT_PUBLIE], true) ? $statut : Publication::STATUT_BROUILLON);
+
             if ($this->getUser()) {
                 $publication->setAuteur($this->getUser());
+            }
+
+            $violations = $validator->validate($publication);
+            if (count($violations) > 0) {
+                foreach ($violations as $violation) {
+                    $this->addFlash('error', $violation->getMessage());
+                }
+
+                return $this->render('publication/form.html.twig', [
+                    'publication' => $publication,
+                ]);
             }
 
             $em->persist($publication);
             $em->flush();
 
-            $this->addFlash('success', 'Publication créée avec succès !');
+            $this->addFlash('success', 'Publication creee avec succes !');
             return $this->redirectToRoute('publication_index');
         }
 
@@ -137,27 +169,53 @@ class PublicationController extends AbstractController
         ]);
     }
 
-    #[Route('/edit/{id}', name: 'publication_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
-    public function edit(int $id, Request $request, PublicationRepository $repository, EntityManagerInterface $em): Response
-    {
-        if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_ADMIN')) {
+    #[Route('/edit/{id}', name: 'publication_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
+    public function edit(
+        int $id,
+        Request $request,
+        PublicationRepository $repository,
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
+    ): Response {
+        if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Seuls les coachs et administrateurs peuvent modifier une publication.');
         }
+
         $publication = $repository->find($id);
 
         if (!$publication) {
-            throw $this->createNotFoundException();
+            throw $this->createNotFoundException('Publication non trouvee');
         }
 
         if ($request->isMethod('POST')) {
-            $publication->setTitre($request->request->get('titre'));
-            $publication->setContenu($request->request->get('contenu'));
-            $publication->setCategorie($request->request->get('categorie'));
-            $publication->setStatut($request->request->get('statut'));
+            if (!$this->isCsrfTokenValid('publication_form', (string) $request->request->get('_token'))) {
+                $this->addFlash('error', 'Jeton de securite invalide.');
+                return $this->redirectToRoute('publication_edit', ['id' => $publication->getId()]);
+            }
+
+            $publication->setTitre(trim((string) $request->request->get('titre', '')));
+            $publication->setContenu(trim((string) $request->request->get('contenu', '')));
+
+            $categorie = trim((string) $request->request->get('categorie', ''));
+            $publication->setCategorie(in_array($categorie, Publication::CATEGORIES, true) ? $categorie : null);
+
+            $statut = trim((string) $request->request->get('statut', Publication::STATUT_BROUILLON));
+            $publication->setStatut(in_array($statut, [Publication::STATUT_BROUILLON, Publication::STATUT_PUBLIE], true) ? $statut : Publication::STATUT_BROUILLON);
+
+            $violations = $validator->validate($publication);
+            if (count($violations) > 0) {
+                foreach ($violations as $violation) {
+                    $this->addFlash('error', $violation->getMessage());
+                }
+
+                return $this->render('publication/form.html.twig', [
+                    'publication' => $publication,
+                ]);
+            }
 
             $em->flush();
 
-            $this->addFlash('success', 'Publication modifiée avec succès !');
+            $this->addFlash('success', 'Publication modifiee avec succes !');
             return $this->redirectToRoute('publication_show', ['id' => $publication->getId()]);
         }
 
@@ -166,36 +224,49 @@ class PublicationController extends AbstractController
         ]);
     }
 
-    #[Route('/delete/{id}', name: 'publication_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function delete(int $id, PublicationRepository $repository, EntityManagerInterface $em): Response
+    #[Route('/delete/{id}', name: 'publication_delete', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    public function delete(int $id, Request $request, PublicationRepository $repository, EntityManagerInterface $em): Response
     {
-        if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_ADMIN')) {
+        if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Seuls les coachs et administrateurs peuvent supprimer une publication.');
         }
+
         $publication = $repository->find($id);
 
         if (!$publication) {
-            throw $this->createNotFoundException();
+            throw $this->createNotFoundException('Publication non trouvee');
+        }
+
+        if (!$this->isCsrfTokenValid('delete_' . $publication->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Jeton de securite invalide.');
+            return $this->redirectToRoute('publication_show', ['id' => $publication->getId()]);
         }
 
         $em->remove($publication);
         $em->flush();
 
-        $this->addFlash('success', 'Publication supprimée avec succès !');
+        $this->addFlash('success', 'Publication supprimee avec succes !');
         return $this->redirectToRoute('publication_index');
     }
 
-    #[Route('/like/{id}', name: 'publication_like', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/like/{id}', name: 'publication_like', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function like(int $id, Request $request, PublicationRepository $repository, EntityManagerInterface $em): Response
     {
         $publication = $repository->find($id);
 
         if (!$publication) {
-            return $this->json(['success' => false, 'error' => 'Publication non trouvée'], 404);
+            return $this->json(['success' => false, 'error' => 'Publication non trouvee'], 404);
         }
 
         $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['success' => false, 'error' => 'Requete invalide'], 400);
+        }
+
         $action = $data['action'] ?? 'like';
+        if (!in_array($action, ['like', 'unlike'], true)) {
+            return $this->json(['success' => false, 'error' => 'Action invalide'], 400);
+        }
 
         if ($action === 'like') {
             $publication->setNbLikes($publication->getNbLikes() + 1);

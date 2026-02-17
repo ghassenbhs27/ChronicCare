@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\CommentaireRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommentaireRepository::class)]
 class Commentaire
@@ -23,6 +24,13 @@ class Commentaire
     private ?User $auteur = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Le commentaire ne peut pas etre vide.')]
+    #[Assert\Length(
+        min: 3,
+        max: 3000,
+        minMessage: 'Le commentaire doit contenir au moins {{ limit }} caracteres.',
+        maxMessage: 'Le commentaire ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $contenu;
 
     #[ORM\Column]

@@ -47,6 +47,27 @@ class EtatRepository extends ServiceEntityRepository
         return $qb->orderBy('e.' . $sort, $dir)->getQuery()->getResult();
     }
 
+    public function findByUserWithSearchSort(User $user, ?string $q, string $sort = 'dateReleve', string $dir = 'DESC'): array
+    {
+        $allowedSort = ['id', 'type', 'valeur', 'unite', 'dateReleve'];
+        if (!in_array($sort, $allowedSort, true)) {
+            $sort = 'dateReleve';
+        }
+        $dir = strtoupper($dir) === 'ASC' ? 'ASC' : 'DESC';
+
+        $qb = $this->createQueryBuilder('e')
+            ->leftJoin('e.utilisateur', 'u')->addSelect('u')
+            ->andWhere('e.utilisateur = :user')
+            ->setParameter('user', $user);
+
+        if ($q) {
+            $qb->andWhere('LOWER(e.type) LIKE :q OR LOWER(e.unite) LIKE :q')
+                ->setParameter('q', '%' . mb_strtolower(trim($q)) . '%');
+        }
+
+        return $qb->orderBy('e.' . $sort, $dir)->getQuery()->getResult();
+    }
+
     /** @return array<array{date: string, total: int}> Relevés des patients uniquement. */
     public function getCountByDayLastDays(int $days = 7): array
     {

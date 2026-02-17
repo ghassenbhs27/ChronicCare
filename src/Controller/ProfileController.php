@@ -7,8 +7,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 class ProfileController extends AbstractController
 {
@@ -26,7 +28,8 @@ class ProfileController extends AbstractController
     public function edit(
         Request $request,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        SluggerInterface $slugger
     ): Response {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
@@ -47,6 +50,19 @@ class ProfileController extends AbstractController
             $role = $form->get('mainRole')->getData();
             if ($role) {
                 $user->setRoles([$role]); // ou array_unique([...$user->getRoles(), $role])
+            }
+
+            /** @var UploadedFile|null $photoFile */
+            $photoFile = $form->get('photoProfil')->getData();
+            if ($photoFile instanceof UploadedFile) {
+                $safeName = $slugger->slug(pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $newFilename = $safeName . '-' . bin2hex(random_bytes(6)) . '.' . $photoFile->guessExtension();
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profile';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0775, true);
+                }
+                $photoFile->move($uploadDir, $newFilename);
+                $user->setPhotoProfil($newFilename);
             }
             
             $em->flush();

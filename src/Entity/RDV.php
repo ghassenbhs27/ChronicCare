@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\RDVRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: RDVRepository::class)]
 class RDV
@@ -21,22 +22,35 @@ class RDV
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: 'Le patient est obligatoire.')]
     private User $patient;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: 'Le professionnel est obligatoire.')]
     private User $professionnel;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Assert\NotNull(message: 'La date du rendez-vous est obligatoire.')]
     private \DateTimeInterface $dateRdv;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(
+        max: 2000,
+        maxMessage: 'Le motif ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private ?string $motif = null;
 
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: 'Le statut est obligatoire.')]
+    #[Assert\Choice(
+        choices: [self::STATUT_EN_ATTENTE, self::STATUT_CONFIRME, self::STATUT_ANNULE, self::STATUT_TERMINE],
+        message: 'Le statut selectionne est invalide.'
+    )]
     private string $statut;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    #[Assert\NotNull(message: 'La date de creation est obligatoire.')]
     private \DateTimeImmutable $createdAt;
 
     #[ORM\OneToOne(mappedBy: 'rdv', cascade: ['persist', 'remove'])]

@@ -8,7 +8,7 @@
   <main class="main">
 <div class="container py-5">
   <h1 class="mb-4">Nouveau relevé</h1>
-  {{ form_start(form) }}
+  {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
     {{ form_widget(form) }}
     <button class="btn btn-primary" type="submit">Enregistrer</button>
     <a class="btn btn-outline-secondary" href="{{ path('front_etat_index') }}">Annuler</a>

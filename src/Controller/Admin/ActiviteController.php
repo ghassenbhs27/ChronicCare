@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Activite;
 use App\Form\ActiviteType;
 use App\Repository\ActiviteRepository;
+use App\Repository\EtatRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -52,23 +53,10 @@ class ActiviteController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_activite_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(): Response
     {
-        $activite = new Activite();
-        $form = $this->createForm(ActiviteType::class, $activite);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($activite);
-            $em->flush();
-
-            return $this->redirectToRoute('admin_activite_index');
-        }
-
-        return $this->render('admin/activite/new.html.twig', [
-            'activite' => $activite,
-            'form' => $form->createView(),
-        ]);
+        $this->addFlash('warning', 'Ajout d activite desactive dans l administration.');
+        return $this->redirectToRoute('admin_activite_index');
     }
 
     #[Route('/{id}', name: 'admin_activite_show', methods: ['GET'])]
@@ -78,9 +66,10 @@ class ActiviteController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_activite_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Activite $activite, EntityManagerInterface $em): Response
+    public function edit(Request $request, Activite $activite, EntityManagerInterface $em, EtatRepository $etatRepository): Response
     {
-        $form = $this->createForm(ActiviteType::class, $activite);
+        $etats = $etatRepository->findBy([], ['dateReleve' => 'DESC']);
+        $form = $this->createForm(ActiviteType::class, $activite, ['etats' => $etats]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

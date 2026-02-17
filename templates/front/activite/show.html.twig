@@ -1,18 +1,31 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Activité{% endblock %}
+{% block title %}Activite{% endblock %}
 
 {% block body %}
   {% include 'partials/_navbar.html.twig' %}
 
   <main class="main">
-<div class="container py-5">
-  <h1 class="mb-4">{{ activite.type }}</h1>
-  <p><strong>Durée :</strong> {{ activite.duree }} min</p>
-  <p><strong>Calories :</strong> {{ activite.calories }}</p>
-  <p><strong>Date :</strong> {{ activite.dateActivite ? activite.dateActivite|date('d/m/Y') : '' }}</p>
-  <a class="btn btn-primary" href="{{ path('front_activite_edit', {id: activite.id}) }}">Éditer</a>
-  <a class="btn btn-outline-secondary" href="{{ path('front_activite_index') }}">Retour</a>
-</div>
+    <div class="container py-5">
+      <h1 class="mb-4">{{ activite.type }}</h1>
+      {% if activite.utilisateur %}
+        <p><strong>Patient :</strong> {{ activite.utilisateur.prenom }} {{ activite.utilisateur.nom }}</p>
+      {% endif %}
+      <p><strong>Duree :</strong> {{ activite.duree }} min</p>
+      <p><strong>Calories :</strong> {{ activite.calories }}</p>
+      <p><strong>Date :</strong> {{ activite.dateActivite ? activite.dateActivite|date('d/m/Y') : '' }}</p>
+      <p><strong>Etat lie :</strong>
+        {% if activite.etat %}
+          {{ activite.etat.type }} - {{ activite.etat.valeur }} {{ activite.etat.unite }}
+          ({{ activite.etat.dateReleve ? activite.etat.dateReleve|date('d/m/Y') : '' }})
+        {% else %}
+          -
+        {% endif %}
+      </p>
+      {% if isPro %}
+        <a class="btn btn-primary" href="{{ path('front_activite_edit', {id: activite.id}) }}">Editer</a>
+      {% endif %}
+      <a class="btn btn-outline-secondary" href="{{ path('front_activite_index', activite.utilisateur ? {patient: activite.utilisateur.id} : {}) }}">Retour</a>
+    </div>
   </main>
 {% endblock %}

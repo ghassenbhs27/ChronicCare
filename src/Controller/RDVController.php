@@ -71,7 +71,11 @@ final class RDVController extends AbstractController
         }
 
         $professionnel = $userRepository->find($id);
-        if (!$professionnel || !in_array('ROLE_COACH', $professionnel->getRoles())) {
+        if (
+            !$professionnel
+            || (!in_array('ROLE_COACH', $professionnel->getRoles(), true)
+                && !in_array('ROLE_NUTRITIONNISTE', $professionnel->getRoles(), true))
+        ) {
             throw $this->createNotFoundException();
         }
 

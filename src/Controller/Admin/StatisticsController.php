@@ -41,7 +41,7 @@ class StatisticsController extends AbstractController
         $roleLabelsMap = [
             'ROLE_PATIENT' => 'Patients',
             'ROLE_COACH' => 'Coachs',
-            'ROLE_NUTRITIONIST' => 'Nutritionnistes',
+            'ROLE_NUTRITIONNISTE' => 'Nutritionnistes',
             'ROLE_ADMIN' => 'Admins',
             'OTHER' => 'Autres',
         ];

@@ -32,19 +32,14 @@
       z-index: 40;
       box-shadow: 1px 0 0 0 rgba(0,0,0,0.03);
     }
-    .back-sidebar.collapsed {
-      width: 68px;
-      min-width: 68px;
-    }
     .back-sidebar .back-sidebar-inner {
       padding: 20px 12px 20px 16px;
-      padding-right: 52px;
+      padding-right: 16px;
       flex: 1;
       display: flex;
       flex-direction: column;
       min-height: 0;
     }
-    .back-sidebar.collapsed .back-sidebar-inner { padding: 20px 10px; padding-right: 10px; }
     .back-sidebar .back-brand {
       display: flex;
       align-items: center;
@@ -73,16 +68,6 @@
       letter-spacing: -0.01em;
       white-space: nowrap;
     }
-    .back-sidebar.collapsed .back-brand {
-      justify-content: center;
-      padding: 10px;
-      border-bottom-color: #f3f4f6;
-    }
-    .back-sidebar.collapsed .back-brand span,
-    .back-sidebar.collapsed .back-nav-label,
-    .back-sidebar.collapsed .back-nav-link-text,
-    .back-sidebar.collapsed .back-user-label,
-    .back-sidebar.collapsed .back-user-name { display: none !important; }
     .back-sidebar .back-nav-label {
       font-size: 0.6875rem;
       font-weight: 600;
@@ -92,28 +77,33 @@
       padding: 16px 12px 8px;
       margin: 0;
     }
-    .back-sidebar.collapsed .back-nav-label { padding: 12px 0 6px; }
     .back-sidebar .back-nav {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 0;
       flex: 1;
       min-height: 0;
+      border: 1px solid #f3f4f6;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
     }
     .back-sidebar .back-nav a {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 9px 12px;
-      border-radius: 6px;
+      padding: 10px 12px;
+      border-radius: 0;
       color: #4b5563;
       text-decoration: none;
       font-size: 0.8125rem;
       font-weight: 500;
       transition: background 0.15s ease, color 0.15s ease;
-      border-left: 2px solid transparent;
-      margin-left: 2px;
+      border-left: 3px solid transparent;
+      border-bottom: 1px solid #f3f4f6;
+      margin-left: 0;
     }
+    .back-sidebar .back-nav a:last-of-type { border-bottom: none; }
     .back-sidebar .back-nav a:hover {
       background: #f9fafb;
       color: #111827;
@@ -122,7 +112,6 @@
       background: #eff6ff;
       color: #1d4ed8;
       border-left-color: #2563eb;
-      margin-left: 0;
       padding-left: 14px;
     }
     .back-sidebar .back-nav a i {
@@ -150,17 +139,6 @@
       color: #6b7280;
     }
     .back-sidebar .back-nav a.back-nav-external:hover { color: #374151; }
-    .back-sidebar.collapsed .back-nav a {
-      justify-content: center;
-      padding: 10px;
-      margin-left: 0;
-      border-left: none;
-    }
-    .back-sidebar.collapsed .back-nav a.active {
-      padding: 10px;
-      background: #eff6ff;
-      border-radius: 8px;
-    }
     .back-sidebar .back-divider {
       height: 1px;
       background: #f3f4f6;
@@ -188,51 +166,6 @@
       color: #374151;
       word-break: break-word;
     }
-    .back-sidebar.collapsed .back-user {
-      display: flex;
-      justify-content: center;
-      padding: 12px;
-    }
-    .back-sidebar.collapsed .back-user::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #10b981;
-      box-shadow: 0 0 0 2px #d1fae5;
-    }
-    .back-sidebar .back-toggle-wrap {
-      position: absolute;
-      top: 18px;
-      right: 10px;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-    }
-    .back-sidebar .back-toggle {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      color: #6b7280;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      font-size: 0.75rem;
-    }
-    .back-sidebar .back-toggle:hover {
-      background: #111827;
-      color: #fff;
-      border-color: #111827;
-    }
-    .back-sidebar .back-toggle i { transition: transform 0.25s ease; }
-    .back-sidebar.collapsed .back-toggle i { transform: rotate(180deg); }
     .back-content { padding: 28px; }
     .back-topbar {
       background: #fff;
@@ -254,12 +187,7 @@
 
 <div class="back-shell d-flex">
 
-  <aside class="back-sidebar d-flex flex-column" id="adminSidebar" data-collapsed="false">
-    <div class="back-toggle-wrap">
-      <button type="button" class="back-toggle" id="adminSidebarToggle" aria-label="Ouvrir / Fermer le menu">
-        <i class="bi bi-chevron-left"></i>
-      </button>
-    </div>
+  <aside class="back-sidebar d-flex flex-column" id="adminSidebar">
     <div class="back-sidebar-inner flex-grow-1 d-flex flex-column">
       <div class="back-brand">
         <i class="bi bi-grid-3x3-gap-fill"></i>
@@ -335,6 +263,9 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
+          <a class="btn btn-outline-primary btn-sm" href="{{ path('admin_dashboard') }}" title="Dashboard admin">
+            <i class="bi bi-speedometer2"></i>
+          </a>
           <a class="btn btn-outline-secondary btn-sm" href="{{ path('index') }}">
             <i class="bi bi-house"></i>
           </a>
@@ -361,31 +292,6 @@
 <script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('assets/vendor/aos/aos.js') }}"></script>
 <script src="{{ asset('assets/js/main.js') }}"></script>
-<script>
-(function() {
-  var STORAGE_KEY = 'chroniccare_admin_sidebar_collapsed';
-  var sidebar = document.getElementById('adminSidebar');
-  var toggle = document.getElementById('adminSidebarToggle');
-  if (!sidebar || !toggle) return;
-  function applyState(collapsed) {
-    if (collapsed) {
-      sidebar.classList.add('collapsed');
-      sidebar.setAttribute('data-collapsed', 'true');
-    } else {
-      sidebar.classList.remove('collapsed');
-      sidebar.setAttribute('data-collapsed', 'false');
-    }
-    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (e) {}
-  }
-  var saved = false;
-  try { saved = localStorage.getItem(STORAGE_KEY) === '1'; } catch (e) {}
-  applyState(saved);
-  toggle.addEventListener('click', function() {
-    var collapsed = sidebar.classList.contains('collapsed');
-    applyState(!collapsed);
-  });
-})();
-</script>
 {% block javascripts %}{% endblock %}
 </body>
 </html>

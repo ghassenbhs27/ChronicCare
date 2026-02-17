@@ -1,6 +1,6 @@
 {% extends 'coach/base.html.twig' %}
 
-{% block page_title %}Mes événements{% endblock %}
+{% block page_title %}Mes evenements{% endblock %}
 
 {% block stylesheets %}
   {{ parent() }}
@@ -27,24 +27,29 @@
 {% endblock %}
 
 {% block content %}
+{% set is_nutritionniste = app.user and ('ROLE_NUTRITIONNISTE' in app.user.roles) %}
+{% set pro_space_label = is_nutritionniste ? 'Espace Nutritionniste' : 'Espace Coach' %}
 <nav aria-label="Fil d'Ariane" class="coach-breadcrumb">
   <ol class="breadcrumb mb-0">
     <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Espace Coach · Événements</li>
+    <li class="breadcrumb-item active" aria-current="page">{{ pro_space_label }} - Evenements</li>
   </ol>
 </nav>
 
 <header class="coach-page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
   <div>
-    <h1 class="coach-page-title"><i class="bi bi-calendar2-event me-2"></i>Mes événements</h1>
-    <p class="coach-page-sub">Créez et gérez vos événements, suivez les inscriptions et les exercices associés.</p>
+    <h1 class="coach-page-title"><i class="bi bi-calendar2-event me-2"></i>Mes evenements</h1>
+    <p class="coach-page-sub">Creez et gerez vos evenements, suivez les inscriptions et les exercices associes.</p>
   </div>
   <div class="d-flex gap-2">
     <a class="btn coach-accent-btn d-flex align-items-center gap-2" href="{{ path('app_statistics') }}">
       <i class="bi bi-graph-up-arrow"></i> Statistiques
     </a>
+    <a class="btn coach-accent-btn d-flex align-items-center gap-2" href="{{ path('exercice_index') }}">
+      <i class="bi bi-lightning-charge"></i> Creer un exercice
+    </a>
     <a class="btn coach-accent-btn d-flex align-items-center gap-2" href="{{ path('evenement_new') }}">
-      <i class="bi bi-plus-lg"></i> Créer un événement
+      <i class="bi bi-plus-lg"></i> Creer un evenement
     </a>
   </div>
 </header>
@@ -62,12 +67,12 @@
   <form method="get" class="row g-3 align-items-end">
     <div class="col-12 col-md-5">
       <label class="form-label small fw-bold text-uppercase text-muted" for="q">Recherche</label>
-      <input class="form-control" id="q" name="q" type="text" placeholder="Titre ou lieu…" value="{{ q }}">
+      <input class="form-control" id="q" name="q" type="text" placeholder="Titre ou lieu..." value="{{ q }}">
     </div>
     <div class="col-6 col-md-2">
       <label class="form-label small fw-bold text-uppercase text-muted" for="sort">Trier par</label>
       <select class="form-select" id="sort" name="sort">
-        <option value="dateDebut" {% if sort == 'dateDebut' %}selected{% endif %}>Date début</option>
+        <option value="dateDebut" {% if sort == 'dateDebut' %}selected{% endif %}>Date debut</option>
         <option value="dateFin" {% if sort == 'dateFin' %}selected{% endif %}>Date fin</option>
         <option value="titre" {% if sort == 'titre' %}selected{% endif %}>Titre</option>
       </select>
@@ -75,25 +80,25 @@
     <div class="col-6 col-md-2">
       <label class="form-label small fw-bold text-uppercase text-muted" for="order">Ordre</label>
       <select class="form-select" id="order" name="order">
-        <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>Décroissant</option>
+        <option value="DESC" {% if order == 'DESC' %}selected{% endif %}>Decroissant</option>
         <option value="ASC" {% if order == 'ASC' %}selected{% endif %}>Croissant</option>
       </select>
     </div>
     <div class="col-12 col-md-3 d-flex gap-2">
       <button class="btn coach-accent-btn flex-grow-1" type="submit"><i class="bi bi-search me-2"></i>Filtrer</button>
-      <a class="btn btn-outline-secondary" href="{{ path('evenement_index') }}">Réinitialiser</a>
+      <a class="btn btn-outline-secondary" href="{{ path('evenement_index') }}">Reinitialiser</a>
     </div>
   </form>
 </div>
 
-<p class="text-muted small mb-3"><strong>{{ total }}</strong> événement{{ total > 1 ? 's' : '' }}</p>
+<p class="text-muted small mb-3"><strong>{{ total }}</strong> evenement{{ total > 1 ? 's' : '' }}</p>
 
 {% if evenements is empty %}
   <div class="coach-empty">
     <i class="bi bi-calendar-x coach-empty-icon"></i>
-    <h2 class="coach-empty-title">Aucun événement</h2>
-    <p class="coach-empty-text mb-4">Créez votre premier événement pour commencer à gérer vos activités.</p>
-    <a class="btn btn-primary" href="{{ path('evenement_new') }}"><i class="bi bi-plus-lg me-2"></i>Créer un événement</a>
+    <h2 class="coach-empty-title">Aucun evenement</h2>
+    <p class="coach-empty-text mb-4">Creez votre premier evenement pour commencer a gerer vos activites.</p>
+    <a class="btn btn-primary" href="{{ path('evenement_new') }}"><i class="bi bi-plus-lg me-2"></i>Creer un evenement</a>
   </div>
 {% else %}
   <div class="row g-4">
@@ -103,19 +108,19 @@
           <div class="card-body">
             <h3 class="coach-event-title">{{ evenement.titre }}</h3>
             <div class="coach-event-meta">
-              <span><i class="bi bi-calendar3 me-1"></i> {{ evenement.dateDebut ? evenement.dateDebut|date('d/m/Y H:i') : '—' }}</span>
-              <span class="ms-2"><i class="bi bi-geo-alt me-1"></i> {{ evenement.lieu|length > 25 ? evenement.lieu|slice(0, 25) ~ '…' : evenement.lieu }}</span>
+              <span><i class="bi bi-calendar3 me-1"></i> {{ evenement.dateDebut ? evenement.dateDebut|date('d/m/Y H:i') : '-' }}</span>
+              <span class="ms-2"><i class="bi bi-geo-alt me-1"></i> {{ evenement.lieu|length > 25 ? evenement.lieu|slice(0, 25) ~ '...' : evenement.lieu }}</span>
             </div>
             <div class="coach-event-badges">
               <span class="badge coach-accent-badge">{{ inscription_counts[evenement.id] ?? 0 }} inscription(s)</span>
               {% if holiday_map[evenement.id] is defined %}
-                <span class="badge bg-warning text-dark">J. férié</span>
+                <span class="badge bg-warning text-dark">Jour ferie</span>
               {% endif %}
             </div>
             <div class="coach-event-actions">
               <a class="btn btn-sm coach-accent-btn" href="{{ path('evenement_show', { id: evenement.id }) }}">Voir</a>
               <a class="btn btn-sm coach-accent-btn" href="{{ path('evenement_edit', { id: evenement.id }) }}">Modifier</a>
-              <form class="d-inline" method="post" action="{{ path('evenement_delete', { id: evenement.id }) }}" onsubmit="return confirm('Supprimer cet événement ?');">
+              <form class="d-inline" method="post" action="{{ path('evenement_delete', { id: evenement.id }) }}" onsubmit="return confirm('Supprimer cet evenement ?');">
                 <input type="hidden" name="_token" value="{{ csrf_token('delete_evenement_' ~ evenement.id) }}">
                 <button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>
               </form>
@@ -128,7 +133,7 @@
 
   {% if pages > 1 %}
     {% set params = { q: q, sort: sort, order: order } %}
-    <nav class="mt-4 coach-pagination" aria-label="Pagination événements">
+    <nav class="mt-4 coach-pagination" aria-label="Pagination evenements">
       <ul class="pagination justify-content-center mb-0">
         <li class="page-item {{ page <= 1 ? 'disabled' : '' }}">
           <a class="page-link" href="{{ path('evenement_index', params|merge({ page: page - 1 })) }}">&laquo;</a>

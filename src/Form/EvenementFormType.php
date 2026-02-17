@@ -5,6 +5,8 @@ namespace App\Form;
 use App\Entity\Evenement;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -13,10 +15,20 @@ class EvenementFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('titre')
-            ->add('description')
+            ->add('titre', TextType::class, [
+                'trim' => true,
+                'attr' => [
+                    'maxlength' => 200,
+                ],
+            ])
+            ->add('description', TextareaType::class, [
+                'trim' => true,
+                'attr' => [
+                    'maxlength' => 5000,
+                ],
+            ])
             ->add('dateDebut', DateTimeType::class, [
-                'label' => 'Date début',
+                'label' => 'Date debut',
                 'widget' => 'single_text',
                 'invalid_message' => 'Veuillez saisir une date et une heure valides.',
             ])
@@ -25,7 +37,12 @@ class EvenementFormType extends AbstractType
                 'widget' => 'single_text',
                 'invalid_message' => 'Veuillez saisir une date et une heure valides.',
             ])
-            ->add('lieu')
+            ->add('lieu', TextType::class, [
+                'trim' => true,
+                'attr' => [
+                    'maxlength' => 255,
+                ],
+            ])
         ;
     }
 

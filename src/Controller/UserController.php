@@ -6,6 +6,7 @@ use Dompdf\Options;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,6 +35,9 @@ class UserController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $role = $form->get('accountType')->getData();
             $user->setRoles(array_unique(['ROLE_USER', $role]));
+            $user->setRequestedRole($role);
+            $user->setApprovalStatus(User::APPROVAL_APPROVED);
+            $user->setIsActive(true);
 
             $plainPassword = $form->get('password')->getData();
             if ($plainPassword) {
@@ -95,6 +99,7 @@ class UserController extends AbstractController
         $roleLabels = [
             'ROLE_ADMIN' => 'Admin',
             'ROLE_COACH' => 'Coach',
+            'ROLE_NUTRITIONNISTE' => 'Nutritionniste',
             'ROLE_PATIENT' => 'Patient',
             'OTHER' => 'Autre',
         ];
@@ -161,6 +166,10 @@ class UserController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $role = $form->get('role')->getData();
             $user->setRoles($role ? array_unique([$role]) : []);
+            $user->setRequestedRole($role ?: $user->getRequestedRole());
+            if ($user->isActive()) {
+                $user->setApprovalStatus(User::APPROVAL_APPROVED);
+            }
 
             $plainPassword = $form->get('password')->getData();
             if ($plainPassword) {
@@ -178,6 +187,57 @@ class UserController extends AbstractController
             'user' => $user,
             'form' => $form->createView(),
         ]);
+    }
+
+    #[Route('/{id}/approve', name: 'app_user_approve', methods: ['POST'])]
+    public function approve(
+        Request $request,
+        User $user,
+        EntityManagerInterface $entityManager,
+        NotificationService $notificationService
+    ): Response {
+        if (!$this->isCsrfTokenValid('approve' . $user->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_user_index');
+        }
+
+        $role = $user->getRequestedRole() ?: 'ROLE_PATIENT';
+        $user->setRoles([$role]);
+        $user->setIsActive(true);
+        $user->setApprovalStatus(User::APPROVAL_APPROVED);
+        $user->setVerificationToken(null);
+        $user->setVerificationTokenExpiresAt(null);
+        $user->setUpdatedAt(new \DateTimeImmutable());
+        $entityManager->flush();
+
+        $notificationService->sendUserApprovalDecision($user, true);
+        $this->addFlash('success', 'Compte approuve avec succes.');
+
+        return $this->redirectToRoute('app_user_index');
+    }
+
+    #[Route('/{id}/reject', name: 'app_user_reject', methods: ['POST'])]
+    public function reject(
+        Request $request,
+        User $user,
+        EntityManagerInterface $entityManager,
+        NotificationService $notificationService
+    ): Response {
+        if (!$this->isCsrfTokenValid('reject' . $user->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_user_index');
+        }
+
+        $user->setRoles([]);
+        $user->setIsActive(false);
+        $user->setApprovalStatus(User::APPROVAL_REJECTED);
+        $user->setUpdatedAt(new \DateTimeImmutable());
+        $entityManager->flush();
+
+        $notificationService->sendUserApprovalDecision($user, false);
+        $this->addFlash('warning', 'Compte refuse.');
+
+        return $this->redirectToRoute('app_user_index');
     }
 
     #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]

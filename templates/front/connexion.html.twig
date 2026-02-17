@@ -284,9 +284,10 @@
 
                   <div class="col-12 text-center" id="resend-link-wrap">
                     <a href="{{ path('app_resend_verification', last_email is defined and last_email ? { email: last_email } : []) }}" class="auth-link d-block mb-2 small" id="resend-link">
-                      <i class="bi bi-envelope me-1"></i>Vous n'avez pas reçu l'email de vérification ?
+                      <i class="bi bi-envelope me-1"></i>Vous n'avez pas recu l'email de verification ?
                     </a>
                   </div>
+
                   <div class="col-12 text-center">
                     <span class="text-muted">Pas encore de compte ?</span>
                     <a href="{{ path('app_register') }}" class="auth-link">
