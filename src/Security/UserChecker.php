@@ -15,15 +15,31 @@ class UserChecker implements UserCheckerInterface
             return;
         }
 
+        $roles = $user->getRoles();
+        $requiresEmailVerification = in_array($user->getRequestedRole(), ['ROLE_COACH', 'ROLE_NUTRITIONNISTE'], true)
+            || in_array('ROLE_COACH', $roles, true)
+            || in_array('ROLE_NUTRITIONNISTE', $roles, true);
+        if ($requiresEmailVerification && !$user->isActive() && $user->getVerificationToken() !== null) {
+            throw new CustomUserMessageAccountStatusException(
+                'Veuillez verifier votre adresse email avant de vous connecter.'
+            );
+        }
+
+        if ($user->isRejected()) {
+            throw new CustomUserMessageAccountStatusException(
+                'Votre demande d inscription a ete refusee. Veuillez contacter le support.'
+            );
+        }
+
         if (!$user->isActive()) {
             throw new CustomUserMessageAccountStatusException(
-                'Votre compte n\'est pas encore actif. Veuillez vérifier votre email et attendre la validation par l\'administrateur.'
+                'Votre compte n est pas encore actif. Verifiez votre email puis attendez la validation de l administrateur.'
             );
         }
 
         if ($user->getRoles() === []) {
             throw new CustomUserMessageAccountStatusException(
-                'Votre compte n\'a pas encore de rôle attribué. Un administrateur doit valider votre inscription.'
+                'Votre compte n a pas encore de role attribue. Un administrateur doit valider votre inscription.'
             );
         }
     }

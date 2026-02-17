@@ -91,23 +91,10 @@ class EtatController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_etat_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(): Response
     {
-        $etat = new Etat();
-        $form = $this->createForm(EtatType::class, $etat);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($etat);
-            $em->flush();
-
-            return $this->redirectToRoute('admin_etat_index');
-        }
-
-        return $this->render('suivi/etat/new.html.twig', [
-            'etat' => $etat,
-            'form' => $form->createView(),
-        ]);
+        $this->addFlash('warning', 'Ajout d etat de sante desactive dans l administration.');
+        return $this->redirectToRoute('admin_etat_index');
     }
 
     #[Route('/{id}', name: 'admin_etat_show', methods: ['GET'])]

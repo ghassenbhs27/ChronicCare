@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ConsultationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ConsultationRepository::class)]
 class Consultation
@@ -16,15 +17,26 @@ class Consultation
 
     #[ORM\OneToOne(inversedBy: 'consultation')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: 'Le rendez-vous est obligatoire.')]
     private RDV $rdv;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Les notes sont obligatoires.')]
+    #[Assert\Length(
+        max: 5000,
+        maxMessage: 'Les notes ne peuvent pas depasser {{ limit }} caracteres.'
+    )]
     private string $notes;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(
+        max: 5000,
+        maxMessage: 'Le diagnostic ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private ?string $diagnostic = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    #[Assert\NotNull(message: 'La date de consultation est obligatoire.')]
     private \DateTimeImmutable $dateConsultation;
 
     public function __construct()

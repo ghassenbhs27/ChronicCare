@@ -227,12 +227,16 @@
             <option value="no_role" {{ (roleFilter ?? '') == 'no_role' ? 'selected' : '' }}>Sans rôle</option>
             <option value="ROLE_ADMIN" {{ (roleFilter ?? '') == 'ROLE_ADMIN' ? 'selected' : '' }}>Admin</option>
             <option value="ROLE_COACH" {{ (roleFilter ?? '') == 'ROLE_COACH' ? 'selected' : '' }}>Coach</option>
+            <option value="ROLE_NUTRITIONNISTE" {{ (roleFilter ?? '') == 'ROLE_NUTRITIONNISTE' ? 'selected' : '' }}>Nutritionniste</option>
             <option value="ROLE_PATIENT" {{ (roleFilter ?? '') == 'ROLE_PATIENT' ? 'selected' : '' }}>Patient</option>
           </select>
           <select name="status" class="form-select form-select-sm user-filter-select" style="max-width: 120px;" aria-label="Filtrer par statut">
             <option value="" {{ (statusFilter ?? '') == '' ? 'selected' : '' }}>Tous statuts</option>
             <option value="actif" {{ (statusFilter ?? '') == 'actif' ? 'selected' : '' }}>Actif</option>
             <option value="inactif" {{ (statusFilter ?? '') == 'inactif' ? 'selected' : '' }}>Inactif</option>
+            <option value="pending" {{ (statusFilter ?? '') == 'pending' ? 'selected' : '' }}>En attente</option>
+            <option value="approved" {{ (statusFilter ?? '') == 'approved' ? 'selected' : '' }}>Approuve</option>
+            <option value="rejected" {{ (statusFilter ?? '') == 'rejected' ? 'selected' : '' }}>Refuse</option>
           </select>
           <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary btn-sm" title="Réinitialiser les filtres">Réinitialiser</a>
         </form>

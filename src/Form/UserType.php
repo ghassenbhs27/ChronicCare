@@ -20,6 +20,7 @@ class UserType extends AbstractType
     private const ROLE_CHOICES = [
         'Patient' => 'ROLE_PATIENT',
         'Coach' => 'ROLE_COACH',
+        'Nutritionniste' => 'ROLE_NUTRITIONNISTE',
         'Administrateur' => 'ROLE_ADMIN',
     ];
 

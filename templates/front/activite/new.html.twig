@@ -1,18 +1,37 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Nouvelle activité{% endblock %}
+{% block title %}Nouvelle activite{% endblock %}
 
 {% block body %}
   {% include 'partials/_navbar.html.twig' %}
 
   <main class="main">
-<div class="container py-5">
-  <h1 class="mb-4">Nouvelle activité</h1>
-  {{ form_start(form) }}
-    {{ form_widget(form) }}
-    <button class="btn btn-primary" type="submit">Enregistrer</button>
-    <a class="btn btn-outline-secondary" href="{{ path('front_activite_index') }}">Annuler</a>
-  {{ form_end(form) }}
-</div>
+    <div class="container py-5">
+      <h1 class="mb-4">Nouvelle activite patient</h1>
+
+      {% if selectedPatient %}
+        <form method="get" class="row g-2 mb-3">
+          <div class="col-md-8">
+            <select name="patient" class="form-select" onchange="this.form.submit()">
+              {% for p in patients %}
+                <option value="{{ p.id }}" {{ selectedPatient.id == p.id ? 'selected' : '' }}>{{ p.prenom }} {{ p.nom }} - {{ p.email }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4 d-flex align-items-center text-muted small">
+            Activite ajoutee pour: {{ selectedPatient.prenom }} {{ selectedPatient.nom }}
+          </div>
+        </form>
+      {% endif %}
+
+      {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
+        {% if selectedPatient %}
+          <input type="hidden" name="patient" value="{{ selectedPatient.id }}">
+        {% endif %}
+        {{ form_widget(form) }}
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{{ path('front_activite_index', selectedPatient ? {patient: selectedPatient.id} : {}) }}">Annuler</a>
+      {{ form_end(form) }}
+    </div>
   </main>
 {% endblock %}

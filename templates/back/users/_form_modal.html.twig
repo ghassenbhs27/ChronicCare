@@ -5,7 +5,7 @@
     <a href="{{ path('app_user_index') }}" class="btn btn-link text-muted p-0" style="font-size: 1.25rem;" aria-label="Fermer">&times;</a>
   </div>
   <div class="card-body p-4">
-    {{ form_start(form, { attr: { class: 'user-modal-form' } }) }}
+    {{ form_start(form, { attr: { class: 'user-modal-form', novalidate: 'novalidate' } }) }}
     {{ form_errors(form) }}
 
     <div class="row g-3">

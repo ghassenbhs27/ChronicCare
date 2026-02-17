@@ -28,7 +28,7 @@ final class FrontController extends AbstractController
     #[Route('/contenu-educatif', name: 'contenu-educatif')]
     public function index(): Response|RedirectResponse
     {
-        if ($this->getUser() && $this->isGranted('ROLE_USER') && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_ADMIN')) {
+        if ($this->getUser() && $this->isGranted('ROLE_USER') && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             return $this->redirectToRoute('suivi_front_dashboard');
         }
         return $this->render('front/index.html.twig');
@@ -135,8 +135,8 @@ final class FrontController extends AbstractController
         HolidayService $holidayService,
         InscriptionEvenementRepository $inscriptionRepo
     ): Response {
-        if (!$evenement->isValide()) {
-            throw $this->createNotFoundException('Événement non disponible.');
+        if ($evenement->getStatut() === Evenement::STATUT_REFUSE) {
+            throw $this->createNotFoundException('Evenement non disponible.');
         }
 
         $user = $this->getUser();
@@ -165,12 +165,12 @@ final class FrontController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $email = $inscription->getEmail();
             if ($inscriptionRepo->findOneByEvenementAndEmail($evenement, $email) !== null) {
-                $this->addFlash('warning', 'Vous êtes déjà inscrit à cet événement avec cette adresse email.');
+                $this->addFlash('warning', 'Vous Ãªtes dÃ©jÃ  inscrit Ã  cet Ã©vÃ©nement avec cette adresse email.');
                 return $this->redirectToRoute('front_evenement_show', ['id' => $evenement->getId()]);
             }
             $em->persist($inscription);
             $em->flush();
-            $this->addFlash('success', 'Votre inscription a bien été enregistrée. Vous recevrez les informations pratiques par email si besoin.');
+            $this->addFlash('success', 'Votre inscription a bien Ã©tÃ© enregistrÃ©e. Vous recevrez les informations pratiques par email si besoin.');
             return $this->redirectToRoute('front_evenement_show', ['id' => $evenement->getId()]);
         }
 

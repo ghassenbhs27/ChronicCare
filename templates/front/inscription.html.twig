@@ -129,6 +129,17 @@
         </div>
 
         <div class="col-md-12">
+          {{ form_widget(form.requestedRole, {'attr': {'class': 'form-select'}}) }}
+          <div class="text-danger">{{ form_errors(form.requestedRole) }}</div>
+        </div>
+
+        <div class="col-md-12">
+          {{ form_widget(form.photoProfil, {'attr': {'class': 'form-control', 'accept': 'image/png,image/jpeg,image/webp'}}) }}
+          <div class="form-text">Photo de profil optionnelle (JPG, PNG, WEBP).</div>
+          <div class="text-danger">{{ form_errors(form.photoProfil) }}</div>
+        </div>
+
+        <div class="col-md-12">
           {{ form_widget(form.password.first, {'attr': {'class': 'form-control', 'placeholder': 'Mot de passe (min. 8 caractères)'}}) }}
           <div class="text-danger">{{ form_errors(form.password.first) }}</div>
         </div>
@@ -138,7 +149,7 @@
           <div class="text-danger">{{ form_errors(form.password.second) }}</div>
         </div>
 
-        {# Note : le rôle est attribué par l'admin après vérification de l'email #}
+        {# Le rôle est demandé par l'utilisateur puis validé/refusé par l'admin #}
 
         {# Checkbox optionnelle - conditions d'utilisation #}
         <div class="col-12">

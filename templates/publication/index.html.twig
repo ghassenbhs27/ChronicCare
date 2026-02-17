@@ -37,7 +37,7 @@
         <div class="d-none d-md-block">
           <span class="text-muted small fw-semibold">{{ publications.getTotalItemCount }} publication(s)</span>
         </div>
-        {% if is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN') %}
+        {% if is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN') %}
           <a href="{{ path('publication_new') }}" class="btn btn-primary d-flex align-items-center gap-2">
             <i class="bi bi-plus-lg"></i> Nouvelle publication
           </a>
@@ -105,7 +105,7 @@
                 </div>
                 <div class="forum-pub-actions">
                   <a href="{{ path('publication_show', {id: publication.id}) }}" class="btn btn-primary btn-sm">Lire et commenter</a>
-                  {% if is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN') %}
+                  {% if is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN') %}
                     <a href="{{ path('publication_edit', {id: publication.id}) }}" class="btn btn-outline-secondary btn-sm">Modifier</a>
                     <form method="post" action="{{ path('publication_delete', {id: publication.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette publication ?');">
                       <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ publication.id) }}">
@@ -122,7 +122,7 @@
               <i class="bi bi-chat-square-text forum-empty-icon"></i>
               <h3 class="forum-empty-title">Aucune publication trouvée</h3>
               <p class="forum-empty-text">Aucune publication ne correspond à vos critères pour le moment.</p>
-              {% if is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN') %}
+              {% if is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN') %}
                 <a href="{{ path('publication_new') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Créer une publication</a>
               {% endif %}
             </div>

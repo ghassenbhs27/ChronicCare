@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ActiviteRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ActiviteRepository::class)]
 class Activite
@@ -18,22 +19,41 @@ class Activite
     #[ORM\JoinColumn(nullable: true)]
     private ?User $utilisateur = null;
 
+    #[ORM\ManyToOne(inversedBy: 'activites')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Etat $etat = null;
+
     #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: 'Le type d activite est obligatoire.')]
+    #[Assert\Length(
+        max: 100,
+        maxMessage: 'Le type d activite ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $type;
 
     #[ORM\Column]
-    private int $duree;
+    #[Assert\NotNull(message: 'La duree est obligatoire.')]
+    #[Assert\Positive(message: 'La duree doit etre superieure a 0.')]
+    private ?int $duree = null;
 
     #[ORM\Column]
-    private int $calories;
+    #[Assert\NotNull(message: 'Le nombre de calories est obligatoire.')]
+    #[Assert\PositiveOrZero(message: 'Le nombre de calories doit etre superieur ou egal a 0.')]
+    private ?int $calories = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $dateActivite;
+    #[Assert\NotNull(message: 'La date de l activite est obligatoire.')]
+    private ?\DateTimeImmutable $dateActivite = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(
+        max: 1000,
+        maxMessage: 'Les notes ne peuvent pas depasser {{ limit }} caracteres.'
+    )]
     private ?string $notes = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    #[Assert\NotNull(message: 'La date de creation est obligatoire.')]
     private \DateTimeImmutable $createdAt;
 
     public function __construct()
@@ -41,10 +61,7 @@ class Activite
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    // =========================
-    // GETTERS / SETTERS
-    // =========================
-
+    
     public function getId(): ?int
     {
         return $this->id;
@@ -61,6 +78,17 @@ class Activite
         return $this;
     }
 
+    public function getEtat(): ?Etat
+    {
+        return $this->etat;
+    }
+
+    public function setEtat(?Etat $etat): self
+    {
+        $this->etat = $etat;
+        return $this;
+    }
+
     public function getType(): string
     {
         return $this->type;
@@ -72,34 +100,34 @@ class Activite
         return $this;
     }
 
-    public function getDuree(): int
+    public function getDuree(): ?int
     {
         return $this->duree;
     }
 
-    public function setDuree(int $duree): self
+    public function setDuree(?int $duree): self
     {
         $this->duree = $duree;
         return $this;
     }
 
-    public function getCalories(): int
+    public function getCalories(): ?int
     {
         return $this->calories;
     }
 
-    public function setCalories(int $calories): self
+    public function setCalories(?int $calories): self
     {
         $this->calories = $calories;
         return $this;
     }
 
-    public function getDateActivite(): \DateTimeImmutable
+    public function getDateActivite(): ?\DateTimeImmutable
     {
         return $this->dateActivite;
     }
 
-    public function setDateActivite(\DateTimeImmutable $dateActivite): self
+    public function setDateActivite(?\DateTimeImmutable $dateActivite): self
     {
         $this->dateActivite = $dateActivite;
         return $this;

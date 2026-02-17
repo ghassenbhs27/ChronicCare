@@ -16,7 +16,7 @@
         </div>
       {% endif %}
 
-      {{ form_start(form, { attr: { class: 'row g-3 mb-4' } }) }}
+      {{ form_start(form, { attr: { class: 'row g-3 mb-4', novalidate: 'novalidate' } }) }}
         <div class="col-md-8">
           {{ form_widget(form.q, { attr: { class: 'form-control' } }) }}
         </div>

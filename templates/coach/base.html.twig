@@ -1,6 +1,8 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{% block page_title %}Espace coach{% endblock %} - Chronic Care{% endblock %}
+{% set is_nutritionniste = app.user and ('ROLE_NUTRITIONNISTE' in app.user.roles) %}
+{% set default_pro_title = is_nutritionniste ? 'Espace nutritionniste' : 'Espace coach' %}
+{% block title %}{% block page_title %}{{ default_pro_title }}{% endblock %} - Chronic Care{% endblock %}
 
 {% block stylesheets %}
   {{ parent() }}

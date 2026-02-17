@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ExerciceRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ExerciceRepository::class)]
 class Exercice
@@ -18,15 +19,28 @@ class Exercice
     private ?Evenement $evenement = null;
 
     #[ORM\Column(length: 200)]
+    #[Assert\NotBlank(message: 'Le nom est obligatoire.')]
+    #[Assert\Length(
+        max: 200,
+        maxMessage: 'Le nom ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $nom;
 
     #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank(message: 'La description est obligatoire.')]
+    #[Assert\Length(
+        max: 5000,
+        maxMessage: 'La description ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $description;
 
     #[ORM\Column]
+    #[Assert\NotNull(message: 'La duree est obligatoire.')]
+    #[Assert\Positive(message: 'La duree doit etre superieure a 0.')]
     private int $duree;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero(message: 'Le nombre de repetitions doit etre superieur ou egal a 0.')]
     private ?int $repetitions = null;
 
     public function getId(): ?int

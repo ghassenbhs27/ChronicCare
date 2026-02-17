@@ -6,81 +6,138 @@ use App\Entity\Activite;
 use App\Entity\User;
 use App\Form\ActiviteType;
 use App\Repository\ActiviteRepository;
+use App\Repository\EtatRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/activite')]
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
 class ActiviteFrontController extends AbstractController
 {
     #[Route('/', name: 'front_activite_index', methods: ['GET'])]
-    public function index(
-        Request $request,
-        ActiviteRepository $repo,
-        UserRepository $userRepository,
-        EntityManagerInterface $em
-    ): Response {
-        $user = $this->resolvePatient($userRepository, $em);
+    public function index(Request $request, ActiviteRepository $repo, UserRepository $userRepository): Response
+    {
+        $currentUser = $this->getAuthenticatedUser();
+        $isPro = $this->isProUser($currentUser);
         $q = $request->query->get('q');
         $sort = $request->query->get('sort', 'dateActivite');
         $dir = $request->query->get('dir', 'DESC');
 
-        $activites = $repo->findByUserWithSearchSort($user, $q, $sort, $dir);
-        $stats = $repo->getPersonalStats($user);
+        $patients = [];
+        $selectedPatient = $currentUser;
+        if ($isPro) {
+            $patients = $userRepository->findPatientsForFollowup();
+            $selectedPatient = $this->resolveSelectedPatient($request, $userRepository, $patients);
+        }
+
+        $activites = [];
+        $stats = [
+            'totalActivites' => 0,
+            'totalDuree' => 0,
+            'totalCalories' => 0,
+            'moyenneCalories' => 0,
+            'moyenneDuree' => 0,
+        ];
+        if ($selectedPatient instanceof User) {
+            $activites = $repo->findByUserWithSearchSort($selectedPatient, $q, $sort, $dir);
+            $stats = $repo->getPersonalStats($selectedPatient);
+        }
 
         $goalMinutes = 150;
         $goalCalories = 2000;
         $minutesProgress = $goalMinutes > 0 ? min(100, (int) round(($stats['totalDuree'] / $goalMinutes) * 100)) : 0;
         $caloriesProgress = $goalCalories > 0 ? min(100, (int) round(($stats['totalCalories'] / $goalCalories) * 100)) : 0;
 
-        return $this->render(
-            'front/activite/index.html.twig',
-            compact('activites', 'q', 'sort', 'dir', 'stats', 'goalMinutes', 'goalCalories', 'minutesProgress', 'caloriesProgress')
-        );
+        return $this->render('front/activite/index.html.twig', [
+            'activites' => $activites,
+            'q' => $q,
+            'sort' => $sort,
+            'dir' => $dir,
+            'stats' => $stats,
+            'goalMinutes' => $goalMinutes,
+            'goalCalories' => $goalCalories,
+            'minutesProgress' => $minutesProgress,
+            'caloriesProgress' => $caloriesProgress,
+            'isPro' => $isPro,
+            'patients' => $patients,
+            'selectedPatient' => $selectedPatient,
+        ]);
     }
 
     #[Route('/new', name: 'front_activite_new', methods: ['GET', 'POST'])]
     public function new(
         Request $request,
         EntityManagerInterface $em,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        EtatRepository $etatRepository
     ): Response {
-        $patient = $this->resolvePatient($userRepository, $em);
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->isProUser($currentUser)) {
+            $this->addFlash('danger', 'Seuls le coach et le nutritionniste peuvent ajouter une activite.');
+            return $this->redirectToRoute('front_activite_index');
+        }
+
+        $patients = $userRepository->findPatientsForFollowup();
+        $selectedPatient = $this->resolveSelectedPatient($request, $userRepository, $patients);
+        if (!$selectedPatient instanceof User) {
+            $this->addFlash('warning', 'Aucun patient disponible pour ajouter une activite.');
+            return $this->redirectToRoute('front_activite_index');
+        }
+
         $activite = new Activite();
-        $form = $this->createForm(ActiviteType::class, $activite);
+        $etats = $etatRepository->findBy(['utilisateur' => $selectedPatient], ['dateReleve' => 'DESC']);
+        $form = $this->createForm(ActiviteType::class, $activite, ['etats' => $etats]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $activite->setUtilisateur($patient);
-            $this->applyCaloriesEstimation($activite);
-            $em->persist($activite);
-            $em->flush();
-            $this->addFlash('success', 'Activité enregistrée avec succès.');
+            $etat = $activite->getEtat();
+            if ($etat && $etat->getUtilisateur()?->getId() !== $selectedPatient->getId()) {
+                $form->addError(new FormError('L etat selectionne ne correspond pas au patient choisi.'));
+            } else {
+                $activite->setUtilisateur($selectedPatient);
+                $this->applyCaloriesEstimation($activite);
+                $em->persist($activite);
+                $em->flush();
+                $this->addFlash('success', sprintf(
+                    'Activite enregistree avec succes pour %s %s.',
+                    $selectedPatient->getPrenom(),
+                    $selectedPatient->getNom()
+                ));
 
-            return $this->redirectToRoute('front_activite_index');
+                return $this->redirectToRoute('front_activite_index', ['patient' => $selectedPatient->getId()]);
+            }
         }
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('danger', 'Enregistrement impossible : vérifiez les champs.');
+            $this->addFlash('danger', 'Enregistrement impossible : verifiez les champs.');
         }
 
         return $this->render('front/activite/new.html.twig', [
             'activite' => $activite,
             'form' => $form->createView(),
+            'isPro' => true,
+            'patients' => $patients,
+            'selectedPatient' => $selectedPatient,
         ]);
     }
 
     #[Route('/{id}', name: 'front_activite_show', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function show(Activite $activite, UserRepository $userRepository, EntityManagerInterface $em): Response
+    public function show(Activite $activite): Response
     {
-        $patient = $this->resolvePatient($userRepository, $em);
-        if ($activite->getUtilisateur()?->getId() !== $patient->getId()) {
-            throw $this->createAccessDeniedException('Cette activité ne vous appartient pas.');
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->canAccessActivity($currentUser, $activite)) {
+            throw $this->createAccessDeniedException('Acces refuse a cette activite.');
         }
 
-        return $this->render('front/activite/show.html.twig', compact('activite'));
+        return $this->render('front/activite/show.html.twig', [
+            'activite' => $activite,
+            'isPro' => $this->isProUser($currentUser),
+        ]);
     }
 
     #[Route('/{id}/edit', name: 'front_activite_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
@@ -88,79 +145,114 @@ class ActiviteFrontController extends AbstractController
         Request $request,
         Activite $activite,
         EntityManagerInterface $em,
-        UserRepository $userRepository
+        EtatRepository $etatRepository
     ): Response {
-        $patient = $this->resolvePatient($userRepository, $em);
-        if ($activite->getUtilisateur()?->getId() !== $patient->getId()) {
-            throw $this->createAccessDeniedException('Cette activité ne vous appartient pas.');
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->isProUser($currentUser)) {
+            throw $this->createAccessDeniedException('Le patient ne peut pas modifier une activite.');
+        }
+        if (!$this->canAccessActivity($currentUser, $activite)) {
+            throw $this->createAccessDeniedException('Acces refuse a cette activite.');
         }
 
-        $form = $this->createForm(ActiviteType::class, $activite);
+        $patient = $activite->getUtilisateur();
+        $etats = $patient ? $etatRepository->findBy(['utilisateur' => $patient], ['dateReleve' => 'DESC']) : [];
+        $form = $this->createForm(ActiviteType::class, $activite, ['etats' => $etats]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->applyCaloriesEstimation($activite);
-            $em->flush();
-            $this->addFlash('success', 'Activité mise à jour avec succès.');
+            $etat = $activite->getEtat();
+            if ($etat && $patient && $etat->getUtilisateur()?->getId() !== $patient->getId()) {
+                $form->addError(new FormError('L etat selectionne ne correspond pas au patient de cette activite.'));
+            } else {
+                $this->applyCaloriesEstimation($activite);
+                $em->flush();
+                $this->addFlash('success', 'Activite mise a jour avec succes.');
 
-            return $this->redirectToRoute('front_activite_index');
+                return $this->redirectToRoute('front_activite_index', ['patient' => $patient?->getId()]);
+            }
         }
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('danger', 'Modification impossible : vérifiez les champs.');
+            $this->addFlash('danger', 'Modification impossible : verifiez les champs.');
         }
 
         return $this->render('front/activite/edit.html.twig', [
             'activite' => $activite,
             'form' => $form->createView(),
+            'isPro' => true,
         ]);
     }
 
     #[Route('/{id}', name: 'front_activite_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function delete(
-        Request $request,
-        Activite $activite,
-        EntityManagerInterface $em,
-        UserRepository $userRepository
-    ): Response {
-        $patient = $this->resolvePatient($userRepository, $em);
-        if ($activite->getUtilisateur()?->getId() !== $patient->getId()) {
-            throw $this->createAccessDeniedException('Cette activité ne vous appartient pas.');
+    public function delete(Request $request, Activite $activite, EntityManagerInterface $em): Response
+    {
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->isProUser($currentUser)) {
+            throw $this->createAccessDeniedException('Le patient ne peut pas supprimer une activite.');
+        }
+        if (!$this->canAccessActivity($currentUser, $activite)) {
+            throw $this->createAccessDeniedException('Acces refuse a cette activite.');
         }
 
+        $patientId = $activite->getUtilisateur()?->getId();
         if ($this->isCsrfTokenValid('delete' . $activite->getId(), $request->request->get('_token'))) {
             $em->remove($activite);
             $em->flush();
-            $this->addFlash('success', 'Activité supprimée avec succès.');
+            $this->addFlash('success', 'Activite supprimee avec succes.');
         } else {
-            $this->addFlash('danger', 'Token CSRF invalide : suppression refusée.');
+            $this->addFlash('danger', 'Token CSRF invalide : suppression refusee.');
         }
 
-        return $this->redirectToRoute('front_activite_index');
+        return $this->redirectToRoute('front_activite_index', ['patient' => $patientId]);
     }
 
-    private function resolvePatient(UserRepository $userRepository, EntityManagerInterface $em): User
+    private function getAuthenticatedUser(): User
     {
-        $current = $this->getUser();
-        if ($current instanceof User) {
-            return $current;
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('Connexion requise.');
         }
-
-        $fallback = $userRepository->findOneBy([], ['id' => 'ASC']);
-        if ($fallback instanceof User) {
-            return $fallback;
-        }
-
-        $stamp = date('YmdHis');
-        $user = new User();
-        $user->setNom('Patient');
-        $user->setPrenom('Temporaire');
-        $user->setEmail('patient-activite-' . $stamp . '@local.chroniccare');
-        $user->setPassword('temporary-password');
-        $user->setRoles(['ROLE_PATIENT']);
-        $em->persist($user);
-        $em->flush();
 
         return $user;
+    }
+
+    private function isProUser(User $user): bool
+    {
+        $roles = $user->getRoles();
+        return in_array('ROLE_COACH', $roles, true) || in_array('ROLE_NUTRITIONNISTE', $roles, true);
+    }
+
+    /**
+     * @param User[] $patients
+     */
+    private function resolveSelectedPatient(Request $request, UserRepository $userRepository, array $patients): ?User
+    {
+        $patientId = (int) ($request->query->get('patient') ?? $request->request->get('patient'));
+        if ($patientId > 0) {
+            $patient = $userRepository->find($patientId);
+            if ($patient instanceof User) {
+                foreach ($patients as $candidate) {
+                    if ($candidate->getId() === $patient->getId()) {
+                        return $patient;
+                    }
+                }
+            }
+        }
+
+        return $patients[0] ?? null;
+    }
+
+    private function canAccessActivity(User $user, Activite $activite): bool
+    {
+        $ownerId = $activite->getUtilisateur()?->getId();
+        if ($ownerId === null) {
+            return false;
+        }
+        if ($this->isProUser($user)) {
+            return true;
+        }
+
+        return $ownerId === $user->getId();
     }
 
     private function applyCaloriesEstimation(Activite $activite): void

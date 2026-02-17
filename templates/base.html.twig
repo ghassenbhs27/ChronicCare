@@ -163,6 +163,11 @@
         color: #64748b;
         margin-top: 10px;
       }
+
+      .cc-filter-loading {
+        opacity: .75;
+        transition: opacity .12s ease;
+      }
     </style>
 
     <!-- Main CSS File -->
@@ -197,6 +202,68 @@
 
 <!-- Main JS File -->
 <script src="{{ asset('assets/js/main.js') }}"></script>
+<script>
+  (function () {
+    // Fallback global: auto-submit GET filter forms even if main.js failed.
+    if (window.__ccAjaxFilterReady) return;
+    if (window.__ccFilterFallbackBound) return;
+    window.__ccFilterFallbackBound = true;
+
+    const debounce = (fn, wait) => {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), wait);
+      };
+    };
+
+    const submitForm = (form) => {
+      if (!(form instanceof HTMLFormElement)) return;
+      const method = (form.getAttribute('method') || 'get').toLowerCase();
+      if (method !== 'get') return;
+      const action = (form.getAttribute('action') || '').toLowerCase();
+      if (action.includes('/export') || action.includes('excel') || action.includes('pdf') || action.includes('csv')) return;
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.submit();
+    };
+
+    const debouncedByForm = new WeakMap();
+    const getDebounced = (form) => {
+      if (debouncedByForm.has(form)) return debouncedByForm.get(form);
+      const fn = debounce(() => submitForm(form), 120);
+      debouncedByForm.set(form, fn);
+      return fn;
+    };
+
+    document.addEventListener('input', function (e) {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (!target.matches('form[method="get"] input[name], form[method="GET"] input[name], form input[type="search"][name], form input[type="text"][name], form textarea[name]')) return;
+      const form = target.closest('form');
+      if (!form) return;
+      getDebounced(form)();
+    }, true);
+
+    document.addEventListener('change', function (e) {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (!target.matches('form[method="get"] select[name], form[method="GET"] select[name], form[method="get"] input[type="date"][name], form[method="GET"] input[type="date"][name]')) return;
+      const form = target.closest('form');
+      submitForm(form);
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (!target.matches('form[method="get"] input[name], form[method="GET"] input[name], form textarea[name]')) return;
+      const form = target.closest('form');
+      if (!form) return;
+      e.preventDefault();
+      submitForm(form);
+    }, true);
+  })();
+</script>
 
 <!-- Profile Modal -->
 <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">

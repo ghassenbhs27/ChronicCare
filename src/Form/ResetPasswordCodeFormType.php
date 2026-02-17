@@ -16,14 +16,14 @@ class ResetPasswordCodeFormType extends AbstractType
     {
         $builder
             ->add('code', TextType::class, [
-                'label' => 'Code reçu par email',
+                'label' => 'Code recu par email',
                 'attr' => [
                     'autocomplete' => 'one-time-code',
-                    'placeholder' => 'Collez le code reçu',
+                    'placeholder' => 'Collez le code recu',
                 ],
                 'constraints' => [
                     new NotBlank([
-                        'message' => 'Veuillez entrer le code reçu par email',
+                        'message' => 'Veuillez entrer le code recu par email',
                     ]),
                 ],
             ]);

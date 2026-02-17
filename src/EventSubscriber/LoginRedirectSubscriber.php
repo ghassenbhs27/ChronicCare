@@ -33,7 +33,7 @@ class LoginRedirectSubscriber implements EventSubscriberInterface
             $roles = $user->getRoles();
             if (in_array('ROLE_ADMIN', $roles, true)) {
                 $route = 'admin_dashboard';
-            } elseif (in_array('ROLE_COACH', $roles, true)) {
+            } elseif (in_array('ROLE_COACH', $roles, true) || in_array('ROLE_NUTRITIONNISTE', $roles, true)) {
                 $route = 'app_statistics';
             } elseif (in_array('ROLE_PATIENT', $roles, true) || in_array('ROLE_USER', $roles, true)) {
                 $route = 'app_statistics';

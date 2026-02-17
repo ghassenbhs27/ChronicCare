@@ -16,9 +16,7 @@ class EvenementService
     public function createEvenement(Evenement $evenement, User $coach): Evenement
     {
         if ($evenement->getDateFin() <= $evenement->getDateDebut()) {
-            throw new InvalidArgumentException(
-                'La date de fin doit être après la date de début.'
-            );
+            throw new InvalidArgumentException('La date de fin doit etre apres la date de debut.');
         }
 
         $evenement->setCoach($coach);
@@ -33,9 +31,7 @@ class EvenementService
     public function updateEvenement(Evenement $evenement): Evenement
     {
         if ($evenement->getDateFin() <= $evenement->getDateDebut()) {
-            throw new InvalidArgumentException(
-                'La date de fin doit être après la date de début.'
-            );
+            throw new InvalidArgumentException('La date de fin doit etre apres la date de debut.');
         }
 
         $this->em->flush();

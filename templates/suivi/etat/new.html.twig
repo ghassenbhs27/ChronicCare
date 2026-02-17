@@ -5,7 +5,7 @@
 {% block body %}
 <div class="card shadow-sm">
   <div class="card-body">
-    {{ form_start(form) }}
+    {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
       {{ form_widget(form) }}
       <button class="btn btn-primary" type="submit">Créer</button>
       <a class="btn btn-outline-secondary" href="{{ path('admin_etat_index') }}">Annuler</a>

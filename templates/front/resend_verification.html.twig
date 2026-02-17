@@ -33,6 +33,7 @@
                 {% endif %}
 
                 <form method="post" action="{{ path('app_resend_verification') }}">
+                  <input type="hidden" name="_token" value="{{ csrf_token('resend_verification') }}">
                   <div class="mb-3">
                     <label for="email" class="form-label">Adresse email</label>
                     <input type="email" name="email" id="email" class="form-control" placeholder="nom@exemple.com" value="{{ email }}" required autofocus>

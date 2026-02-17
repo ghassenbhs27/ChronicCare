@@ -12,7 +12,7 @@
       <div class="card">
         <div class="card-body">
           <h2 class="mb-4">Replanifier le rendez-vous</h2>
-          {{ form_start(form) }}
+          {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
             <div class="mb-3">
               {{ form_label(form.dateRdv) }}
               {{ form_widget(form.dateRdv, { attr: { class: 'form-control' } }) }}

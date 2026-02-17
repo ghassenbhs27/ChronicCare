@@ -15,6 +15,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['email'], message: 'Il existe déjà un compte avec cet email')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    public const APPROVAL_PENDING = 'pending';
+    public const APPROVAL_APPROVED = 'approved';
+    public const APPROVAL_REJECTED = 'rejected';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -63,11 +67,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isActive = false;
 
+    #[ORM\Column(length: 30, nullable: true)]
+    private ?string $requestedRole = null;
+
+    #[ORM\Column(length: 20, options: ['default' => self::APPROVAL_PENDING])]
+    private string $approvalStatus = self::APPROVAL_PENDING;
+
     #[ORM\Column(length: 64, nullable: true, unique: true)]
     private ?string $verificationToken = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $verificationTokenExpiresAt = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $photoProfil = null;
 
     /**
      * @var Collection<int, Evenement>
@@ -378,5 +391,53 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->verificationTokenExpiresAt = $verificationTokenExpiresAt;
         return $this;
+    }
+
+    public function getPhotoProfil(): ?string
+    {
+        return $this->photoProfil;
+    }
+
+    public function setPhotoProfil(?string $photoProfil): self
+    {
+        $this->photoProfil = $photoProfil;
+        return $this;
+    }
+
+    public function getRequestedRole(): ?string
+    {
+        return $this->requestedRole;
+    }
+
+    public function setRequestedRole(?string $requestedRole): self
+    {
+        $this->requestedRole = $requestedRole;
+        return $this;
+    }
+
+    public function getApprovalStatus(): string
+    {
+        return $this->approvalStatus;
+    }
+
+    public function setApprovalStatus(string $approvalStatus): self
+    {
+        $this->approvalStatus = $approvalStatus;
+        return $this;
+    }
+
+    public function isPendingApproval(): bool
+    {
+        return $this->approvalStatus === self::APPROVAL_PENDING;
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->approvalStatus === self::APPROVAL_APPROVED;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->approvalStatus === self::APPROVAL_REJECTED;
     }
 }

@@ -20,13 +20,21 @@
       <tbody>
         {% for user in users %}
           {% set _firstRole = user.roles|filter(r => r != 'ROLE_USER')|first %}
+          {% set requestedRole = user.requestedRole %}
           {% set mainRole = (_firstRole is defined and _firstRole != null) ? _firstRole : (user.roles|length > 0 ? 'ROLE_USER' : 'no_role') %}
           {% if mainRole == 'no_role' %}{% set roleLabel = 'Sans rôle' %}
           {% elseif mainRole == 'ROLE_ADMIN' %}{% set roleLabel = 'Admin' %}
           {% elseif mainRole == 'ROLE_COACH' %}{% set roleLabel = 'Coach' %}
+          {% elseif mainRole == 'ROLE_NUTRITIONNISTE' %}{% set roleLabel = 'Nutritionniste' %}
           {% elseif mainRole == 'ROLE_PATIENT' %}{% set roleLabel = 'Patient' %}
           {% elseif mainRole == 'ROLE_USER' %}{% set roleLabel = 'User' %}
           {% else %}{% set roleLabel = mainRole %}{% endif %}
+          {% if requestedRole == 'ROLE_ADMIN' %}{% set requestedRoleLabel = 'Admin' %}
+          {% elseif requestedRole == 'ROLE_COACH' %}{% set requestedRoleLabel = 'Coach' %}
+          {% elseif requestedRole == 'ROLE_NUTRITIONNISTE' %}{% set requestedRoleLabel = 'Nutritionniste' %}
+          {% elseif requestedRole == 'ROLE_PATIENT' %}{% set requestedRoleLabel = 'Patient' %}
+          {% else %}{% set requestedRoleLabel = '-' %}{% endif %}
+          {% set approvalStatus = user.approvalStatus|default('pending') %}
           {% set _updated = user.updatedAt %}
           {% set _created = user.createdAt %}
           {% set lastDate = (_updated is defined and _updated != null) ? _updated : _created %}
@@ -47,10 +55,13 @@
             <td>
               {% if mainRole == 'no_role' %}
                 <span class="badge bg-warning text-dark">{{ roleLabel }}</span>
+                <span class="small text-muted d-block mt-1">Demande: {{ requestedRoleLabel }}</span>
               {% elseif mainRole == 'ROLE_ADMIN' %}
                 <span class="badge bg-danger">{{ roleLabel }}</span>
               {% elseif mainRole == 'ROLE_COACH' %}
                 <span class="badge bg-info">{{ roleLabel }}</span>
+              {% elseif mainRole == 'ROLE_NUTRITIONNISTE' %}
+                <span class="badge bg-primary">{{ roleLabel }}</span>
               {% else %}
                 <span class="badge bg-secondary">{{ roleLabel }}</span>
               {% endif %}
@@ -60,6 +71,13 @@
                 <span class="badge bg-success">Actif</span>
               {% else %}
                 <span class="badge bg-secondary">Inactif</span>
+              {% endif %}
+              {% if approvalStatus == 'pending' %}
+                <span class="badge bg-warning text-dark mt-1">En attente</span>
+              {% elseif approvalStatus == 'approved' %}
+                <span class="badge bg-success mt-1">Approuve</span>
+              {% elseif approvalStatus == 'rejected' %}
+                <span class="badge bg-danger mt-1">Refuse</span>
               {% endif %}
             </td>
             <td class="small text-muted">
@@ -75,6 +93,21 @@
                   <i class="bi bi-three-dots-vertical"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
+                  {% if approvalStatus == 'pending' %}
+                    <li>
+                      <form method="post" action="{{ path('app_user_approve', { id: user.id }) }}" class="d-inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('approve' ~ user.id) }}">
+                        <button type="submit" class="dropdown-item text-success"><i class="bi bi-check-circle me-2"></i> Approuver</button>
+                      </form>
+                    </li>
+                    <li>
+                      <form method="post" action="{{ path('app_user_reject', { id: user.id }) }}" class="d-inline" onsubmit="return confirm('Refuser cette demande ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('reject' ~ user.id) }}">
+                        <button type="submit" class="dropdown-item text-warning"><i class="bi bi-x-circle me-2"></i> Refuser</button>
+                      </form>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                  {% endif %}
                   <li><a class="dropdown-item" href="{{ path('app_user_edit', { id: user.id }) }}"><i class="bi bi-pencil me-2"></i> Modifier</a></li>
                   <li><hr class="dropdown-divider"></li>
                   <li>

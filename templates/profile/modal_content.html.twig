@@ -1,9 +1,7 @@
-{# templates/profile/modal_content.html.twig #}
-
 {% if saved is defined and saved %}
   <div class="alert alert-success d-flex align-items-center" role="alert">
     <i class="bi bi-check-circle-fill me-2"></i>
-    Profil mis à jour avec succès.
+    Profil mis a jour avec succes.
   </div>
 {% endif %}
 
@@ -12,7 +10,11 @@
 {% if mode == 'view' %}
   <div class="cc-profile">
     <div class="cc-avatar">
-      {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+      {% if app.user.photoProfil %}
+        <img src="{{ asset('uploads/profile/' ~ app.user.photoProfil) }}" alt="Photo de profil" style="width:100%;height:100%;object-fit:cover;border-radius:18px;">
+      {% else %}
+        {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+      {% endif %}
     </div>
     <div>
       <p class="cc-name">{{ app.user.prenom }} {{ app.user.nom }}</p>
@@ -24,7 +26,7 @@
     <li class="cc-item">
       <span class="cc-ico"><i class="bi bi-person"></i></span>
       <div>
-        <p class="cc-k">Prénom</p>
+        <p class="cc-k">Prenom</p>
         <p class="cc-v">{{ app.user.prenom }}</p>
       </div>
     </li>
@@ -53,16 +55,15 @@
       </div>
     </li>
 
-    {# Affichage rôle actuel #}
     <li class="cc-item">
       <span class="cc-ico"><i class="bi bi-award"></i></span>
       <div>
-        <p class="cc-k">Rôle</p>
+        <p class="cc-k">Role</p>
         <p class="cc-v">
-          {% if 'ROLE_COACH' in app.user.roles %}
-            Coach
-          {% elseif 'ROLE_NUTRITIONIST' in app.user.roles %}
+          {% if 'ROLE_NUTRITIONNISTE' in app.user.roles %}
             Nutritionniste
+          {% elseif 'ROLE_COACH' in app.user.roles %}
+            Coach
           {% else %}
             Patient
           {% endif %}
@@ -83,13 +84,13 @@
 
   <p class="cc-hint">
     <i class="bi bi-shield-check me-1"></i>
-    Vos informations sont sécurisées et modifiables à tout moment.
+    Vos informations sont securisees et modifiables a tout moment.
   </p>
 
 {% else %}
   {% if form is not defined %}
     <div class="alert alert-danger">
-      Formulaire indisponible (variable <b>form</b> manquante). Vérifie que /profile/edit renvoie bien <code>'form' => $form->createView()</code>.
+      Formulaire indisponible (variable <b>form</b> manquante).
     </div>
   {% else %}
     {{ form_start(form, {
@@ -100,7 +101,7 @@
 
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label fw-bold">Prénom</label>
+        <label class="form-label fw-bold">Prenom</label>
         {{ form_widget(form.prenom) }}
         <div class="text-danger small mt-1">{{ form_errors(form.prenom) }}</div>
       </div>
@@ -123,12 +124,20 @@
         <div class="text-danger small mt-1">{{ form_errors(form.genre) }}</div>
       </div>
 
-      {# Si tu as ajouté mainRole dans ProfileType, il s’affichera ici #}
       {% if form.mainRole is defined %}
         <div class="col-12">
-          <label class="form-label fw-bold">Vous êtes</label>
+          <label class="form-label fw-bold">Vous etes</label>
           {{ form_widget(form.mainRole) }}
           <div class="text-danger small mt-1">{{ form_errors(form.mainRole) }}</div>
+        </div>
+      {% endif %}
+
+      {% if form.photoProfil is defined %}
+        <div class="col-12">
+          <label class="form-label fw-bold">Photo de profil</label>
+          {{ form_widget(form.photoProfil) }}
+          <div class="form-text">JPG, PNG, WEBP - max 4 Mo.</div>
+          <div class="text-danger small mt-1">{{ form_errors(form.photoProfil) }}</div>
         </div>
       {% endif %}
 

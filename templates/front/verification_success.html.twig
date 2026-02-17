@@ -6,12 +6,44 @@
 
 {% block stylesheets %}
   <style>
+    body.auth-page {
+      background: #f3f7fc;
+    }
+
     .verify-wrap {
-      padding: 72px 0;
+      min-height: calc(100vh - 120px);
+      display: flex;
+      align-items: center;
+      padding: 40px 0;
       background:
         radial-gradient(circle at 15% 20%, rgba(25, 135, 84, 0.14), transparent 35%),
         radial-gradient(circle at 85% 85%, rgba(13, 110, 253, 0.12), transparent 35%),
         #f8fbff;
+    }
+
+    .verify-topbar {
+      padding: 14px 0;
+      background: #ffffff;
+      border-bottom: 1px solid #e7eef7;
+    }
+
+    .verify-topbar .brand {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0d6efd;
+      text-decoration: none;
+    }
+
+    .verify-topbar .links {
+      display: flex;
+      gap: 14px;
+      font-size: 0.95rem;
+    }
+
+    .verify-topbar .links a {
+      color: #375172;
+      text-decoration: none;
+      font-weight: 600;
     }
 
     .success-card {
@@ -56,15 +88,49 @@
       margin-bottom: 15px;
     }
 
+    .success-body h2 {
+      font-weight: 700;
+    }
+
+    .success-body .btn {
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
     @media (max-width: 576px) {
-      .verify-wrap { padding: 42px 0; }
+      .verify-topbar .brand {
+        font-size: 1rem;
+      }
+
+      .verify-topbar .links {
+        gap: 10px;
+        font-size: 0.85rem;
+      }
+
+      .verify-wrap {
+        min-height: auto;
+        padding: 24px 0;
+      }
       .success-head, .success-body { padding: 20px; }
+      .success-icon {
+        width: 68px;
+        height: 68px;
+        font-size: 1.8rem;
+      }
     }
   </style>
 {% endblock %}
 
 {% block body %}
-  {% include 'partials/_navbar.html.twig' with { minimal_nav: true } %}
+  <header class="verify-topbar">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a href="{{ path('index') }}" class="brand">Chronic Care</a>
+      <nav class="links" aria-label="Navigation">
+        <a href="{{ path('index') }}">Accueil</a>
+        <a href="{{ path('contact') }}">Contact</a>
+      </nav>
+    </div>
+  </header>
 
   <main class="main">
     <section class="verify-wrap">
@@ -89,7 +155,8 @@
                 </div>
                 <h2 class="text-success mb-2">Email confirme avec succes</h2>
                 <p class="text-muted mb-4">
-                  Votre compte est valide. Un administrateur doit encore attribuer un role avant votre premiere connexion.
+                  Votre email est confirme. Votre demande est en attente de validation administrateur.
+                  Vous recevrez une notification email apres approbation ou refus.
                 </p>
                 <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
                   <a href="{{ path('app_login') }}" class="btn btn-primary px-4">

@@ -33,51 +33,62 @@ class ResendVerificationController extends AbstractController
             return $this->redirectToRoute('index');
         }
 
-        $email = $request->request->get('email') ?? $request->query->get('email', '');
+        $email = trim((string) ($request->request->get('email') ?? $request->query->get('email', '')));
         $sent = false;
         $error = null;
 
-        if ($request->isMethod('POST') && $email) {
-            $user = $this->userRepository->findOneBy(['email' => trim($email)]);
-
-            if (!$user) {
-                $error = 'Aucun compte trouvé avec cette adresse email.';
-            } elseif ($user->isActive()) {
-                $error = 'Ce compte est déjà actif. Vous pouvez vous connecter.';
+        if ($request->isMethod('POST') && $email !== '') {
+            if (!$this->isCsrfTokenValid('resend_verification', (string) $request->request->get('_token'))) {
+                $error = 'Jeton de securite invalide.';
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $error = 'Adresse email invalide.';
             } else {
-                $now = new \DateTimeImmutable();
-                $token = $user->getVerificationToken();
-                $expires = $user->getVerificationTokenExpiresAt();
-                if (!$token || !$expires || $expires < $now) {
-                    $user->setVerificationToken(bin2hex(random_bytes(32)));
-                    $user->setVerificationTokenExpiresAt(new \DateTimeImmutable('+24 hours'));
-                    $this->entityManager->flush();
-                }
+                $email = mb_strtolower($email);
+                $user = $this->userRepository->findOneBy(['email' => $email]);
 
-                $baseUrl = rtrim($this->getParameter('app_url'), '/');
-                $path = $urlGenerator->generate('app_verify_email', [
-                    'token' => $user->getVerificationToken(),
-                ]);
-                $signedUrl = $baseUrl . $path;
+                if (!$user) {
+                    $error = 'Aucun compte trouve avec cette adresse email.';
+                } elseif ($user->isActive()) {
+                    $error = 'Ce compte est deja actif. Vous pouvez vous connecter.';
+                } else {
+                    $now = new \DateTimeImmutable();
+                    $token = $user->getVerificationToken();
+                    $expires = $user->getVerificationTokenExpiresAt();
+                    if (!$token || !$expires || $expires < $now) {
+                        $user->setVerificationToken(bin2hex(random_bytes(32)));
+                        $user->setVerificationTokenExpiresAt(new \DateTimeImmutable('+24 hours'));
+                        $this->entityManager->flush();
+                    }
 
-                $emailMessage = (new TemplatedEmail())
-                    ->from(new Address(
-                        $this->getParameter('mailer_from_address'),
-                        $this->getParameter('mailer_from_name')
-                    ))
-                    ->to((string) $user->getEmail())
-                    ->subject('Vérifiez votre email - Chronic Care')
-                    ->htmlTemplate('email/verification.html.twig')
-                    ->context([
-                        'user' => $user,
-                        'signedUrl' => $signedUrl,
+                    $path = $urlGenerator->generate('app_verify_email', [
+                        'token' => $user->getVerificationToken(),
                     ]);
+                    $appUrl = rtrim((string) ($this->getParameter('app_url') ?? ''), '/');
+                    $signedUrl = $appUrl !== ''
+                        ? $appUrl . $path
+                        : $urlGenerator->generate('app_verify_email', [
+                            'token' => $user->getVerificationToken(),
+                        ], UrlGeneratorInterface::ABSOLUTE_URL);
 
-                try {
-                    $mailer->send($emailMessage);
-                    $sent = true;
-                } catch (TransportExceptionInterface $e) {
-                    $error = 'Impossible d\'envoyer l\'email. Vérifiez la configuration du serveur mail.';
+                    $emailMessage = (new TemplatedEmail())
+                        ->from(new Address(
+                            (string) $this->getParameter('mailer_from_address'),
+                            (string) $this->getParameter('mailer_from_name')
+                        ))
+                        ->to((string) $user->getEmail())
+                        ->subject('Verifiez votre email - Chronic Care')
+                        ->htmlTemplate('email/verification.html.twig')
+                        ->context([
+                            'user' => $user,
+                            'signedUrl' => $signedUrl,
+                        ]);
+
+                    try {
+                        $mailer->send($emailMessage);
+                        $sent = true;
+                    } catch (TransportExceptionInterface $e) {
+                        $error = 'Impossible d\'envoyer l\'email. Verifiez la configuration du serveur mail.';
+                    }
                 }
             }
         }

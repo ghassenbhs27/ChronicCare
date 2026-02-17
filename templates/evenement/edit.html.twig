@@ -19,7 +19,7 @@
 
 <div class="coach-card coach-form-card">
   <div class="card-body">
-    {{ form_start(form) }}
+    {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
       {{ form_row(form.titre, { label: 'Titre', attr: { class: 'form-control' } }) }}
       {{ form_row(form.description, { label: 'Description', attr: { class: 'form-control', rows: 4 } }) }}
       <div class="row">

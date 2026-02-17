@@ -32,7 +32,11 @@ final class ProfessionnelController extends AbstractController
     public function show(int $id, UserRepository $userRepository, CalendarService $calendarService): Response
     {
         $professionnel = $userRepository->find($id);
-        if (!$professionnel) {
+        if (
+            !$professionnel
+            || (!in_array('ROLE_COACH', $professionnel->getRoles(), true)
+                && !in_array('ROLE_NUTRITIONNISTE', $professionnel->getRoles(), true))
+        ) {
             throw $this->createNotFoundException();
         }
 
