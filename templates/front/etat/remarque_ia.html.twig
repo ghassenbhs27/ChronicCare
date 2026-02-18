@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
 {% block title %}Remarque IA - Etat{% endblock %}
 
@@ -57,6 +57,21 @@
       bottom: 16px;
       z-index: 2000;
       box-shadow: 0 10px 24px rgba(15, 23, 42, .2);
+    }
+    .voice-floating {
+      position: fixed;
+      right: 16px;
+      bottom: 64px;
+      z-index: 2000;
+      background: #ffffff;
+      border: 1px solid #dbe3ef;
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, .18);
+      padding: 10px;
+      width: min(280px, calc(100vw - 24px));
+    }
+    .voice-floating .btn {
+      white-space: nowrap;
     }
   </style>
 {% endblock %}
@@ -138,5 +153,146 @@
     </div>
   </main>
 
+  <div class="voice-floating">
+    <div class="small fw-semibold mb-2"><i class="bi bi-mic-fill me-1"></i> Lecture vocale IA</div>
+    <div class="d-flex gap-2">
+      <select id="voiceLang" class="form-select form-select-sm"></select>
+      <select id="voiceRate" class="form-select form-select-sm" style="max-width: 110px;">
+        <option value="0.65" selected>Lente</option>
+        <option value="0.8">Normale</option>
+        <option value="1.0">Rapide</option>
+      </select>
+      <button type="button" id="voiceToggleBtn" class="btn btn-primary btn-sm">
+        <i class="bi bi-play-fill me-1"></i> Lire
+      </button>
+    </div>
+    <div id="voiceHint" class="small text-muted mt-2"></div>
+  </div>
+
   <a class="btn btn-secondary btn-sm back-floating" href="{{ path('front_etat_index', etat.utilisateur ? {patient: etat.utilisateur.id} : {}) }}">Retour</a>
+
+  <script>
+    (function () {
+      const toggleBtn = document.getElementById('voiceToggleBtn');
+      const langSelect = document.getElementById('voiceLang');
+      const rateSelect = document.getElementById('voiceRate');
+      const hint = document.getElementById('voiceHint');
+      if (!toggleBtn || !langSelect || !rateSelect || !hint || !('speechSynthesis' in window)) return;
+
+      let speaking = false;
+      let voices = [];
+      const allowedLocales = [
+        { value: 'en-US', label: 'English (en-US)' },
+        { value: 'de-DE', label: 'Deutsch (de-DE)' }
+      ];
+
+      const loadLanguageOptions = () => {
+        langSelect.innerHTML = allowedLocales
+          .map((l) => `<option value="${l.value}">${l.label}</option>`)
+          .join('');
+        langSelect.value = 'en-US';
+        hint.textContent = '2 langues disponibles.';
+      };
+
+      const buildSheetText = () => {
+        const chunks = [];
+        const title = document.querySelector('.sheet-title')?.textContent?.trim() || '';
+        const summary = document.querySelector('.sheet-card p')?.textContent?.trim() || '';
+        if (title) chunks.push(title);
+        if (summary) chunks.push('RÃ©sumÃ©: ' + summary);
+
+        document.querySelectorAll('.sheet-card').forEach((card) => {
+          const h = card.querySelector('h6')?.textContent?.trim();
+          const items = Array.from(card.querySelectorAll('li')).map((li) => li.textContent?.trim()).filter(Boolean);
+          if (h && items.length > 0) {
+            chunks.push(h + ': ' + items.join('. '));
+          }
+        });
+
+        return chunks.join('. ');
+      };
+
+      const translateText = async (text, targetLocale) => {
+        try {
+          const response = await fetch('{{ path('ai_translate') }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ text, target: targetLocale })
+          });
+          if (!response.ok) return text;
+          const data = await response.json();
+          return (data && data.translatedText) ? String(data.translatedText) : text;
+        } catch (e) {
+          return text;
+        }
+      };
+
+      const pickVoice = (targetLocale) => {
+        const target = (targetLocale || '').toLowerCase();
+        const lang = target.split('-')[0];
+        return voices.find(v => v.lang.toLowerCase() === target)
+          || voices.find(v => v.lang.toLowerCase().startsWith(lang))
+          || null;
+      };
+
+      const setButtonState = (isSpeaking) => {
+        speaking = isSpeaking;
+        toggleBtn.innerHTML = isSpeaking
+          ? '<i class="bi bi-stop-fill me-1"></i> Stop'
+          : '<i class="bi bi-play-fill me-1"></i> Lire';
+        toggleBtn.classList.toggle('btn-danger', isSpeaking);
+        toggleBtn.classList.toggle('btn-primary', !isSpeaking);
+      };
+
+      toggleBtn.addEventListener('click', async () => {
+        if (speaking) {
+          window.speechSynthesis.cancel();
+          setButtonState(false);
+          return;
+        }
+
+        const sourceText = buildSheetText();
+        if (!sourceText) return;
+        const targetLocale = langSelect.value || 'en-US';
+        hint.textContent = 'Traduction en cours...';
+        const text = await translateText(sourceText, targetLocale);
+        if (!text) return;
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = targetLocale;
+        const selectedVoice = pickVoice(targetLocale);
+        if (selectedVoice) utterance.voice = selectedVoice;
+        utterance.rate = parseFloat(rateSelect.value || '0.65');
+        utterance.pitch = 1.0;
+
+        utterance.onstart = () => {
+          hint.textContent = `Lecture en ${targetLocale}`;
+          setButtonState(true);
+        };
+        utterance.onend = () => {
+          hint.textContent = '2 langues disponibles.';
+          setButtonState(false);
+        };
+        utterance.onerror = () => {
+          hint.textContent = 'Lecture non disponible pour cette langue.';
+          setButtonState(false);
+        };
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      });
+
+      const initVoices = () => {
+        voices = window.speechSynthesis.getVoices() || [];
+        loadLanguageOptions();
+      };
+
+      initVoices();
+      window.speechSynthesis.onvoiceschanged = initVoices;
+    })();
+  </script>
 {% endblock %}
+
