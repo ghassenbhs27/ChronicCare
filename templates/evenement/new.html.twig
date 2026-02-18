@@ -1,0 +1,36 @@
+{% extends 'coach/base.html.twig' %}
+
+{% block page_title %}Créer un événement{% endblock %}
+
+{% block content %}
+<nav aria-label="Fil d'Ariane" class="coach-breadcrumb">
+  <ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('evenement_index') }}">Mes événements</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Nouvel événement</li>
+  </ol>
+</nav>
+
+<header class="coach-page-header mb-4">
+  <h1 class="coach-page-title"><i class="bi bi-calendar-plus me-2"></i>Créer un événement</h1>
+  <p class="coach-page-sub">Renseignez les informations de votre événement.</p>
+</header>
+
+<div class="coach-card coach-form-card">
+  <div class="card-body">
+    {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
+      {{ form_row(form.titre, { label: 'Titre', attr: { class: 'form-control', placeholder: 'Ex. : Séance sport hebdo' } }) }}
+      {{ form_row(form.description, { label: 'Description', attr: { class: 'form-control', rows: 4 } }) }}
+      <div class="row">
+        <div class="col-md-6">{{ form_row(form.dateDebut, { label: 'Date et heure de début' }) }}</div>
+        <div class="col-md-6">{{ form_row(form.dateFin, { label: 'Date et heure de fin' }) }}</div>
+      </div>
+      {{ form_row(form.lieu, { label: 'Lieu', attr: { class: 'form-control', placeholder: 'Adresse ou lieu de l\'événement' } }) }}
+      <div class="coach-form-actions">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i> Créer</button>
+        <a class="btn btn-outline-secondary" href="{{ path('evenement_index') }}">Annuler</a>
+      </div>
+    {{ form_end(form) }}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Email confirme - Chronic Care{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block stylesheets %}
+  <style>
+    body.auth-page {
+      background: #f3f7fc;
+    }
+
+    .verify-wrap {
+      min-height: calc(100vh - 120px);
+      display: flex;
+      align-items: center;
+      padding: 40px 0;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(25, 135, 84, 0.14), transparent 35%),
+        radial-gradient(circle at 85% 85%, rgba(13, 110, 253, 0.12), transparent 35%),
+        #f8fbff;
+    }
+
+    .verify-topbar {
+      padding: 14px 0;
+      background: #ffffff;
+      border-bottom: 1px solid #e7eef7;
+    }
+
+    .verify-topbar .brand {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0d6efd;
+      text-decoration: none;
+    }
+
+    .verify-topbar .links {
+      display: flex;
+      gap: 14px;
+      font-size: 0.95rem;
+    }
+
+    .verify-topbar .links a {
+      color: #375172;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .success-card {
+      border: 0;
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 20px 55px rgba(15, 23, 42, 0.1);
+      overflow: hidden;
+    }
+
+    .success-head {
+      padding: 28px 30px;
+      background: linear-gradient(120deg, #198754, #25a167);
+      color: #fff;
+    }
+
+    .success-body {
+      padding: 30px;
+    }
+
+    .success-icon {
+      width: 82px;
+      height: 82px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.1rem;
+      color: #198754;
+      background: rgba(25, 135, 84, 0.12);
+      margin-bottom: 14px;
+    }
+
+    .status-chip {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #e9f8ef;
+      color: #166a42;
+      font-weight: 600;
+      border: 1px solid #d4efdf;
+      margin-bottom: 15px;
+    }
+
+    .success-body h2 {
+      font-weight: 700;
+    }
+
+    .success-body .btn {
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 576px) {
+      .verify-topbar .brand {
+        font-size: 1rem;
+      }
+
+      .verify-topbar .links {
+        gap: 10px;
+        font-size: 0.85rem;
+      }
+
+      .verify-wrap {
+        min-height: auto;
+        padding: 24px 0;
+      }
+      .success-head, .success-body { padding: 20px; }
+      .success-icon {
+        width: 68px;
+        height: 68px;
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+  <header class="verify-topbar">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a href="{{ path('index') }}" class="brand">Chronic Care</a>
+      <nav class="links" aria-label="Navigation">
+        <a href="{{ path('index') }}">Accueil</a>
+        <a href="{{ path('contact') }}">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="verify-wrap">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-7 col-md-9">
+            <div class="success-card">
+              <div class="success-head d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <h5 class="mb-1">Compte valide</h5>
+                  <p class="mb-0 opacity-75">Votre email est maintenant confirme</p>
+                </div>
+                <span class="badge bg-light text-success rounded-pill px-3 py-2">Verification reussie</span>
+              </div>
+
+              <div class="success-body text-center">
+                <div class="success-icon">
+                  <i class="bi bi-patch-check-fill"></i>
+                </div>
+                <div class="status-chip">
+                  <i class="bi bi-check-circle me-1"></i>Adresse email confirmee
+                </div>
+                <h2 class="text-success mb-2">Email confirme avec succes</h2>
+                <p class="text-muted mb-4">
+                  Votre email est confirme. Votre demande est en attente de validation administrateur.
+                  Vous recevrez une notification email apres approbation ou refus.
+                </p>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                  <a href="{{ path('app_login') }}" class="btn btn-primary px-4">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
+                  </a>
+                  <a href="{{ path('index') }}" class="btn btn-outline-secondary px-4">
+                    <i class="bi bi-house-door me-2"></i>Accueil
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}

@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>{% block title %}Back - ChronicCare{% endblock %}</title>
 
-  {# mêmes assets que le front #}
+  {# mÃªmes assets que le front #}
   <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
   <link href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
   <link href="{{ asset('assets/vendor/fontawesome-free/css/all.css') }}" rel="stylesheet">
@@ -16,24 +16,176 @@
   <link href="{{ asset('assets/css/main.css') }}" rel="stylesheet">
 
   <style>
-    .back-shell { min-height: 100vh; background: #f8fafc; }
+    .back-shell { min-height: 100vh; background: #f1f5f9; }
     .back-sidebar {
-      width: 260px; background: #fff; border-right: 1px solid rgba(100,116,139,.12);
-      position: sticky; top: 0; height: 100vh; padding: 18px;
+      width: 260px;
+      min-width: 260px;
+      background: #fff;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #e5e7eb;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      z-index: 40;
+      box-shadow: 1px 0 0 0 rgba(0,0,0,0.03);
+    }
+    .back-sidebar .back-sidebar-inner {
+      padding: 20px 12px 20px 16px;
+      padding-right: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .back-sidebar .back-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px 14px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .back-sidebar .back-brand i {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      border-radius: 8px;
+      background: #111827;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .back-sidebar .back-brand span {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #111827;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+    .back-sidebar .back-nav-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #9ca3af;
+      padding: 16px 12px 8px;
+      margin: 0;
+    }
+    .back-sidebar .back-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
+      border: 1px solid #f3f4f6;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .back-sidebar .back-nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 0;
+      color: #4b5563;
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: background 0.15s ease, color 0.15s ease;
+      border-left: 3px solid transparent;
+      border-bottom: 1px solid #f3f4f6;
+      margin-left: 0;
+    }
+    .back-sidebar .back-nav a:last-of-type { border-bottom: none; }
+    .back-sidebar .back-nav a:hover {
+      background: #f9fafb;
+      color: #111827;
+    }
+    .back-sidebar .back-nav a.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-left-color: #2563eb;
+      padding-left: 14px;
+    }
+    .back-sidebar .back-nav a i {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: #6b7280;
+      background: #f9fafb;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .back-sidebar .back-nav a:hover i {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .back-sidebar .back-nav a.active i {
+      background: #2563eb;
+      color: #fff;
+    }
+    .back-sidebar .back-nav a.back-nav-external {
+      color: #6b7280;
+    }
+    .back-sidebar .back-nav a.back-nav-external:hover { color: #374151; }
+    .back-sidebar .back-nav a.back-nav-alert .back-nav-link-text {
+      color: #b91c1c;
+      font-weight: 700;
+    }
+    .back-sidebar .back-nav a.back-nav-alert:hover .back-nav-link-text {
+      color: #991b1b;
+    }
+    .back-sidebar .back-nav a.back-nav-alert.active .back-nav-link-text {
+      color: #b91c1c;
+    }
+    .back-sidebar .back-divider {
+      height: 1px;
+      background: #f3f4f6;
+      margin: 12px 0;
+      flex-shrink: 0;
+    }
+    .back-sidebar .back-user {
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #f3f4f6;
+      flex-shrink: 0;
+    }
+    .back-sidebar .back-user-label {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+    .back-sidebar .back-user-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #374151;
+      word-break: break-word;
     }
     .back-content { padding: 28px; }
-    .back-brand { font-weight: 900; color: #0f172a; display:flex; align-items:center; gap:10px; }
-    .back-nav a{
-      display:flex; align-items:center; gap:10px;
-      padding: 10px 12px; border-radius: 12px; color:#0f172a; text-decoration:none;
-    }
-    .back-nav a:hover { background: rgba(13,110,253,.08); }
-    .back-nav .active { background: rgba(13,110,253,.12); color:#0d6efd; font-weight: 800; }
-    .back-topbar{
-      background:#fff; border: 1px solid rgba(100,116,139,.12);
-      border-radius: 16px; padding: 14px 18px;
-      display:flex; justify-content:space-between; align-items:center;
-      box-shadow: 0 14px 30px rgba(16,24,40,.06);
+    .back-topbar {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
   </style>
 
@@ -41,30 +193,64 @@
 </head>
 
 <body>
+{% include 'partials/_navbar.html.twig' %}
+
 <div class="back-shell d-flex">
 
-  <aside class="back-sidebar">
-    <div class="back-brand mb-4">
-      <i class="bi bi-grid-fill"></i>
-      <span>ChronicCare • Admin</span>
-    </div>
+  <aside class="back-sidebar d-flex flex-column" id="adminSidebar">
+    <div class="back-sidebar-inner flex-grow-1 d-flex flex-column">
+      <div class="back-brand">
+        <span>ChronicCare Admin</span>
+      </div>
 
-    <nav class="back-nav d-grid gap-2">
-      <a href="{{ path('admin_dashboard') }}" class="{% if app.request.get('_route') starts with 'admin_dashboard' %}active{% endif %}">
-        <i class="bi bi-speedometer2"></i> Dashboard
-      </a>
-      <a href="{{ path('app_user_index') }}" class="{% if app.request.get('_route') starts with 'app_user_' %}active{% endif %}">
-        <i class="bi bi-people"></i> Utilisateurs
-      </a>
-      <a href="{{ path('index') }}">
-        <i class="bi bi-arrow-left"></i> Retour au site
-      </a>
-    </nav>
+      <p class="back-nav-label">Navigation</p>
+      <nav class="back-nav">
+        <a href="{{ path('admin_dashboard') }}" title="Dashboard" class="{% if app.request.get('_route') starts with 'admin_dashboard' %}active{% endif %}">
+          <span class="back-nav-link-text">Dashboard</span>
+        </a>
+        <a href="{{ path('app_user_index') }}" title="Utilisateurs" class="{% if app.request.get('_route') starts with 'app_user_' %}active{% endif %}">
+          <span class="back-nav-link-text">Utilisateurs</span>
+        </a>
+        <a href="{{ path('admin_activite_index') }}" title="Activites" class="{% if app.request.get('_route') starts with 'admin_activite_' %}active{% endif %}">
+          <span class="back-nav-link-text">Activites</span>
+        </a>
+        <a href="{{ path('admin_etat_vue_globale') }}" title="Vue globale sante" class="{% if app.request.get('_route') == 'admin_etat_vue_globale' %}active{% endif %}">
+          <span class="back-nav-link-text">Vue globale sante</span>
+        </a>
+        <a href="{{ path('admin_etat_index') }}" title="Etats suivi" class="{% if app.request.get('_route') == 'admin_etat_index' %}active{% endif %}">
+          <span class="back-nav-link-text">Etats suivi</span>
+        </a>
+        <a href="{{ path('admin_statistics_index') }}" title="Statistiques" class="{% if app.request.get('_route') starts with 'admin_statistics' %}active{% endif %}">
+          <span class="back-nav-link-text">Statistiques</span>
+        </a>
+        <a href="{{ path('admin_evenement_index') }}" title="Gestion des evenements" class="{% if app.request.get('_route') starts with 'admin_evenement' %}active{% endif %}">
+          <span class="back-nav-link-text">Evenements</span>
+        </a>
+        <a href="{{ path('admin_security_alert_index') }}" title="Alertes de securite" class="back-nav-alert {% if app.request.get('_route') starts with 'admin_security_alert_' %}active{% endif %}">
+          <span class="back-nav-link-text">Alertes securite</span>
+        </a>
 
-    <hr class="my-4">
+        <p class="back-nav-label">Boutique</p>
+        <a href="{{ path('admin_produit_list') }}" title="Produits" class="{% if app.request.get('_route') starts with 'admin_produit' %}active{% endif %}">
+          <span class="back-nav-link-text">Produits</span>
+        </a>
+        <a href="{{ path('admin_produit_low_stock') }}" title="Stock faible" class="{% if app.request.get('_route') == 'admin_produit_low_stock' %}active{% endif %}">
+          <span class="back-nav-link-text">Stock faible</span>
+        </a>
+        <a href="{{ path('admin_commande_list') }}" title="Commandes" class="{% if app.request.get('_route') starts with 'admin_commande' %}active{% endif %}">
+          <span class="back-nav-link-text">Commandes</span>
+        </a>
+        <a href="{{ path('admin_commande_stats') }}" title="Stats ventes" class="{% if app.request.get('_route') == 'admin_commande_stats' %}active{% endif %}">
+          <span class="back-nav-link-text">Stats ventes</span>
+        </a>
+      </nav>
 
-    <div class="small text-muted">
-      Connecté : <b>{{ app.user ? app.user.fullName : '' }}</b>
+      <div class="back-divider"></div>
+
+      <div class="back-user">
+        <div class="back-user-label">Connecte</div>
+        <div class="back-user-name">{{ app.user ? app.user.fullName : 'â€”' }}</div>
+      </div>
     </div>
   </aside>
 
@@ -78,6 +264,9 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
+          <a class="btn btn-outline-primary btn-sm" href="{{ path('admin_dashboard') }}" title="Dashboard admin">
+            <i class="bi bi-speedometer2"></i>
+          </a>
           <a class="btn btn-outline-secondary btn-sm" href="{{ path('index') }}">
             <i class="bi bi-house"></i>
           </a>
@@ -107,3 +296,5 @@
 {% block javascripts %}{% endblock %}
 </body>
 </html>
+
+

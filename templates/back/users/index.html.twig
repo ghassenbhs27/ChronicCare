@@ -1,11 +1,22 @@
 {% extends 'back/base.html.twig' %}
 
-{% block title %}Utilisateurs - Chronic Care{% endblock %}
-{% block page_title %}Utilisateurs{% endblock %}
-{% block page_subtitle %}Liste des comptes enregistrés{% endblock %}
+{% block title %}Gestion des utilisateurs - Chronic Care{% endblock %}
+{% block page_title %}Gestion des utilisateurs{% endblock %}
+{% block page_subtitle %}Gérer les utilisateurs, rôles et permissions{% endblock %}
 
 {% block body %}
-<div class="container">
+<div class="container-fluid">
+
+  {% if users_without_role_count|default(0) > 0 %}
+    <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+      <div>
+        <strong>Comptes sans rôle</strong> — {{ users_without_role_count }} compte(s) n'ont pas encore de rôle attribué.
+        <a href="{{ path('app_user_index', { role: 'no_role' }) }}" class="alert-link ms-1">Voir les comptes sans rôle</a>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+    </div>
+  {% endif %}
 
   {% for label, messages in app.flashes %}
     {% for message in messages %}
@@ -16,141 +27,360 @@
     {% endfor %}
   {% endfor %}
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Liste des utilisateurs</h2>
-    <a href="{{ path('app_user_new') }}" class="btn btn-primary">
-      <i class="bi bi-person-plus me-1"></i> Ajouter un utilisateur
-    </a>
-    <a href="{{ path('app_user_export_pdf', { q: search ?? '', sort: currentSort ?? 'createdAt', order: currentOrder ?? 'DESC' }) }}"
-        class="btn btn-outline-dark">
-        <i class="bi bi-file-earmark-pdf me-1"></i> Télécharger PDF
-    </a>
-  </div>
-    {# ✅ Barre de tri #}
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div class="text-muted small">
-            <i class="bi bi-funnel me-1"></i>
-            Trier par :
-        </div>
-
-        <div class="btn-group" role="group" aria-label="Tri utilisateurs">
-            <a href="{{ path('app_user_index', { sort: 'nom', order: (currentSort == 'nom' and currentOrder == 'ASC') ? 'DESC' : 'ASC' }) }}"
-                class="btn btn-outline-secondary btn-sm {{ currentSort == 'nom' ? 'active' : '' }}">
-                Nom
-                {% if currentSort == 'nom' %}
-                    <i class="bi {{ currentOrder == 'ASC' ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up' }} ms-1"></i>
-                {% endif %}
-            </a>
-
-            <a href="{{ path('app_user_index', { sort: 'prenom', order: (currentSort == 'prenom' and currentOrder == 'ASC') ? 'DESC' : 'ASC' }) }}"
-                class="btn btn-outline-secondary btn-sm {{ currentSort == 'prenom' ? 'active' : '' }}">
-                Prénom
-                {% if currentSort == 'prenom' %}
-                    <i class="bi {{ currentOrder == 'ASC' ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up' }} ms-1"></i>
-                {% endif %}
-            </a>
-
-            <a href="{{ path('app_user_index', { sort: 'createdAt', order: (currentSort == 'createdAt' and currentOrder == 'ASC') ? 'DESC' : 'ASC' }) }}"
-                class="btn btn-outline-secondary btn-sm {{ currentSort == 'createdAt' ? 'active' : '' }}">
-                Date d’inscription
-                {% if currentSort == 'createdAt' %}
-                    <i class="bi {{ currentOrder == 'ASC' ? 'bi-sort-down' : 'bi-sort-up' }} ms-1"></i>
-                {% endif %}
-            </a>
-        </div>
+  {# En-tête + actions #}
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <h2 class="mb-1">User Management</h2>
+      <p class="text-muted mb-0 small">Manage users, roles, and permissions</p>
     </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <form method="post" action="{{ path('app_user_assign_most_active_badge') }}" class="d-inline">
+        <input type="hidden" name="_token" value="{{ csrf_token('assign_most_active_badge') }}">
+        <input type="hidden" name="days" value="30">
+        <button type="submit" class="btn btn-outline-warning btn-sm">
+          <i class="bi bi-award me-1"></i> Attribuer badge actif
+        </button>
+      </form>
+      <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-upload me-1"></i> Import
+      </a>
+      <a href="{{ path('app_user_export_pdf', { q: search ?? '', sort: currentSort ?? 'createdAt', order: currentOrder ?? 'DESC', role: roleFilter ?? '', status: statusFilter ?? '' }) }}"
+         class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-download me-1"></i> Export
+      </a>
+      <a href="{{ path('app_user_new') }}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-1"></i> Ajouter un utilisateur
+      </a>
+    </div>
+  </div>
 
-    <form method="get" class="mb-3">
-        <div class="d-flex gap-2 flex-wrap align-items-center">
-
-            <div class="input-group" style="max-width: 320px;">
-                <span class="input-group-text">
-                    <i class="bi bi-search"></i>
-                </span>
-                <input
-                    type="text"
-                    name="q"
-                    class="form-control"
-                    placeholder="Rechercher par nom ou prénom..."
-                    value="{{ search ?? '' }}"
-                >
-            </div>
-
-            {# conserver tri pendant la recherche #}
-            <input type="hidden" name="sort" value="{{ currentSort }}">
-            <input type="hidden" name="order" value="{{ currentOrder }}">
-
-            <button class="btn btn-outline-primary btn-sm">
-                Rechercher
-            </button>
-
-            {% if search %}
-                <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary btn-sm">
-                    Réinitialiser
-                </a>
-            {% endif %}
-         </div>
-    </form>
-
-
-  <div class="row g-3">
-    {% for user in users %}
-      <div class="col-lg-4 col-md-6">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <h5 class="mb-1">{{ user.prenom }} {{ user.nom }}</h5>
-                <div class="text-muted small">{{ user.email }}</div>
-              </div>
-              <span class="badge bg-light text-dark border">
-                #{{ user.id }}
-              </span>
-            </div>
-
-            <hr>
-
-            <div class="mb-2">
-              <div class="small text-muted">Genre</div>
-              <div class="fw-semibold">{{ user.genre }}</div>
-            </div>
-
-            <div class="mb-2">
-                <div class="small text-muted">Date d'inscription</div>
-                <div class="fw-semibold">{{ user.createdAt ? user.createdAt|date('d/m/Y H:i') : '—' }}
-            </div>
-</div>
-            <div class="mb-3">
-              <div class="small text-muted mb-1">Rôles</div>
-              {% for r in user.roles %}
-                <span class="badge bg-secondary me-1">{{ r }}</span>
-              {% endfor %}
-            </div>
-
-            <div class="d-flex gap-2">
-              <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-pencil-square me-1"></i> Modifier
-              </a>
-
-              <form method="post"
-                    action="{{ path('app_user_delete', {id: user.id}) }}"
-                    onsubmit="return confirm('Supprimer cet utilisateur ?');"
-                    class="d-inline">
-                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
-                <button class="btn btn-outline-danger btn-sm">
-                  <i class="bi bi-trash me-1"></i> Supprimer
-                </button>
-              </form>
-            </div>
-
+  {# 4 KPI #}
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="rounded-3 p-2 bg-primary bg-opacity-10 text-primary">
+            <i class="bi bi-people fs-4"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-4">{{ total_users|default(0) }}</div>
+            <div class="text-muted small">Total utilisateurs</div>
+            <div class="text-success small"><i class="bi bi-arrow-up"></i> +{{ total_percent|default(0) }}% ce mois</div>
           </div>
         </div>
       </div>
-    {% else %}
-      <div class="col-12">
-        <div class="alert alert-info mb-0">Aucun utilisateur trouvé.</div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="rounded-3 p-2 bg-success bg-opacity-10 text-success">
+            <i class="bi bi-person-check fs-4"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-4">{{ active_users|default(0) }}</div>
+            <div class="text-muted small">Utilisateurs actifs</div>
+            <div class="text-success small"><i class="bi bi-arrow-up"></i> Derniers 30 jours</div>
+          </div>
+        </div>
       </div>
-    {% endfor %}
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="rounded-3 p-2 bg-info bg-opacity-10 text-info">
+            <i class="bi bi-person-plus fs-4"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-4">{{ new_this_month|default(0) }}</div>
+            <div class="text-muted small">Nouveaux ce mois</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="rounded-3 p-2 bg-warning bg-opacity-10 text-warning">
+            <i class="bi bi-graph-up fs-4"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-4">{{ active_rate|default(0) }}%</div>
+            <div class="text-muted small">Taux d'activité</div>
+            <div class="text-muted small"><i class="bi bi-clock me-1"></i> Derniers 30j</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  {# Graphique + Répartition #}
+  <div class="row g-3 mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+          <h6 class="mb-0">Évolution des inscriptions</h6>
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-secondary active">7j</button>
+            <button type="button" class="btn btn-outline-secondary">30j</button>
+            <button type="button" class="btn btn-outline-secondary">90j</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <canvas id="chartRegistrations" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="mb-0">Répartition par rôle</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6 d-flex align-items-center justify-content-center">
+              <canvas id="chartByRole" height="180"></canvas>
+            </div>
+            <div class="col-6">
+              {% set total_role = distribution_by_role|map(d => d.total)|reduce((a,b) => a + b, 0) %}
+              {% for item in distribution_by_role %}
+                <div class="d-flex justify-content-between align-items-center mb-2 small">
+                  <span>{{ item.label }}</span>
+                  <span class="badge bg-light text-dark">{{ item.total }}</span>
+                </div>
+                <div class="progress mb-2" style="height: 6px;">
+                  <div class="progress-bar" role="progressbar" style="width: {{ total_role > 0 ? (item.total / total_role * 100) : 0 }}%;"></div>
+                </div>
+              {% else %}
+                <p class="text-muted small mb-0">Aucune donnée</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Alertes + Actions rapides #}
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+          <h6 class="mb-0">Alertes</h6>
+          {% if new_this_month|default(0) > 0 %}
+            <span class="badge bg-danger">{{ new_this_month }}</span>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          {% if new_this_month|default(0) > 0 %}
+            <div class="alert alert-warning alert-dismissible py-2 mb-2 small">
+              <strong>Nouvelles inscriptions</strong><br>
+              {{ new_this_month }} inscription(s) en attente ou récente(s).
+              <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+            </div>
+          {% endif %}
+          <div class="text-muted small">Aucune autre alerte.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="mb-0">Actions rapides</h6>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-6">
+              <a href="{{ path('app_user_new') }}" class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-person-plus"></i> Ajouter
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="{{ path('app_user_index') }}" class="btn btn-outline-info w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-upload"></i> Import
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="{{ path('app_user_export_pdf', { q: search ?? '', sort: currentSort ?? 'createdAt', order: currentOrder ?? 'DESC', role: roleFilter ?? '', status: statusFilter ?? '' }) }}"
+                 class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-download"></i> Export
+              </a>
+            </div>
+            <div class="col-6">
+              <button type="button" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-envelope"></i> Invitations
+              </button>
+            </div>
+            <div class="col-6">
+              <form method="post" action="{{ path('app_user_assign_most_active_badge') }}" class="w-100">
+                <input type="hidden" name="_token" value="{{ csrf_token('assign_most_active_badge') }}">
+                <input type="hidden" name="days" value="30">
+                <button type="submit" class="btn btn-outline-warning w-100 d-flex align-items-center justify-content-center gap-2">
+                  <i class="bi bi-award"></i> Badge actif
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Users Directory #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 py-3">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <h6 class="mb-0">Annuaire des utilisateurs</h6>
+        <form method="get" action="{{ path('app_user_index') }}" id="user-filter-form" class="d-flex flex-wrap gap-2 align-items-center">
+          <input type="hidden" name="sort" value="{{ currentSort }}">
+          <input type="hidden" name="order" value="{{ currentOrder }}">
+          <div class="input-group input-group-sm" style="max-width: 200px;">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" class="form-control" placeholder="Rechercher..."
+                   value="{{ search ?? '' }}" aria-label="Rechercher par nom, prénom ou email" id="user-search-input">
+          </div>
+          <select name="role" class="form-select form-select-sm user-filter-select" style="max-width: 150px;" aria-label="Filtrer par rôle">
+            <option value="" {{ (roleFilter ?? '') == '' ? 'selected' : '' }}>Tous les rôles</option>
+            <option value="no_role" {{ (roleFilter ?? '') == 'no_role' ? 'selected' : '' }}>Sans rôle</option>
+            <option value="ROLE_ADMIN" {{ (roleFilter ?? '') == 'ROLE_ADMIN' ? 'selected' : '' }}>Admin</option>
+            <option value="ROLE_COACH" {{ (roleFilter ?? '') == 'ROLE_COACH' ? 'selected' : '' }}>Coach</option>
+            <option value="ROLE_NUTRITIONNISTE" {{ (roleFilter ?? '') == 'ROLE_NUTRITIONNISTE' ? 'selected' : '' }}>Nutritionniste</option>
+            <option value="ROLE_PATIENT" {{ (roleFilter ?? '') == 'ROLE_PATIENT' ? 'selected' : '' }}>Patient</option>
+          </select>
+          <select name="status" class="form-select form-select-sm user-filter-select" style="max-width: 120px;" aria-label="Filtrer par statut">
+            <option value="" {{ (statusFilter ?? '') == '' ? 'selected' : '' }}>Tous statuts</option>
+            <option value="actif" {{ (statusFilter ?? '') == 'actif' ? 'selected' : '' }}>Actif</option>
+            <option value="inactif" {{ (statusFilter ?? '') == 'inactif' ? 'selected' : '' }}>Inactif</option>
+            <option value="pending" {{ (statusFilter ?? '') == 'pending' ? 'selected' : '' }}>En attente</option>
+            <option value="approved" {{ (statusFilter ?? '') == 'approved' ? 'selected' : '' }}>Approuve</option>
+            <option value="rejected" {{ (statusFilter ?? '') == 'rejected' ? 'selected' : '' }}>Refuse</option>
+          </select>
+          <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary btn-sm" title="Réinitialiser les filtres">Réinitialiser</a>
+        </form>
+      </div>
+    </div>
+    <div id="user-list-container" data-list-url="{{ path('app_user_index') }}">
+      {% include 'back/users/_list.html.twig' %}
+    </div>
+  </div>
+
 </div>
+
+<script>
+(function() {
+  var container = document.getElementById('user-list-container');
+  var form = document.getElementById('user-filter-form');
+  if (!container || !form) return;
+
+  function buildListUrl(params) {
+    var base = container.getAttribute('data-list-url') || form.action;
+    var qs = Object.keys(params).filter(function(k) { return params[k] !== '' && params[k] != null; }).map(function(k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
+    return qs ? base + (base.indexOf('?') !== -1 ? '&' : '?') + qs : base;
+  }
+
+  function loadList(url, pushState) {
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        container.innerHTML = html;
+        var state = container.querySelector('#list-state');
+        if (state) {
+          var s = form.querySelector('input[name=sort]');
+          var o = form.querySelector('input[name=order]');
+          if (s) s.value = state.getAttribute('data-sort') || '';
+          if (o) o.value = state.getAttribute('data-order') || '';
+        }
+        if (pushState !== false && typeof history !== 'undefined' && history.pushState) history.pushState(null, '', url);
+      })
+      .catch(function() { window.location.href = url; });
+  }
+
+  function formToParams() {
+    var p = { page: 1 };
+    [].forEach.call(form.querySelectorAll('input, select'), function(el) {
+      if (el.name && el.type !== 'submit') p[el.name] = el.value || '';
+    });
+    return p;
+  }
+
+  [].forEach.call(form.querySelectorAll('.user-filter-select'), function(sel) {
+    sel.addEventListener('change', function() {
+      loadList(buildListUrl(formToParams()));
+    });
+  });
+  var searchInput = document.getElementById('user-search-input');
+  if (searchInput) {
+    var debounce = null;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(debounce);
+      debounce = setTimeout(function() { loadList(buildListUrl(formToParams())); }, 400);
+    });
+  }
+
+  container.addEventListener('click', function(e) {
+    var a = e.target.closest('a');
+    if (!a || !a.href) return;
+    if (a.getAttribute('data-no-ajax') === '1') return;
+    var listUrl = container.getAttribute('data-list-url');
+    var href = a.getAttribute('href') || '';
+    if (href.indexOf('/admin/users') !== -1 || (listUrl && href.indexOf(listUrl.split('?')[0]) === 0)) {
+      e.preventDefault();
+      loadList(a.href);
+    }
+  });
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+  var trendLabels = {{ trend_labels|json_encode|raw }};
+  var trendData = {{ trend_data|json_encode|raw }};
+  var ctx = document.getElementById('chartRegistrations');
+  if (ctx && trendLabels.length) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: trendLabels,
+        datasets: [{
+          label: 'Inscriptions',
+          data: trendData,
+          backgroundColor: 'rgba(99, 102, 241, 0.7)',
+          borderColor: 'rgb(99, 102, 241)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  var byRole = {{ distribution_by_role|json_encode|raw }};
+  var ctxRole = document.getElementById('chartByRole');
+  if (ctxRole && byRole.length) {
+    var colors = ['#22c55e', '#f97316', '#6366f1', '#ec4899', '#94a3b8'];
+    new Chart(ctxRole, {
+      type: 'doughnut',
+      data: {
+        labels: byRole.map(function(r) { return r.label; }),
+        datasets: [{
+          data: byRole.map(function(r) { return r.total; }),
+          backgroundColor: colors.slice(0, byRole.length),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+})();
+</script>
 {% endblock %}

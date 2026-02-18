@@ -1,0 +1,167 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Espace Nutritionniste - Chronic Care{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main">
+    <div class="container py-5">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+          <h1 class="mb-1">Mon espace nutritionniste</h1>
+          <p class="text-muted mb-0">Gerez vos rendez-vous, publications, statistiques et actions terrain dans un espace dedie.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Fil d'Ariane" class="mb-4">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Espace Nutritionniste</li>
+        </ol>
+      </nav>
+
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rounded-3 bg-success bg-opacity-10 text-success p-3">
+                  <i class="bi bi-heart-pulse fs-3"></i>
+                </div>
+                <div>
+                  <h5 class="card-title mb-0">Etats patient</h5>
+                  <p class="text-muted small mb-0">Suivi des releves</p>
+                </div>
+              </div>
+              <p class="card-text small flex-grow-1">Consultez les etats de sante des patients pour adapter vos recommandations.</p>
+              <a href="{{ path('front_etat_index') }}" class="btn btn-success align-self-start">
+                <i class="bi bi-arrow-right-circle me-1"></i> Ouvrir les etats
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-3">
+                  <i class="bi bi-activity fs-3"></i>
+                </div>
+                <div>
+                  <h5 class="card-title mb-0">Activites patient</h5>
+                  <p class="text-muted small mb-0">Selon les etats</p>
+                </div>
+              </div>
+              <p class="card-text small flex-grow-1">Ajoutez des activites au patient en fonction de ses etats de sante.</p>
+              <a href="{{ path('front_activite_index') }}" class="btn btn-primary align-self-start">
+                <i class="bi bi-arrow-right-circle me-1"></i> Ouvrir les activites
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rounded-3 bg-info bg-opacity-10 text-info p-3">
+                  <i class="bi bi-calendar2-check fs-3"></i>
+                </div>
+                <div>
+                  <h5 class="card-title mb-0">Mes RDV nutrition</h5>
+                  <p class="text-muted small mb-0">Consultations patients</p>
+                </div>
+              </div>
+              <p class="card-text small flex-grow-1">Consultez, confirmez, annulez et annotez vos rendez-vous nutritionnels.</p>
+              <a href="{{ path('pro_rdv_list') }}" class="btn btn-info align-self-start">
+                <i class="bi bi-arrow-right-circle me-1"></i> Ouvrir mes RDV
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rounded-3 bg-secondary bg-opacity-10 text-secondary p-3">
+                  <i class="bi bi-chat-dots fs-3"></i>
+                </div>
+                <div>
+                  <h5 class="card-title mb-0">Publications</h5>
+                  <p class="text-muted small mb-0">Conseils nutritionnels</p>
+                </div>
+              </div>
+              <p class="card-text small flex-grow-1">Redigez et gerez vos publications pour accompagner les patients.</p>
+              <a href="{{ path('publication_index') }}" class="btn btn-outline-secondary align-self-start">
+                <i class="bi bi-arrow-right-circle me-1"></i> Ouvrir le forum
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-3">
+                  <i class="bi bi-graph-up-arrow fs-3"></i>
+                </div>
+                <div>
+                  <h5 class="card-title mb-0">Statistiques</h5>
+                  <p class="text-muted small mb-0">Suivi de performance</p>
+                </div>
+              </div>
+              <p class="card-text small flex-grow-1">Visualisez vos indicateurs, rendez-vous et activites sur la plateforme.</p>
+              <a href="{{ path('app_statistics') }}" class="btn btn-primary align-self-start">
+                <i class="bi bi-arrow-right-circle me-1"></i> Voir mes statistiques
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rounded-3 bg-warning bg-opacity-10 text-warning p-3">
+                  <i class="bi bi-calendar2-event fs-3"></i>
+                </div>
+                <div>
+                  <h5 class="card-title mb-0">Evenements</h5>
+                  <p class="text-muted small mb-0">Ateliers et actions</p>
+                </div>
+              </div>
+              <p class="card-text small flex-grow-1">Creez et gerez vos evenements nutrition et ateliers educatifs.</p>
+              <a href="{{ path('evenement_index') }}" class="btn btn-warning align-self-start">
+                <i class="bi bi-arrow-right-circle me-1"></i> Gerer les evenements
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rounded-3 bg-success bg-opacity-10 text-success p-3">
+                  <i class="bi bi-activity fs-3"></i>
+                </div>
+                <div>
+                  <h5 class="card-title mb-0">Exercices</h5>
+                  <p class="text-muted small mb-0">Plans associes</p>
+                </div>
+              </div>
+              <p class="card-text small flex-grow-1">Associez des exercices et recommandations a vos programmes nutrition.</p>
+              <a href="{{ path('exercice_index') }}" class="btn btn-success align-self-start">
+                <i class="bi bi-arrow-right-circle me-1"></i> Gerer les exercices
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

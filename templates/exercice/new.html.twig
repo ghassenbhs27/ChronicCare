@@ -1,0 +1,76 @@
+{% extends 'coach/base.html.twig' %}
+
+{% block page_title %}Nouvel exercice{% endblock %}
+
+{% block content %}
+<nav aria-label="Fil d'Ariane" class="coach-breadcrumb">
+  <ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('exercice_index') }}">Mes exercices</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Nouvel exercice</li>
+  </ol>
+</nav>
+
+<header class="coach-page-header mb-4">
+  <h1 class="coach-page-title"><i class="bi bi-plus-circle me-2"></i>Nouvel exercice</h1>
+  <p class="coach-page-sub">Définissez le nom, la description et les paramètres de l'exercice, puis associez-le à un événement.</p>
+</header>
+
+<div class="coach-card coach-form-card">
+  <div class="card-body">
+    {{ form_start(form, { attr: { class: 'exercice-form', novalidate: 'novalidate' } }) }}
+
+      <div class="exercice-form-section mb-4">
+        <h3 class="h6 text-uppercase fw-bold text-muted mb-3 d-flex align-items-center">
+          <i class="bi bi-info-circle me-2"></i>Informations générales
+        </h3>
+        {{ form_row(form.nom, {
+          label: 'Nom de l\'exercice',
+          attr: { class: 'form-control form-control-lg', placeholder: 'Ex. : Étirements dos, Cardio 15 min' }
+        }) }}
+        {{ form_row(form.description, {
+          label: 'Description',
+          attr: { class: 'form-control', rows: 4, placeholder: 'Décrivez le déroulé, les consignes et objectifs pour les participants.' }
+        }) }}
+      </div>
+
+      <div class="exercice-form-section mb-4">
+        <h3 class="h6 text-uppercase fw-bold text-muted mb-3 d-flex align-items-center">
+          <i class="bi bi-sliders me-2"></i>Paramètres
+        </h3>
+        <div class="row g-3">
+          <div class="col-md-4">
+            {{ form_row(form.duree, {
+              label: 'Durée (minutes)',
+              attr: { class: 'form-control', placeholder: 'Ex. : 15', min: 1 }
+            }) }}
+            <small class="text-muted">Temps estimé pour réaliser l'exercice.</small>
+          </div>
+          <div class="col-md-4">
+            {{ form_row(form.repetitions, {
+              label: 'Répétitions',
+              attr: { class: 'form-control', placeholder: 'Optionnel', min: 0 }
+            }) }}
+            <small class="text-muted">Nombre de répétitions si applicable.</small>
+          </div>
+          <div class="col-md-4">
+            {{ form_row(form.evenement, {
+              label: 'Événement',
+              attr: { class: 'form-select' }
+            }) }}
+          </div>
+        </div>
+      </div>
+
+      <div class="coach-form-actions pt-2 border-top">
+        <button class="btn btn-primary px-4" type="submit">
+          <i class="bi bi-check-lg me-2"></i>Créer l'exercice
+        </button>
+        <a class="btn btn-outline-secondary" href="{{ path('exercice_index') }}">
+          <i class="bi bi-x-lg me-2"></i>Annuler
+        </a>
+      </div>
+    {{ form_end(form) }}
+  </div>
+</div>
+{% endblock %}

@@ -1,23 +1,20 @@
 {% extends 'back/base.html.twig' %}
 
-{% block title %}Modifier utilisateur{% endblock %}
-{% block page_title %}Modifier un utilisateur{% endblock %}
-{% block page_subtitle %}Mise à jour des informations{% endblock %}
+{% block title %}Edit User - Chronic Care{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+{% block page_subtitle %}Update user information{% endblock %}
 
 {% block body %}
-<div class="container">
-  <div class="card border-0 shadow-sm">
-    <div class="card-body">
-      {{ form_start(form) }}
-        {{ form_widget(form) }}
-        <div class="d-flex gap-2 mt-3">
-          <button class="btn btn-primary">
-            <i class="bi bi-save2 me-1"></i> Sauvegarder
-          </button>
-          <a href="{{ path('app_user_index') }}" class="btn btn-light border">Retour</a>
-        </div>
-      {{ form_end(form) }}
-    </div>
-  </div>
+<div class="container" style="max-width: 600px;">
+  {% for label, messages in app.flashes %}
+    {% for message in messages %}
+      <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endfor %}
+
+  {% include 'back/users/_form_modal.html.twig' with { form: form, modal_title: 'Edit User' } %}
 </div>
 {% endblock %}

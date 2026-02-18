@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Note de consultation - RDV{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link href="{{ asset('assets/css/coach.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main">
+    <div class="container py-5">
+      <nav aria-label="Fil d'Ariane" class="coach-breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('pro_rdv_list') }}">Mes RDV pro</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Note de consultation</li>
+        </ol>
+      </nav>
+
+      <div class="coach-card coach-form-card mt-4">
+        <div class="card-body">
+          <h1 class="coach-page-title mb-4"><i class="bi bi-journal-text me-2"></i>Note de consultation</h1>
+          <p class="text-muted mb-4">
+            RDV avec <strong>{{ rdv.patient.prenom }} {{ rdv.patient.nom }}</strong> — {{ rdv.dateRdv|date('d/m/Y à H:i') }}
+          </p>
+
+          <form method="post">
+            <input type="hidden" name="_token" value="{{ csrf_token('consultation_note_' ~ rdv.id) }}">
+            <div class="mb-4">
+              <label for="notes" class="form-label">Notes de consultation <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="notes" name="notes" rows="6" placeholder="Renseignez les notes de la consultation (observations, conseils, suivi)…">{{ consultation.notes }}</textarea>
+            </div>
+            <div class="mb-4">
+              <label for="diagnostic" class="form-label">Diagnostic (optionnel)</label>
+              <textarea class="form-control" id="diagnostic" name="diagnostic" rows="3" placeholder="Diagnostic ou synthèse si pertinent">{{ consultation.diagnostic ?? '' }}</textarea>
+            </div>
+            <div class="coach-form-actions">
+              <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Enregistrer</button>
+              <a href="{{ path('pro_rdv_list') }}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

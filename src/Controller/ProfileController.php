@@ -2,13 +2,17 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Form\ProfileType;
+use App\Service\SecurityMonitoringService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 class ProfileController extends AbstractController
 {
@@ -26,11 +30,17 @@ class ProfileController extends AbstractController
     public function edit(
         Request $request,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        SluggerInterface $slugger,
+        SecurityMonitoringService $securityMonitoringService
     ): Response {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
         $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+        $previousEmail = mb_strtolower(trim((string) $user->getEmail()));
 
         $form = $this->createForm(ProfileType::class, $user);
         $form->handleRequest($request);
@@ -47,6 +57,24 @@ class ProfileController extends AbstractController
             $role = $form->get('mainRole')->getData();
             if ($role) {
                 $user->setRoles([$role]); // ou array_unique([...$user->getRoles(), $role])
+            }
+
+            /** @var UploadedFile|null $photoFile */
+            $photoFile = $form->get('photoProfil')->getData();
+            if ($photoFile instanceof UploadedFile) {
+                $safeName = $slugger->slug(pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME));
+                $newFilename = $safeName . '-' . bin2hex(random_bytes(6)) . '.' . $photoFile->guessExtension();
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profile';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0775, true);
+                }
+                $photoFile->move($uploadDir, $newFilename);
+                $user->setPhotoProfil($newFilename);
+            }
+
+            $newEmail = mb_strtolower(trim((string) $user->getEmail()));
+            if ($newEmail !== '' && $newEmail !== $previousEmail) {
+                $securityMonitoringService->trackEmailChange($request, $user, $previousEmail, $newEmail);
             }
             
             $em->flush();

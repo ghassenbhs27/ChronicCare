@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande {{ commande.numeroCommande }} - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
+
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
+
+<main class="main">
+  <div class="page-title">
+    <div class="container">
+      <h1>Commande {{ commande.numeroCommande }}</h1>
+      <p>Date: {{ commande.createdAt|date('d/m/Y H:i') }} — Statut: <span class="badge bg-primary">{{ commande.statut }}</span></p>
+    </div>
+  </div>
+
+  <section class="services section light-background">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header"><h5 class="mb-0">Articles</h5></div>
+            <div class="card-body">
+              <table class="table">
+                <thead><tr><th>Produit</th><th>Qté</th><th>Prix unit.</th><th>Sous-total</th></tr></thead>
+                <tbody>
+                  {% for ligne in commande.ligneCommandes %}
+                  <tr>
+                    <td>{{ ligne.produit.nom }}</td>
+                    <td>{{ ligne.quantite }}</td>
+                    <td>{{ ligne.prixUnitaire }} €</td>
+                    <td>{{ ligne.sousTotal }} €</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card">
+            <div class="card-body">
+              <h5>Total: {{ commande.total }} €</h5>
+              {% if commande.adresse %}
+                <p class="small text-muted mt-2">{{ commande.adresse }}</p>
+              {% endif %}
+              <a href="{{ path('commande_history') }}" class="btn btn-outline-secondary w-100 mt-3">Retour aux commandes</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include 'partials/_footer.html.twig' %}
+{% endblock %}

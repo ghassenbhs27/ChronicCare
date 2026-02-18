@@ -6,7 +6,12 @@
     <title>{% block title %}ChronicCare{% endblock %}</title>
 
     <!-- Vendor CSS Files -->
-    <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link
+      id="bootstrap-css-local"
+      href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}"
+      rel="stylesheet"
+      onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css';"
+    >
     <link href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/vendor/fontawesome-free/css/all.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/vendor/aos/aos.css') }}" rel="stylesheet">
@@ -158,6 +163,73 @@
         color: #64748b;
         margin-top: 10px;
       }
+
+    .cc-filter-loading {
+        opacity: .75;
+        transition: opacity .12s ease;
+      }
+
+      .badge-energy-modal .modal-content {
+        border: 0;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 28px 70px rgba(15, 23, 42, .28);
+        background: linear-gradient(150deg, #0f172a 0%, #1e293b 55%, #334155 100%);
+        color: #f8fafc;
+      }
+
+      .badge-energy-modal .modal-header {
+        border: 0;
+        background: linear-gradient(90deg, #f59e0b 0%, #f97316 50%, #ef4444 100%);
+        color: #fff;
+        padding: 16px 18px;
+      }
+
+      .badge-energy-modal .modal-title {
+        font-weight: 900;
+        letter-spacing: .4px;
+      }
+
+      .badge-energy-modal .modal-body {
+        padding: 20px 18px 12px;
+      }
+
+      .badge-energy-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(245, 158, 11, .18);
+        color: #fde68a;
+        border: 1px solid rgba(245, 158, 11, .45);
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: .85rem;
+        padding: 6px 12px;
+        margin-bottom: 12px;
+      }
+
+      .badge-energy-highlight {
+        color: #facc15;
+        font-weight: 800;
+      }
+
+      .badge-energy-modal .modal-footer {
+        border: 0;
+        padding: 14px 18px 18px;
+      }
+
+      .badge-energy-modal .btn-energy {
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+        color: #fff;
+        font-weight: 800;
+        padding: 9px 18px;
+      }
+
+      .badge-energy-modal .btn-energy:hover {
+        filter: brightness(1.06);
+      }
     </style>
 
     <!-- Main CSS File -->
@@ -170,7 +242,18 @@
 {% block body %}{% endblock %}
 
 <!-- Vendor JS Files -->
-<script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script
+  id="bootstrap-js-local"
+  src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"
+  onerror="window.__ccBootstrapJsLoadFailed=true"
+></script>
+<script>
+  if (typeof bootstrap === 'undefined' || window.__ccBootstrapJsLoadFailed) {
+    var ccBootstrapCdn = document.createElement('script');
+    ccBootstrapCdn.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js';
+    document.head.appendChild(ccBootstrapCdn);
+  }
+</script>
 <script src="{{ asset('assets/vendor/php-email-form/validate.js') }}"></script>
 <script src="{{ asset('assets/vendor/aos/aos.js') }}"></script>
 <script src="{{ asset('assets/vendor/purecounter/purecounter_vanilla.js') }}"></script>
@@ -181,6 +264,68 @@
 
 <!-- Main JS File -->
 <script src="{{ asset('assets/js/main.js') }}"></script>
+<script>
+  (function () {
+    // Fallback global: auto-submit GET filter forms even if main.js failed.
+    if (window.__ccAjaxFilterReady) return;
+    if (window.__ccFilterFallbackBound) return;
+    window.__ccFilterFallbackBound = true;
+
+    const debounce = (fn, wait) => {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), wait);
+      };
+    };
+
+    const submitForm = (form) => {
+      if (!(form instanceof HTMLFormElement)) return;
+      const method = (form.getAttribute('method') || 'get').toLowerCase();
+      if (method !== 'get') return;
+      const action = (form.getAttribute('action') || '').toLowerCase();
+      if (action.includes('/export') || action.includes('excel') || action.includes('pdf') || action.includes('csv')) return;
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.submit();
+    };
+
+    const debouncedByForm = new WeakMap();
+    const getDebounced = (form) => {
+      if (debouncedByForm.has(form)) return debouncedByForm.get(form);
+      const fn = debounce(() => submitForm(form), 120);
+      debouncedByForm.set(form, fn);
+      return fn;
+    };
+
+    document.addEventListener('input', function (e) {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (!target.matches('form[method="get"] input[name], form[method="GET"] input[name], form input[type="search"][name], form input[type="text"][name], form textarea[name]')) return;
+      const form = target.closest('form');
+      if (!form) return;
+      getDebounced(form)();
+    }, true);
+
+    document.addEventListener('change', function (e) {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (!target.matches('form[method="get"] select[name], form[method="GET"] select[name], form[method="get"] input[type="date"][name], form[method="GET"] input[type="date"][name]')) return;
+      const form = target.closest('form');
+      submitForm(form);
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (!target.matches('form[method="get"] input[name], form[method="GET"] input[name], form textarea[name]')) return;
+      const form = target.closest('form');
+      if (!form) return;
+      e.preventDefault();
+      submitForm(form);
+    }, true);
+  })();
+</script>
 
 <!-- Profile Modal -->
 <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
@@ -200,6 +345,41 @@
 </div>
 
 <script src="{{ asset('assets/js/profile-modal.js') }}"></script>
+
+{% if app.user and app.user.mostActive and app.request.query.get('badge') == '1' %}
+<div class="modal fade badge-energy-modal" id="activityBadgeCongratsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-award-fill me-2"></i>Felicitations
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="badge-energy-chip">
+          <i class="bi bi-lightning-charge-fill"></i>
+          Performance exceptionnelle
+        </div>
+        <p class="mb-2">Bravo <span class="badge-energy-highlight">{{ app.user.prenom }}</span> !</p>
+        <p class="mb-2">Vous etes <span class="badge-energy-highlight">{{ app.user.activityBadge ?: 'Utilisateur le plus actif' }}</span>.</p>
+        <p class="mb-0">Votre cadeau: <span class="badge-energy-highlight">{{ app.user.activityReward ?: 'Bon d achat de 50 DT sur la boutique Chronic Care' }}</span>.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-energy" data-bs-dismiss="modal">Super</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('activityBadgeCongratsModal');
+    if (!el || typeof bootstrap === 'undefined') return;
+    var modal = new bootstrap.Modal(el);
+    modal.show();
+  });
+</script>
+{% endif %}
 
 </body>
 </html>

@@ -16,6 +16,36 @@ class CommentaireRepository extends ServiceEntityRepository
         parent::__construct($registry, Commentaire::class);
     }
 
+    /**
+     * Trouver commentaires paginés par publication
+     */
+    public function findByPublicationPaginated(int $publicationId, int $page = 1, int $limit = 7): array
+    {
+        $offset = ($page - 1) * $limit;
+
+        return $this->createQueryBuilder('c')
+            ->where('c.publication = :publication')
+            ->setParameter('publication', $publicationId)
+            ->orderBy('c.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Compter commentaires par publication
+     */
+    public function countByPublication(int $publicationId): int
+    {
+        return (int) $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->where('c.publication = :publication')
+            ->setParameter('publication', $publicationId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     //    /**
     //     * @return Commentaire[] Returns an array of Commentaire objects
     //     */

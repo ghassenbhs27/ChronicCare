@@ -1,0 +1,150 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ publication.titre }} - Forum Chronic Care{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main forum-page">
+    <div class="container">
+      {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show forum-alert mb-4" role="alert">
+          <i class="bi bi-check-circle me-2"></i>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+        </div>
+      {% endfor %}
+      {% for message in app.flashes('error') %}
+        <div class="alert alert-danger alert-dismissible fade show forum-alert mb-4" role="alert">
+          <i class="bi bi-exclamation-circle me-2"></i>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+        </div>
+      {% endfor %}
+
+      <nav aria-label="Fil d'Ariane" class="forum-breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('publication_index') }}">Forum</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{{ publication.titre|length > 45 ? publication.titre|slice(0, 45) ~ '…' : publication.titre }}</li>
+        </ol>
+      </nav>
+
+      <article class="forum-article">
+        <header class="forum-article-header">
+          <h1 class="forum-article-title">{{ publication.titre }}</h1>
+          <div class="forum-article-meta">
+            <span><i class="bi bi-person me-1"></i> {{ publication.auteur ? publication.auteur.nom : 'Anonyme' }}</span>
+            <span><i class="bi bi-calendar3 me-1"></i> {{ publication.createdAt|date('d/m/Y à H:i') }}</span>
+            <span class="forum-meta-badge badge bg-{{ publication.statut == 'publie' ? 'success' : 'warning' }} text-dark">{{ publication.statut == 'publie' ? 'Publié' : 'Brouillon' }}</span>
+          </div>
+        </header>
+        <div class="forum-article-body">
+          {{ publication.contenu|nl2br }}
+        </div>
+        <div class="forum-article-stats">
+          <span><i class="bi bi-eye me-1"></i> {{ publication.nbVues }} vues</span>
+          <span><i class="bi bi-heart me-1"></i> {{ publication.nbLikes }} likes</span>
+          <span><i class="bi bi-chat-dots me-1"></i> {{ totalCommentaires }} commentaire(s)</span>
+        </div>
+        <div class="forum-article-actions">
+          <a href="{{ path('publication_index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Retour au forum</a>
+          {% if is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('publication_edit', {id: publication.id}) }}" class="btn btn-outline-primary">Modifier</a>
+            <form method="post" action="{{ path('publication_delete', {id: publication.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette publication ?');">
+              <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ publication.id) }}">
+              <button type="submit" class="btn btn-outline-danger">Supprimer</button>
+            </form>
+          {% endif %}
+        </div>
+      </article>
+
+      <section class="forum-comments-card" id="comments">
+        <div class="forum-comments-header">
+          <h2 class="forum-comments-title">
+            <i class="bi bi-chat-left-text"></i> Commentaires
+            <span class="forum-comments-count">({{ totalCommentaires }})</span>
+          </h2>
+        </div>
+
+        {% if not can_comment and publication.statut == 'brouillon' %}
+          <div class="forum-comment-form-wrap forum-brouillon-notice">
+            <p class="text-warning mb-0"><i class="bi bi-pencil-square me-2"></i>Cette publication est en brouillon. Les commentaires sont désactivés jusqu’à sa publication.</p>
+          </div>
+        {% elseif can_comment and app.user %}
+          <div class="forum-comment-form-wrap">
+            <h6 class="mb-2"><i class="bi bi-chat-dots me-1"></i> Ajouter un commentaire</h6>
+            <p class="text-muted small mb-3">Partagez votre avis ou posez une question. En tant que patient, vous pouvez commenter les publications des coachs.</p>
+            <form method="post" action="{{ path('commentaire_add', {publicationId: publication.id}) }}">
+              <input type="hidden" name="_token" value="{{ csrf_token('commentaire_add') }}">
+              <textarea name="contenu" class="form-control mb-3" rows="4" placeholder="Écrivez votre commentaire..." required minlength="3"></textarea>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="is_anonymous" id="is_anonymous" value="1">
+                <label class="form-check-label" for="is_anonymous">Publier en anonyme</label>
+              </div>
+              <button type="submit" class="btn btn-primary">Publier le commentaire</button>
+            </form>
+          </div>
+        {% elseif can_comment and not app.user %}
+          <div class="forum-comment-form-wrap text-center py-4">
+            <p class="text-muted mb-0"><a href="{{ path('connexion') }}" class="fw-semibold">Connectez-vous</a> pour participer et commenter.</p>
+          </div>
+        {% endif %}
+
+        <div class="forum-comments-list">
+          {% for commentaire in commentaires %}
+            <div class="forum-comment-item">
+              <div class="forum-comment-avatar" title="{{ commentaire.nomAuteur }}">
+                {{ commentaire.nomAuteur|slice(0, 1)|upper }}
+              </div>
+              <div class="forum-comment-body">
+                <div class="forum-comment-head">
+                  <span class="forum-comment-author">{{ commentaire.nomAuteur }}</span>
+                  <span class="forum-comment-date">{{ commentaire.createdAt|date('d/m/Y à H:i') }}</span>
+                </div>
+                <div class="forum-comment-text">{{ commentaire.contenu|nl2br }}</div>
+                <div class="forum-comment-actions">
+                  <span class="small text-muted"><i class="bi bi-heart"></i> {{ commentaire.likeCount }}</span>
+                  {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
+                    <a href="{{ path('commentaire_edit', {id: commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                    <form method="post" action="{{ path('commentaire_delete', {id: commentaire.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce commentaire ?');">
+                      <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ commentaire.id) }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <p class="forum-comments-empty">Aucun commentaire pour le moment. Soyez le premier à réagir.</p>
+          {% endfor %}
+        </div>
+
+        {% if totalPages > 1 %}
+          <nav class="forum-comment-pagination" aria-label="Pagination commentaires">
+            <ul class="pagination justify-content-center mb-0">
+              {% if currentPage > 1 %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ path('publication_show', {id: publication.id, page: currentPage - 1}) }}#comments">Précédent</a>
+                </li>
+              {% endif %}
+              {% for p in 1..totalPages %}
+                <li class="page-item {{ p == currentPage ? 'active' }}">
+                  <a class="page-link" href="{{ path('publication_show', {id: publication.id, page: p}) }}#comments">{{ p }}</a>
+                </li>
+              {% endfor %}
+              {% if currentPage < totalPages %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ path('publication_show', {id: publication.id, page: currentPage + 1}) }}#comments">Suivant</a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      </section>
+    </div>
+  </main>
+{% endblock %}

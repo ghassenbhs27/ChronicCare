@@ -1,0 +1,104 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Alertes de securite - Chronic Care{% endblock %}
+{% block page_title %}Alertes de securite{% endblock %}
+{% block page_subtitle %}Surveillance des comportements suspects{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="small text-muted">
+      Alertes ouvertes: <strong>{{ open_count }}</strong>
+    </div>
+  </div>
+
+  <form method="get" action="{{ path('admin_security_alert_index') }}" class="row g-2 mb-3">
+    <div class="col-auto">
+      <select name="status" class="form-select form-select-sm">
+        <option value="open" {{ status == 'open' ? 'selected' : '' }}>Ouvertes</option>
+        <option value="resolved" {{ status == 'resolved' ? 'selected' : '' }}>Resolues</option>
+        <option value="all" {{ status == 'all' ? 'selected' : '' }}>Toutes</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="severity" class="form-select form-select-sm">
+        <option value="" {{ severity == '' ? 'selected' : '' }}>Toutes severites</option>
+        <option value="critical" {{ severity == 'critical' ? 'selected' : '' }}>Critical</option>
+        <option value="high" {{ severity == 'high' ? 'selected' : '' }}>High</option>
+        <option value="medium" {{ severity == 'medium' ? 'selected' : '' }}>Medium</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+    </div>
+  </form>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Severite</th>
+              <th>Score</th>
+              <th>Utilisateur</th>
+              <th>IP</th>
+              <th>Message</th>
+              <th>Etat</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for alert in alerts %}
+              <tr>
+                <td class="small">{{ alert.createdAt|date('d/m/Y H:i') }}</td>
+                <td><code>{{ alert.eventType }}</code></td>
+                <td>
+                  <span class="badge {{ alert.severity == 'critical' ? 'bg-danger' : (alert.severity == 'high' ? 'bg-warning text-dark' : 'bg-info text-dark') }}">
+                    {{ alert.severity }}
+                  </span>
+                </td>
+                <td><strong>{{ alert.riskScore }}</strong></td>
+                <td class="small">{{ alert.user ? alert.user.email : 'N/A' }}</td>
+                <td class="small">{{ alert.ipAddress ?: 'N/A' }}</td>
+                <td class="small">
+                  {{ alert.message }}
+                  {% if alert.context %}
+                    <details class="mt-1">
+                      <summary>Contexte</summary>
+                      <pre class="small mb-0">{{ alert.context|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                    </details>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if alert.isResolved %}
+                    <span class="badge bg-success">Resolue</span>
+                  {% else %}
+                    <span class="badge bg-danger">Ouverte</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if not alert.isResolved %}
+                    <form method="post" action="{{ path('admin_security_alert_resolve', {id: alert.id, status: status, severity: severity}) }}">
+                      <input type="hidden" name="_token" value="{{ csrf_token('resolve_security_alert_' ~ alert.id) }}">
+                      <button type="submit" class="btn btn-sm btn-outline-success">Resoudre</button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted small">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="9" class="text-center text-muted py-4">Aucune alerte</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

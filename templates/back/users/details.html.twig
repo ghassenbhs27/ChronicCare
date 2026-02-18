@@ -1,0 +1,109 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Details utilisateur - Chronic Care{% endblock %}
+{% block page_title %}Details utilisateur{% endblock %}
+{% block page_subtitle %}Informations completes du compte{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Retour a la liste
+    </a>
+    <a href="{{ path('app_user_edit', { id: user.id }) }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-pencil me-1"></i> Modifier
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+      <h6 class="mb-0">{{ user.prenom }} {{ user.nom }} (ID: {{ user.id }})</h6>
+    </div>
+    <div class="card-body">
+      {% set mainRoles = user.roles|filter(r => r != 'ROLE_USER') %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="small text-muted">Prenom</div>
+          <div class="fw-semibold">{{ user.prenom ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Nom</div>
+          <div class="fw-semibold">{{ user.nom ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Email</div>
+          <div class="fw-semibold">{{ user.email ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Telephone</div>
+          <div class="fw-semibold">{{ user.telephone ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Genre</div>
+          <div class="fw-semibold">{{ user.genre ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Role(s)</div>
+          <div class="fw-semibold">{{ mainRoles|join(', ') ?: 'Aucun role' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Role demande</div>
+          <div class="fw-semibold">{{ user.requestedRole ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Statut d'approbation</div>
+          <div class="fw-semibold">{{ user.approvalStatus ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Compte actif</div>
+          <div class="fw-semibold">{{ user.isActive ? 'Oui' : 'Non' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Blocage securite jusqu'a</div>
+          <div class="fw-semibold">{{ user.securityBlockedUntil ? user.securityBlockedUntil|date('d/m/Y H:i') : 'Aucun' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Token verification</div>
+          <div class="fw-semibold">{{ user.verificationToken ?: 'Aucun' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Expiration token verification</div>
+          <div class="fw-semibold">{{ user.verificationTokenExpiresAt ? user.verificationTokenExpiresAt|date('d/m/Y H:i') : 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Photo profil</div>
+          <div class="fw-semibold">{{ user.photoProfil ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Cree le</div>
+          <div class="fw-semibold">{{ user.createdAt ? user.createdAt|date('d/m/Y H:i') : 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Mis a jour le</div>
+          <div class="fw-semibold">{{ user.updatedAt ? user.updatedAt|date('d/m/Y H:i') : 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Activity score</div>
+          <div class="fw-semibold">{{ user.activityScore }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Most active</div>
+          <div class="fw-semibold">{{ user.isMostActive ? 'Oui' : 'Non' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Activity badge</div>
+          <div class="fw-semibold">{{ user.activityBadge ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Activity reward</div>
+          <div class="fw-semibold">{{ user.activityReward ?: 'N/A' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Badge attribue le</div>
+          <div class="fw-semibold">{{ user.activityBadgeAwardedAt ? user.activityBadgeAwardedAt|date('d/m/Y H:i') : 'N/A' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
