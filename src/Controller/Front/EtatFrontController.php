@@ -4,9 +4,12 @@ namespace App\Controller\Front;
 
 use App\Entity\Etat;
 use App\Entity\User;
+use App\Entity\Activite;
 use App\Form\EtatFrontType;
 use App\Repository\EtatRepository;
 use App\Repository\UserRepository;
+use App\Service\AiActiviteRecommendationService;
+use App\Service\AiEtatRemarkService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,6 +43,8 @@ class EtatFrontController extends AbstractController
             $etats = $repo->findByUserWithSearchSort($selectedPatient, $q, $sort, $dir);
         }
 
+        $onlineProfessionals = !$isPro ? $userRepository->findOnlineProfessionnelsForUrgence() : [];
+
         return $this->render('front/etat/index.html.twig', [
             'etats' => $etats,
             'q' => $q,
@@ -48,11 +53,16 @@ class EtatFrontController extends AbstractController
             'isPro' => $isPro,
             'patients' => $patients,
             'selectedPatient' => $selectedPatient,
+            'onlineProfessionals' => $onlineProfessionals,
         ]);
     }
 
     #[Route('/new', name: 'front_etat_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(
+        Request $request,
+        EntityManagerInterface $em,
+        AiActiviteRecommendationService $aiRecommendation
+    ): Response
     {
         $currentUser = $this->getAuthenticatedUser();
         if ($this->isProUser($currentUser)) {
@@ -66,9 +76,30 @@ class EtatFrontController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $etat->setUtilisateur($currentUser);
+            $recommendation = $aiRecommendation->recommendForEtat($etat);
+
+            $activite = (new Activite())
+                ->setUtilisateur($currentUser)
+                ->setEtat($etat)
+                ->setType($recommendation['type'])
+                ->setDuree($recommendation['duree'])
+                ->setDistanceKm($recommendation['distanceKm'])
+                ->setHeuresRepos($recommendation['heuresRepos'])
+                ->setCalories($recommendation['calories'])
+                ->setDateActivite(new \DateTimeImmutable())
+                ->setNotes('[Coach/Nutritionniste] ' . $recommendation['notes']);
+
             $em->persist($etat);
+            $em->persist($activite);
             $em->flush();
             $this->addFlash('success', 'Etat ajoute avec succes.');
+            $this->addFlash('info', sprintf(
+                'Activite recommandee par votre coach ou nutritionniste: %s, %d min, %.1f km, repos %d h.',
+                $recommendation['type'],
+                $recommendation['duree'],
+                $recommendation['distanceKm'],
+                $recommendation['heuresRepos']
+            ));
 
             return $this->redirectToRoute('front_etat_index');
         }
@@ -91,6 +122,23 @@ class EtatFrontController extends AbstractController
         }
 
         return $this->render('front/etat/show.html.twig', compact('etat'));
+    }
+
+    #[Route('/{id}/remarque-ia', name: 'front_etat_remarque_ia', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function remarqueIa(Etat $etat, AiEtatRemarkService $aiEtatRemarkService): Response
+    {
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->canAccessEtat($currentUser, $etat)) {
+            throw $this->createAccessDeniedException('Acces refuse a ce releve.');
+        }
+
+        $report = $aiEtatRemarkService->buildEtatReport($etat);
+
+        return $this->render('front/etat/remarque_ia.html.twig', [
+            'etat' => $etat,
+            'report' => $report,
+            'isPro' => $this->isProUser($currentUser),
+        ]);
     }
 
     #[Route('/{id}/edit', name: 'front_etat_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
@@ -154,13 +202,14 @@ class EtatFrontController extends AbstractController
         $dir = $request->query->get('dir', 'DESC');
         $etats = $repo->findByUserWithSearchSort($selectedPatient, $q, $sort, $dir);
 
-        $rows = ['ID;Type;Valeur;Unite;Date Releve;Utilisateur'];
+        $rows = ['ID;Traitement en cours;Remarques cliniques;Temperature(C);Hydratation(L/j);Date Releve;Utilisateur'];
         foreach ($etats as $etat) {
             $rows[] = implode(';', [
                 $etat->getId(),
-                $this->csvValue($etat->getType()),
-                $etat->getValeur(),
-                $this->csvValue($etat->getUnite()),
+                $this->csvValue($etat->getTraitementEnCours()),
+                $this->csvValue($etat->getRemarquesCliniques()),
+                $this->csvValue($etat->getTemperatureCorporelle()),
+                $this->csvValue($etat->getNiveauHydratation()),
                 $etat->getDateReleve()?->format('Y-m-d') ?? '',
                 $this->csvValue($etat->getUtilisateur()?->getFullName() ?? ''),
             ]);
@@ -193,18 +242,19 @@ class EtatFrontController extends AbstractController
         $dir = $request->query->get('dir', 'DESC');
         $etats = $repo->findByUserWithSearchSort($selectedPatient, $q, $sort, $dir);
 
-        $widths = [6, 34, 14, 16, 18];
+        $widths = [6, 16, 16, 10, 12, 16];
         $lines = ['Export Etats - ' . date('Y-m-d H:i')];
         $lines[] = $this->pdfTableLine($widths);
-        $lines[] = $this->pdfTableRow(['ID', 'Type', 'Valeur', 'Unite', 'Date releve'], $widths);
+        $lines[] = $this->pdfTableRow(['ID', 'Traitement', 'Remarques', 'Temp(C)', 'Hydrat.(L/j)', 'Date'], $widths);
         $lines[] = $this->pdfTableLine($widths);
         foreach ($etats as $etat) {
             $lines[] = $this->pdfTableRow(
                 [
                     (string) ($etat->getId() ?? ''),
-                    (string) ($etat->getType() ?? ''),
-                    (string) ($etat->getValeur() ?? ''),
-                    (string) ($etat->getUnite() ?? ''),
+                    (string) ($etat->getTraitementEnCours() ?? ''),
+                    (string) ($etat->getRemarquesCliniques() ?? ''),
+                    (string) ($etat->getTemperatureCorporelle() ?? ''),
+                    (string) ($etat->getNiveauHydratation() ?? ''),
                     $etat->getDateReleve()?->format('Y-m-d') ?? '',
                 ],
                 $widths
@@ -353,3 +403,4 @@ class EtatFrontController extends AbstractController
         return '+' . implode('+', $segments) . '+';
     }
 }
+

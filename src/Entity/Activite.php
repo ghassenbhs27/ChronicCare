@@ -10,6 +10,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ActiviteRepository::class)]
 class Activite
 {
+    public const TYPE_CHOICES = ['marche', 'course', 'velo'];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -29,6 +31,7 @@ class Activite
         max: 100,
         maxMessage: 'Le type d activite ne peut pas depasser {{ limit }} caracteres.'
     )]
+    #[Assert\Choice(choices: self::TYPE_CHOICES, message: 'Le type doit etre marche, course ou velo.')]
     private string $type;
 
     #[ORM\Column]
@@ -40,6 +43,14 @@ class Activite
     #[Assert\NotNull(message: 'Le nombre de calories est obligatoire.')]
     #[Assert\PositiveOrZero(message: 'Le nombre de calories doit etre superieur ou egal a 0.')]
     private ?int $calories = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero(message: 'La distance doit etre superieure ou egale a 0.')]
+    private ?float $distanceKm = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero(message: 'Les heures de repos doivent etre superieures ou egales a 0.')]
+    private ?int $heuresRepos = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Assert\NotNull(message: 'La date de l activite est obligatoire.')]
@@ -119,6 +130,28 @@ class Activite
     public function setCalories(?int $calories): self
     {
         $this->calories = $calories;
+        return $this;
+    }
+
+    public function getDistanceKm(): ?float
+    {
+        return $this->distanceKm;
+    }
+
+    public function setDistanceKm(?float $distanceKm): self
+    {
+        $this->distanceKm = $distanceKm;
+        return $this;
+    }
+
+    public function getHeuresRepos(): ?int
+    {
+        return $this->heuresRepos;
+    }
+
+    public function setHeuresRepos(?int $heuresRepos): self
+    {
+        $this->heuresRepos = $heuresRepos;
         return $this;
     }
 

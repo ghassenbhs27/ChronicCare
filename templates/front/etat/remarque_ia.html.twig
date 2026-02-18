@@ -1,0 +1,142 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Remarque IA - Etat{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .a4-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 24px 0;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    }
+    .a4-sheet {
+      width: min(210mm, 100%);
+      min-height: 297mm;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, .12);
+      padding: 28px 26px;
+    }
+    .sheet-head {
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+    }
+    .sheet-title {
+      font-weight: 800;
+      margin-bottom: 4px;
+      color: #0f172a;
+    }
+    .sheet-sub {
+      color: #475569;
+      font-size: .93rem;
+      margin: 0;
+    }
+    .sheet-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .sheet-card h6 {
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .sheet-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #334155;
+      font-size: .94rem;
+    }
+    .back-floating {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 2000;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, .2);
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+  {% set minimal_nav = true %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main">
+    <div class="container py-4">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h1 class="h6 mb-0">Remarque IA de l etat</h1>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ path('front_etat_index', etat.utilisateur ? {patient: etat.utilisateur.id} : {}) }}">Retour etats</a>
+      </div>
+
+      <section class="a4-wrap">
+        <article class="a4-sheet">
+          <header class="sheet-head">
+            <h2 class="sheet-title">Fiche IA - Etat #{{ etat.id }}</h2>
+            <p class="sheet-sub">
+              {{ etat.utilisateur ? 'Patient: ' ~ etat.utilisateur.prenom ~ ' ' ~ etat.utilisateur.nom : 'Patient non renseigne' }}
+              | Date etat: {{ etat.dateReleve ? etat.dateReleve|date('d/m/Y') : '-' }}
+            </p>
+          </header>
+
+          <div class="sheet-card">
+            <h6>Resume clinique court</h6>
+            <p class="mb-0 text-secondary">{{ report.resume }}</p>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="sheet-card h-100">
+                <h6>Consignes</h6>
+                <ul class="sheet-list">
+                  {% for item in report.consignes %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="sheet-card h-100">
+                <h6>Traitement sur 7 jours</h6>
+                <ul class="sheet-list">
+                  {% for item in report.traitement7Jours %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="sheet-card h-100">
+                <h6>Repas sur 7 jours</h6>
+                <ul class="sheet-list">
+                  {% for item in report.repas7Jours %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="sheet-card h-100">
+                <h6>Vigilance</h6>
+                <ul class="sheet-list">
+                  {% for item in report.vigilance %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <p class="small text-muted mt-3 mb-0">
+            Cette fiche est un support d aide. La validation finale doit etre faite par le coach, nutritionniste et medecin.
+          </p>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <a class="btn btn-secondary btn-sm back-floating" href="{{ path('front_etat_index', etat.utilisateur ? {patient: etat.utilisateur.id} : {}) }}">Retour</a>
+{% endblock %}

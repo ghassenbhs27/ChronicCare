@@ -12,6 +12,30 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: EtatRepository::class)]
 class Etat
 {
+    public const TEMPERATURE_CORPORELLE_CHOICES = [
+        '35.0',
+        '35.5',
+        '36.0',
+        '36.5',
+        '37.0',
+        '37.5',
+        '38.0',
+        '38.5',
+        '39.0',
+        '39.5',
+        '40.0',
+    ];
+
+    public const NIVEAU_HYDRATATION_CHOICES = [
+        '1.0',
+        '1.5',
+        '2.0',
+        '2.5',
+        '3.0',
+        '3.5',
+        '4.0',
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -25,25 +49,21 @@ class Etat
 
     
 
-    #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Le type est obligatoire.')]
-    #[Assert\Length(
-        max: 100,
-        maxMessage: 'Le type ne peut pas depasser {{ limit }} caracteres.'
-    )]
-    private string $type;
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Length(max: 255, maxMessage: 'Le traitement ne peut pas depasser {{ limit }} caracteres.')]
+    private ?string $traitementEnCours = null;
 
-    #[ORM\Column]
-    #[Assert\NotNull(message: 'La valeur est obligatoire.')]
-    private ?float $valeur = null;
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(max: 2000, maxMessage: 'Les remarques cliniques ne peuvent pas depasser {{ limit }} caracteres.')]
+    private ?string $remarquesCliniques = null;
 
-    #[ORM\Column(length: 50)]
-    #[Assert\NotBlank(message: 'L unite est obligatoire.')]
-    #[Assert\Length(
-        max: 50,
-        maxMessage: 'L unite ne peut pas depasser {{ limit }} caracteres.'
-    )]
-    private string $unite;
+    #[ORM\Column(length: 10, nullable: true)]
+    #[Assert\Choice(choices: self::TEMPERATURE_CORPORELLE_CHOICES, message: 'Temperature corporelle invalide.')]
+    private ?string $temperatureCorporelle = null;
+
+    #[ORM\Column(length: 10, nullable: true)]
+    #[Assert\Choice(choices: self::NIVEAU_HYDRATATION_CHOICES, message: 'Niveau d hydratation invalide.')]
+    private ?string $niveauHydratation = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\NotNull(message: 'La date du releve est obligatoire.')]
@@ -78,36 +98,47 @@ class Etat
         return $this;
     }
 
-    public function getType(): string
+    public function getTraitementEnCours(): ?string
     {
-        return $this->type;
+        return $this->traitementEnCours;
     }
 
-    public function setType(string $type): self
+    public function setTraitementEnCours(?string $traitementEnCours): self
     {
-        $this->type = $type;
+        $this->traitementEnCours = $traitementEnCours;
         return $this;
     }
 
-    public function getValeur(): ?float
+    public function getRemarquesCliniques(): ?string
     {
-        return $this->valeur;
+        return $this->remarquesCliniques;
     }
 
-    public function setValeur(?float $valeur): self
+    public function setRemarquesCliniques(?string $remarquesCliniques): self
     {
-        $this->valeur = $valeur;
+        $this->remarquesCliniques = $remarquesCliniques;
         return $this;
     }
 
-    public function getUnite(): string
+    public function getTemperatureCorporelle(): ?string
     {
-        return $this->unite;
+        return $this->temperatureCorporelle;
     }
 
-    public function setUnite(string $unite): self
+    public function setTemperatureCorporelle(?string $temperatureCorporelle): self
     {
-        $this->unite = $unite;
+        $this->temperatureCorporelle = $temperatureCorporelle;
+        return $this;
+    }
+
+    public function getNiveauHydratation(): ?string
+    {
+        return $this->niveauHydratation;
+    }
+
+    public function setNiveauHydratation(?string $niveauHydratation): self
+    {
+        $this->niveauHydratation = $niveauHydratation;
         return $this;
     }
 

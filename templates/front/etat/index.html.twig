@@ -2,6 +2,40 @@
 
 {% block title %}Etats de sante - Chronic Care{% endblock %}
 
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .urgency-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #16a34a;
+      margin-right: 8px;
+      box-shadow: 0 0 0 0 rgba(22, 163, 74, .6);
+      animation: urgencyPulse 1.8s infinite;
+    }
+    @keyframes urgencyPulse {
+      70% { box-shadow: 0 0 0 10px rgba(22, 163, 74, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+    }
+    .btn-remark-ia {
+      border-color: #f59e0b;
+      color: #92400e;
+      animation: remarkPulse 1.5s infinite;
+    }
+    .btn-remark-ia:hover {
+      background: #fef3c7;
+      color: #78350f;
+    }
+    @keyframes remarkPulse {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35); }
+      70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+  </style>
+{% endblock %}
+
 {% block body %}
   {% include 'partials/_navbar.html.twig' %}
 
@@ -19,12 +53,12 @@
         <div>
           <h1 class="mb-1">{{ isPro ? 'Etats du patient' : 'Mes etats de sante' }}</h1>
           <p class="text-muted mb-0 small">
-            {{ isPro ? 'Consultez les etats du patient pour prescrire des activites adaptees.' : 'Releves de vos indicateurs : poids, glycemie, tension, temperature, etc.' }}
+            {{ isPro ? 'Consultez les etats du patient pour prescrire des activites adaptees.' : 'Etats de vos indicateurs : poids, glycemie, tension, temperature, etc.' }}
           </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
           {% if not isPro %}
-            <a class="btn btn-primary" href="{{ path('front_etat_new') }}"><i class="bi bi-plus-lg me-1"></i> Nouveau releve</a>
+            <a class="btn btn-primary" href="{{ path('front_etat_new') }}"><i class="bi bi-plus-lg me-1"></i> Cree mon etat</a>
           {% endif %}
           <a class="btn btn-outline-secondary" href="{{ path('suivi_front_dashboard') }}"><i class="bi bi-grid me-1"></i> Tableau de bord</a>
           <a class="btn btn-outline-success btn-sm" href="{{ path('front_etat_export_excel', {q: q ?? '', sort: sort ?? 'dateReleve', dir: dir ?? 'DESC', patient: selectedPatient ? selectedPatient.id : null}) }}"><i class="bi bi-file-earmark-excel me-1"></i> Export CSV</a>
@@ -39,6 +73,37 @@
           </div>
         {% endfor %}
       {% endfor %}
+
+      {% if not isPro %}
+        <div class="card border-danger shadow-sm mb-4">
+          <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+            <strong><i class="bi bi-exclamation-triangle-fill me-1"></i> Urgence</strong>
+            <span class="small">{{ onlineProfessionals|length }} professionnel(s) en ligne</span>
+          </div>
+          <div class="card-body">
+            {% if onlineProfessionals is empty %}
+              <p class="text-muted mb-0">Aucun coach ou nutritionniste en ligne pour le moment.</p>
+            {% else %}
+              <div class="row g-2">
+                {% for pro in onlineProfessionals %}
+                  {% set isNutrition = 'ROLE_NUTRITIONNISTE' in pro.roles %}
+                  <div class="col-md-6">
+                    <form method="post" action="{{ path('front_urgence_create') }}" class="border rounded p-2 d-flex justify-content-between align-items-center">
+                      <div>
+                        <div class="fw-semibold mb-1"><span class="urgency-dot"></span>{{ pro.prenom }} {{ pro.nom }}</div>
+                        <div class="small text-muted">{{ isNutrition ? 'Nutritionniste' : 'Coach' }}</div>
+                      </div>
+                      <input type="hidden" name="_token" value="{{ csrf_token('create_urgence') }}">
+                      <input type="hidden" name="professionnel" value="{{ pro.id }}">
+                      <button type="submit" class="btn btn-danger btn-sm">Urgence</button>
+                    </form>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
 
       <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
@@ -61,8 +126,8 @@
             {% if isPro and selectedPatient %}
               <input type="hidden" name="patient" value="{{ selectedPatient.id }}">
             {% endif %}
-            <div class="col-md-6"><input type="text" name="q" value="{{ q ?? '' }}" class="form-control form-control-sm" placeholder="Rechercher (type, unite...)"></div>
-            <div class="col-md-3"><select name="sort" class="form-select form-select-sm"><option value="dateReleve" {{ (sort|default('')) == 'dateReleve' ? 'selected' : '' }}>Date</option><option value="type" {{ (sort|default('')) == 'type' ? 'selected' : '' }}>Type</option></select></div>
+            <div class="col-md-6"><input type="text" name="q" value="{{ q ?? '' }}" class="form-control form-control-sm" placeholder="Rechercher (type...)"></div>
+            <div class="col-md-3"><select name="sort" class="form-select form-select-sm"><option value="dateReleve" {{ (sort|default('')) == 'dateReleve' ? 'selected' : '' }}>Date</option><option value="traitementEnCours" {{ (sort|default('')) == 'traitementEnCours' ? 'selected' : '' }}>Traitement</option></select></div>
             <div class="col-md-3"><button class="btn btn-primary btn-sm w-100" type="submit">Filtrer</button></div>
           </form>
         </div>
@@ -70,26 +135,28 @@
 
       <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-0 py-3">
-          <h6 class="mb-0">Liste des releves</h6>
+          <h6 class="mb-0">Liste des etats</h6>
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
               <thead class="table-light">
-                <tr><th>Type</th><th>Valeur</th><th>Unite</th><th>Date</th><th class="text-end">Actions</th></tr>
+                <tr><th>Traitement en cours</th><th>Remarques cliniques</th><th>Temp. (deg C)</th><th>Hydrat. (L/j)</th><th>Date</th><th class="text-end">Actions</th></tr>
               </thead>
               <tbody>
                 {% for e in etats %}
                   <tr>
-                    <td><span class="badge bg-light text-dark">{{ e.type }}</span></td>
-                    <td class="fw-medium">{{ e.valeur }}</td>
-                    <td>{{ e.unite }}</td>
+                    <td class="fw-medium">{{ e.traitementEnCours ?? '-' }}</td>
+                    <td>{{ e.remarquesCliniques ?? '-' }}</td>
+                    <td>{{ e.temperatureCorporelle ?? '-' }}</td>
+                    <td>{{ e.niveauHydratation ?? '-' }}</td>
                     <td>{{ e.dateReleve ? e.dateReleve|date('d/m/Y') : '-' }}</td>
                     <td class="text-end">
                       <a class="btn btn-sm btn-outline-primary" href="{{ path('front_etat_show', {id: e.id}) }}">Voir</a>
+                      <a class="btn btn-sm btn-outline-warning btn-remark-ia" href="{{ path('front_etat_remarque_ia', {id: e.id}) }}">Remarque IA</a>
                       {% if not isPro %}
                         <a class="btn btn-sm btn-outline-secondary" href="{{ path('front_etat_edit', {id: e.id}) }}">Modifier</a>
-                        <form class="d-inline" method="post" action="{{ path('front_etat_delete', {id: e.id}) }}" onsubmit="return confirm('Supprimer ce releve ?');">
+                        <form class="d-inline" method="post" action="{{ path('front_etat_delete', {id: e.id}) }}" onsubmit="return confirm('Supprimer cet etat ?');">
                           <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ e.id) }}">
                           <button class="btn btn-sm btn-outline-danger">Supprimer</button>
                         </form>
@@ -97,7 +164,7 @@
                     </td>
                   </tr>
                 {% else %}
-                  <tr><td colspan="5" class="text-center text-muted py-4">Aucun releve.</td></tr>
+                  <tr><td colspan="6" class="text-center text-muted py-4">Aucun etat.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -107,3 +174,5 @@
     </div>
   </main>
 {% endblock %}
+
+

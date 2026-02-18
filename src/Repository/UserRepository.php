@@ -140,6 +140,28 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return User[]
+     */
+    public function findOnlineProfessionnelsForUrgence(int $onlineWindowSeconds = 45): array
+    {
+        $since = (new \DateTimeImmutable())->modify(sprintf('-%d seconds', $onlineWindowSeconds));
+
+        return $this->createQueryBuilder('u')
+            ->andWhere('(u.roles LIKE :coachRole OR u.roles LIKE :nutritionRole)')
+            ->andWhere('u.lastSeenAt IS NOT NULL')
+            ->andWhere('u.lastSeenAt >= :since')
+            ->andWhere('u.isActive = true')
+            ->setParameter('coachRole', '%"ROLE_COACH"%')
+            ->setParameter('nutritionRole', '%"ROLE_NUTRITIONNISTE"%')
+            ->setParameter('since', $since)
+            ->orderBy('u.lastSeenAt', 'DESC')
+            ->addOrderBy('u.prenom', 'ASC')
+            ->addOrderBy('u.nom', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @return string[]
      */
     public function findActiveAdminEmails(): array

@@ -108,15 +108,23 @@
 
       <div class="table-responsive">
         <table class="table table-sm table-hover align-middle">
-          <thead class="table-light"><tr><th>ID</th><th>Type</th><th>Etat</th><th>Duree</th><th>Cal.</th><th>Date</th><th>Utilisateur</th><th></th></tr></thead>
+          <thead class="table-light"><tr><th>ID</th><th>Type</th><th>Etat</th><th>Duree</th><th>Cal.</th><th>Distance (km)</th><th>Repos (h)</th><th>Date</th><th>Utilisateur</th><th></th></tr></thead>
           <tbody>
           {% for a in activites %}
             <tr>
               <td>{{ a.id }}</td>
               <td>{{ a.type }}</td>
-              <td>{% if a.etat %}{{ a.etat.type }}: {{ a.etat.valeur }} {{ a.etat.unite }}{% else %}-{% endif %}</td>
+              <td>
+                {% if a.etat %}
+                  Etat{% if a.etat.traitementEnCours %}: {{ a.etat.traitementEnCours }}{% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
               <td>{{ a.duree }} min</td>
               <td>{{ a.calories }}</td>
+              <td>{{ a.distanceKm is not null ? a.distanceKm : '-' }}</td>
+              <td>{{ a.heuresRepos is not null ? a.heuresRepos : '-' }}</td>
               <td>{{ a.dateActivite ? a.dateActivite|date('d/m/Y') : '-' }}</td>
               <td>{{ a.utilisateur ? a.utilisateur.prenom ~ ' ' ~ a.utilisateur.nom : '-' }}</td>
               <td class="text-end">
@@ -129,7 +137,7 @@
               </td>
             </tr>
           {% else %}
-            <tr><td colspan="8" class="text-center text-muted">Aucune activite.</td></tr>
+            <tr><td colspan="10" class="text-center text-muted">Aucune activite.</td></tr>
           {% endfor %}
           </tbody>
         </table>
@@ -173,3 +181,4 @@
 })();
 </script>
 {% endblock %}
+

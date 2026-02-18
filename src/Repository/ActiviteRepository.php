@@ -30,7 +30,7 @@ class ActiviteRepository extends ServiceEntityRepository
             ->leftJoin('a.etat', 'e')->addSelect('e');
 
         if ($q) {
-            $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q OR LOWER(e.type) LIKE :q OR LOWER(e.unite) LIKE :q')
+            $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q OR LOWER(e.traitementEnCours) LIKE :q OR LOWER(e.remarquesCliniques) LIKE :q')
                 ->setParameter('q', '%' . mb_strtolower(trim($q)) . '%');
         }
 
@@ -51,7 +51,7 @@ class ActiviteRepository extends ServiceEntityRepository
             ->setParameter('user', $user);
 
         if ($q) {
-            $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q OR LOWER(e.type) LIKE :q OR LOWER(e.unite) LIKE :q')
+            $qb->andWhere('LOWER(a.type) LIKE :q OR LOWER(a.notes) LIKE :q OR LOWER(e.traitementEnCours) LIKE :q OR LOWER(e.remarquesCliniques) LIKE :q')
                 ->setParameter('q', '%' . mb_strtolower(trim($q)) . '%');
         }
 

@@ -107,7 +107,7 @@
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
               <thead class="table-light">
-                <tr><th>Type</th><th>Etat</th><th>Duree</th><th>Calories</th><th>Date</th><th class="text-end">Actions</th></tr>
+                <tr><th>Type</th><th>Etat</th><th>Duree</th><th>Cal.</th><th>Distance (km)</th><th>Repos (h)</th><th>Date</th><th class="text-end">Actions</th></tr>
               </thead>
               <tbody>
                 {% for a in activites %}
@@ -115,13 +115,18 @@
                     <td><span class="badge bg-light text-dark">{{ a.type }}</span></td>
                     <td>
                       {% if a.etat %}
-                        <span class="small">{{ a.etat.type }}: {{ a.etat.valeur }} {{ a.etat.unite }}</span>
+                        <span class="small">
+                          Etat
+                          {% if a.etat.traitementEnCours %} | Trait.: {{ a.etat.traitementEnCours }}{% endif %}
+                        </span>
                       {% else %}
                         <span class="text-muted">-</span>
                       {% endif %}
                     </td>
                     <td>{{ a.duree }} min</td>
                     <td>{{ a.calories }}</td>
+                    <td>{{ a.distanceKm is not null ? a.distanceKm : '-' }}</td>
+                    <td>{{ a.heuresRepos is not null ? a.heuresRepos : '-' }}</td>
                     <td>{{ a.dateActivite ? a.dateActivite|date('d/m/Y') : '-' }}</td>
                     <td class="text-end">
                       <a class="btn btn-sm btn-outline-primary" href="{{ path('front_activite_show', {id: a.id}) }}">Voir</a>
@@ -135,7 +140,7 @@
                     </td>
                   </tr>
                 {% else %}
-                  <tr><td colspan="6" class="text-center text-muted py-4">
+                  <tr><td colspan="8" class="text-center text-muted py-4">
                     Aucune activite.
                     {% if isPro and selectedPatient %}
                       <a href="{{ path('front_activite_new', {patient: selectedPatient.id}) }}">Ajouter une activite</a>
@@ -149,4 +154,6 @@
       </div>
     </div>
   </main>
+
 {% endblock %}
+

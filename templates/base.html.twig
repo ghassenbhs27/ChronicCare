@@ -168,6 +168,20 @@
         opacity: .75;
         transition: opacity .12s ease;
       }
+
+      .cc-urgent-toast {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        width: min(420px, calc(100vw - 24px));
+        z-index: 2000;
+        border: 2px solid #dc3545;
+        animation: ccUrgentPulse 1.1s infinite alternate;
+      }
+      @keyframes ccUrgentPulse {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(3px); }
+      }
     </style>
 
     <!-- Main CSS File -->
@@ -282,7 +296,132 @@
   </div>
 </div>
 
+{% if app.user and (is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE')) %}
+  <div id="ccUrgentGlobal" class="alert alert-danger cc-urgent-toast d-none mb-0" role="alert">
+    <div class="fw-bold"><i class="bi bi-bell-fill me-1"></i> Notification urgente</div>
+    <div class="small mb-2">Un patient demande un appel immédiat.</div>
+    <ul class="mb-0" id="ccUrgentGlobalList"></ul>
+  </div>
+{% endif %}
+
 <script src="{{ asset('assets/js/profile-modal.js') }}"></script>
+
+{% if app.user and (is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE')) %}
+<script>
+  (function () {
+    const inboxUrl = '{{ path('front_urgence_inbox') }}';
+    const pingUrl = '{{ path('presence_ping') }}';
+    const offlineUrl = '{{ path('presence_offline') }}';
+    const csrf = '{{ csrf_token('presence_ping') }}';
+    const urgentBox = document.getElementById('ccUrgentGlobal');
+    const urgentList = document.getElementById('ccUrgentGlobalList');
+    let previousCount = 0;
+    let audioContext = null;
+
+    const ping = async () => {
+      try {
+        await fetch(pingUrl, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrf
+          }
+        });
+      } catch (e) {
+      }
+    };
+
+    const setOffline = () => {
+      try {
+        if (navigator.sendBeacon) {
+          const body = new URLSearchParams();
+          body.append('_token', csrf);
+          navigator.sendBeacon(offlineUrl, body);
+          return;
+        }
+      } catch (e) {
+      }
+
+      fetch(offlineUrl, {
+        method: 'POST',
+        keepalive: true,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      }).catch(() => {});
+    };
+
+    const unlockAudio = () => {
+      if (audioContext) return;
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        audioContext = new Ctx();
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+      } catch (e) {
+      }
+    };
+
+    const playUrgentSound = () => {
+      if (!audioContext) return;
+      try {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(880, audioContext.currentTime);
+        gain.gain.setValueAtTime(0.001, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start();
+        osc.stop(audioContext.currentTime + 0.35);
+      } catch (e) {
+      }
+    };
+
+    const renderUrgences = (items) => {
+      if (!urgentBox || !urgentList) return;
+      if (!Array.isArray(items) || items.length === 0) {
+        urgentBox.classList.add('d-none');
+        urgentList.innerHTML = '';
+        previousCount = 0;
+        return;
+      }
+
+      urgentBox.classList.remove('d-none');
+      urgentList.innerHTML = items.map((item) =>
+        `<li><a href="${item.joinUrl}" class="alert-link">${item.patient}</a> (${item.role}) - ${item.createdAt}</li>`
+      ).join('');
+
+      if (items.length > previousCount) {
+        playUrgentSound();
+      }
+      previousCount = items.length;
+    };
+
+    const fetchUrgences = async () => {
+      try {
+        const response = await fetch(inboxUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!response.ok) return;
+        const data = await response.json();
+        renderUrgences(data.items || []);
+      } catch (e) {
+      }
+    };
+
+    ping();
+    setInterval(ping, 15000);
+    window.addEventListener('pagehide', setOffline);
+    window.addEventListener('beforeunload', setOffline);
+    window.addEventListener('click', unlockAudio, { once: true });
+    window.addEventListener('keydown', unlockAudio, { once: true });
+
+    fetchUrgences();
+    setInterval(fetchUrgences, 7000);
+  })();
+</script>
+{% endif %}
 
 </body>
 </html>

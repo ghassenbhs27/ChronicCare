@@ -33,7 +33,7 @@
           </div>
           <div>
             <div class="fw-bold fs-5">{{ globalStats.moyenneValeur|default(0)|number_format(1) }}</div>
-            <div class="text-muted small">Moyenne valeur</div>
+            <div class="text-muted small">Suivi clinique</div>
           </div>
         </div>
       </div>
@@ -104,11 +104,10 @@
   <div class="card border-0 shadow-sm">
     <div class="card-body">
       <form method="get" class="row g-2 mb-3">
-        <div class="col-md-6"><input type="text" name="q" value="{{ q ?? '' }}" class="form-control form-control-sm" placeholder="Rechercher (type, unité)..."></div>
+        <div class="col-md-6"><input type="text" name="q" value="{{ q ?? '' }}" class="form-control form-control-sm" placeholder="Rechercher (type)..."></div>
         <div class="col-md-2"><select name="sort" class="form-select form-select-sm">
           <option value="dateReleve" {{ (sort ?? '') == 'dateReleve' ? 'selected' : '' }}>Date</option>
-          <option value="type" {{ (sort ?? '') == 'type' ? 'selected' : '' }}>Type</option>
-          <option value="valeur" {{ (sort ?? '') == 'valeur' ? 'selected' : '' }}>Valeur</option>
+          <option value="traitementEnCours" {{ (sort ?? '') == 'traitementEnCours' ? 'selected' : '' }}>Traitement</option>
         </select></div>
         <div class="col-md-2"><select name="dir" class="form-select form-select-sm">
           <option value="DESC" {{ (dir ?? 'DESC') == 'DESC' ? 'selected' : '' }}>Desc</option>
@@ -121,14 +120,15 @@
 
       <div class="table-responsive">
         <table class="table table-sm table-hover align-middle">
-          <thead class="table-light"><tr><th>ID</th><th>Type</th><th>Valeur</th><th>Unité</th><th>Date</th><th>Utilisateur</th><th></th></tr></thead>
+          <thead class="table-light"><tr><th>ID</th><th>Traitement en cours</th><th>Remarques cliniques</th><th>Temp. (deg C)</th><th>Hydrat. (L/j)</th><th>Date</th><th>Utilisateur</th><th></th></tr></thead>
           <tbody>
           {% for e in etats %}
             <tr>
               <td>{{ e.id }}</td>
-              <td>{{ e.type }}</td>
-              <td>{{ e.valeur }}</td>
-              <td>{{ e.unite }}</td>
+              <td>{{ e.traitementEnCours ?? '-' }}</td>
+              <td>{{ e.remarquesCliniques ?? '-' }}</td>
+              <td>{{ e.temperatureCorporelle ?? '-' }}</td>
+              <td>{{ e.niveauHydratation ?? '-' }}</td>
               <td>{{ e.dateReleve ? e.dateReleve|date('d/m/Y') : '-' }}</td>
               <td>{{ e.utilisateur ? (e.utilisateur.prenom ~ ' ' ~ e.utilisateur.nom) : '-' }}</td>
               <td class="text-end">
@@ -141,7 +141,7 @@
               </td>
             </tr>
           {% else %}
-            <tr><td colspan="7" class="text-center text-muted">Aucun relevé.</td></tr>
+            <tr><td colspan="8" class="text-center text-muted">Aucun relevé.</td></tr>
           {% endfor %}
           </tbody>
         </table>
@@ -185,3 +185,5 @@
 })();
 </script>
 {% endblock %}
+
+

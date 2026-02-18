@@ -82,6 +82,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoProfil = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastSeenAt = null;
+
     /**
      * @var Collection<int, Evenement>
      */
@@ -401,6 +404,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPhotoProfil(?string $photoProfil): self
     {
         $this->photoProfil = $photoProfil;
+        return $this;
+    }
+
+    public function getLastSeenAt(): ?\DateTimeImmutable
+    {
+        return $this->lastSeenAt;
+    }
+
+    public function setLastSeenAt(?\DateTimeImmutable $lastSeenAt): self
+    {
+        $this->lastSeenAt = $lastSeenAt;
         return $this;
     }
 
