@@ -1,0 +1,64 @@
+{% extends 'coach/base.html.twig' %}
+
+{% block page_title %}Mes exercices{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0 rounded-3 p-4">
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }} alert-dismissible fade show">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">Mes exercices</h2>
+        <a class="btn btn-primary" href="{{ path('exercice_new') }}">Créer</a>
+    </div>
+
+    <form class="row g-2 mb-3" method="get">
+        <div class="col-md-4"><input class="form-control" name="q" placeholder="Recherche" value="{{ q }}"></div>
+        <div class="col-md-3">
+            <select class="form-select" name="evenement">
+                <option value="">Tous</option>
+                {% for ev in evenements %}
+                    <option value="{{ ev.id }}" {% if selected_evenement == ev.id %}selected{% endif %}>{{ ev.titre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Filtrer</button></div>
+    </form>
+
+    {% if exercices is empty %}
+        <div class="alert alert-info">Aucun exercice.</div>
+    {% else %}
+        <table class="table table-striped">
+            <thead><tr><th>Nom</th><th>Durée</th><th>Répétitions</th><th>Événement</th><th></th></tr></thead>
+            <tbody>
+            {% for ex in exercices %}
+                <tr>
+                    <td>{{ ex.nom }}</td>
+                    <td>{{ ex.duree }} min</td>
+                    <td>{{ ex.repetitions ?? '-' }}</td>
+                    <td>{{ ex.evenement?.titre ?? '-' }}</td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary" href="{{ path('exercice_show', { id: ex.id }) }}">Voir</a>
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('exercice_edit', { id: ex.id }) }}">Éditer</a>
+                        <form class="d-inline" method="post" action="{{ path('exercice_delete', { id: ex.id }) }}" onsubmit="return confirm('Supprimer ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_exercice_' ~ ex.id) }}">
+                            <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if pages > 1 %}
+            <nav><ul class="pagination">
+                {% for p in 1..pages %}
+                    <li class="page-item {{ p == page ? 'active' : '' }}"><a class="page-link" href="{{ path('exercice_index', { page: p, q: q, evenement: selected_evenement }) }}">{{ p }}</a></li>
+                {% endfor %}
+            </ul></nav>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

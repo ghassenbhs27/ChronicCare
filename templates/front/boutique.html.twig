@@ -43,6 +43,13 @@
         justify-content:center;
         background:#f6f8fb;
         border:1px solid rgba(16,24,40,0.04);
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none;
+      }
+      .service-image:hover {
+        transform: scale(1.08);
+        box-shadow: 0 8px 16px rgba(11, 207, 153, 0.2);
       }
       .service-image img{ width:100%; height:100%; object-fit:cover; display:block; }
 
@@ -61,6 +68,19 @@
         border-color: var(--accent-color);
       }
 
+      .boutique-cta {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        color: #fff;
+      }
+
+      .boutique-cta:hover,
+      .boutique-cta:focus {
+        background: color-mix(in srgb, var(--accent-color), transparent 15%);
+        border-color: color-mix(in srgb, var(--accent-color), transparent 15%);
+        color: #fff;
+      }
+
       @media (max-width:768px){
         .service-item{ padding:12px; }
         .service-image{ flex:0 0 56px; width:56px; height:56px; }
@@ -77,55 +97,7 @@
 {% endblock %}
 
 {% block body %}
-<header id="header" class="header d-flex align-items-center fixed-top">
-      <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
-
-        <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0">
-          <!-- Uncomment the line below if you also wish to use an image logo -->
-          <!-- <img src="{{ asset('assets/img/logo.webp') }}" alt=""> -->
-          <svg class="my-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g id="bgCarrier" stroke-width="0"></g>
-            <g id="tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="iconCarrier">
-              <path d="M22 22L2 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path d="M17 22V6C17 4.11438 17 3.17157 16.4142 2.58579C15.8284 2 14.8856 2 13 2H11C9.11438 2 8.17157 2 7.58579 2.58579C7 3.17157 7 4.11438 7 6V22" stroke="currentColor" stroke-width="1.5"></path>
-              <path opacity="0.5" d="M21 22V8.5C21 7.09554 21 6.39331 20.6629 5.88886C20.517 5.67048 20.3295 5.48298 20.1111 5.33706C19.6067 5 18.9045 5 17.5 5" stroke="currentColor" stroke-width="1.5"></path>
-              <path opacity="0.5" d="M3 22V8.5C3 7.09554 3 6.39331 3.33706 5.88886C3.48298 5.67048 3.67048 5.48298 3.88886 5.33706C4.39331 5 5.09554 5 6.5 5" stroke="currentColor" stroke-width="1.5"></path>
-              <path d="M12 22V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path opacity="0.5" d="M10 12H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path opacity="0.5" d="M5.5 11H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path opacity="0.5" d="M5.5 14H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path opacity="0.5" d="M17 11H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path opacity="0.5" d="M17 14H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path opacity="0.5" d="M5.5 8H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path opacity="0.5" d="M17 8H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path opacity="0.5" d="M10 15H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-              <path d="M12 9V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-              <path d="M14 7L10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-          </svg>
-
-          <h1 class="sitename">Chronic Care</h1>
-        </a>
-
-        <nav id="navmenu" class="navmenu">
-          <ul>
-            <li><a href="{{ path('index') }}">Accueil</a></li>
-            <li><a href="{{ path('nutritionnistes') }}">Nutritionnistes</a></li>
-            <li><a href="{{ path('coachs') }}">Coachs</a></li>
-            <li><a href="{{ path('boutique') }}" class="active">Boutique</a></li>
-            <li><a href="{{ path('contact') }}">Contact</a></li>
-          </ul>
-          <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-        </nav>
-
-        <div class="d-flex gap-2 align-items-center">
-          <a class="btn-getstarted" href="{{ path('connexion') }}">Se connecter</a>
-          <a class="btn-getstarted" href="{{ path('inscription') }}">S'inscrire</a>
-        </div>
-
-      </div>
-    </header>
+  {% include 'partials/_navbar.html.twig' %}
 
     <main class="main">
 
@@ -142,8 +114,10 @@
         <div class="container">
           <h1>Notre boutique</h1>
           <p>Découvrez notre sélection de produits pour la santé et le bien-être : suppléments nutritionnels, équipements de monitoring, et bien plus encore.</p>
+          <a href="{{ path('produit_list') }}" class="btn boutique-cta mt-2"><i class="bi bi-grid-3x3-gap"></i> Voir tout le catalogue</a>
+          <a href="{{ path('cart_show') }}" class="btn boutique-cta mt-2 ms-2"><i class="bi bi-cart"></i> Panier</a>
           <!-- Barre de recherche et tri -->
-          <form method="get" action="{{ path('boutique') }}" class="row mb-4 align-items-end">
+          <form method="get" action="{{ path('boutique') }}" class="row mb-4 mt-3 align-items-end">
             <div class="col-md-4 mb-2">
               <input type="text" name="keyword" class="form-control" placeholder="Rechercher par nom..." value="{{ keyword|default('') }}">
             </div>
@@ -160,240 +134,57 @@
         </div>
       </div><!-- End Page Title -->
 
-      <!-- Services Section -->
-      <section id="services" class="services section light-background">
-
+      <!-- Catalogue dynamique produits -->
+      <section id="products" class="services section light-background">
         <div class="container">
-          <div class="row gy-4">
-
-            <div class="col-lg-12 d-flex align-items-center" data-aos="fade-up" data-aos-delay="200">
-              <ul class="nav nav-tabs boutique-tabs flex-column flex-lg-row flex-wrap ms-auto w-100 p-0 mb-5 mb-lg-0" data-bs-toggle="tabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <a class="nav-link d-flex align-items-center active" href="#services-primary" data-bs-toggle="tab" role="tab" aria-selected="true">
-                    <i class="fa fa-heartbeat"></i>
-                    <span>Suppléments nutritionnels</span>
+          <h2 class="mb-4">Nos produits</h2>
+          {% if produits is defined and produits|length > 0 %}
+            <div class="row g-4">
+              {% for produit in produits|slice(0, 8) %}
+              <div class="col-lg-6">
+                <div class="service-item {{ loop.first ? 'featured' : '' }}">
+                  <a href="{{ path('produit_show', {id: produit.id}) }}" class="service-image" title="Voir {{ produit.nom }}">
+                    {% set categoryLower = produit.categorie|lower %}
+                    {% if 'supplément' in categoryLower %}
+                      {% set iconClass = 'bi-capsule' %}
+                    {% elseif 'équipement' in categoryLower or 'monitoring' in categoryLower %}
+                      {% set iconClass = 'bi-heart-pulse' %}
+                    {% elseif 'bien-être' in categoryLower or 'yoga' in categoryLower %}
+                      {% set iconClass = 'bi-flower1' %}
+                    {% else %}
+                      {% set iconClass = 'bi-box-seam' %}
+                    {% endif %}
+                    <img id="img-{{ produit.id }}" src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" style="display:none;">
+                    <i id="icon-{{ produit.id }}" class="bi {{ iconClass }}" style="font-size:40px; color:#0bcf99;"></i>
+                    <script>
+                      document.getElementById('img-{{ produit.id }}').onload = function() {
+                        this.style.display = 'block';
+                        document.getElementById('icon-{{ produit.id }}').style.display = 'none';
+                      };
+                    </script>
                   </a>
-                </li>
-
-                <li class="nav-item" role="presentation">
-                  <a class="nav-link d-flex align-items-center" href="#services-specialty" data-bs-toggle="tab" role="tab">
-                    <i class="fa fa-heart-pulse"></i>
-                    <span>Équipements de monitoring</span>
-                  </a>
-                </li>
-
-                <li class="nav-item" role="presentation">
-                  <a class="nav-link d-flex align-items-center" href="#services-diagnostics" data-bs-toggle="tab" role="tab">
-                    <i class="fa fa-spa"></i>
-                    <span>Bien-être et accessoires</span>
-                  </a>
-                </li>
-
-                <li class="nav-item" role="presentation">
-                  <a class="nav-link d-flex align-items-center" href="#services-emergency" data-bs-toggle="tab" role="tab">
-                    <i class="fa fa-pills"></i>
-                    <span>Produits spécialisés</span>
-                  </a>
-                </li>
-
-              </ul>
-            </div>
-
-            <div class="col-lg-12" data-aos="fade-up" data-aos-delay="300">
-
-              <div class="tab-content">
-
-                <div class="tab-pane fade active show" id="services-primary" role="tabpanel">
-                  <div class="row g-4">
-                    {% set primeProducts = produits|filter(p => p.categorie == 'Suppléments nutritionnels') %}
-                    {% for produit in primeProducts %}
-                      <div class="col-lg-6">
-                        <div class="service-item {% if loop.first %}featured{% endif %}">
-                          <div class="service-image">
-                            <img src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 200px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;" onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.style.color='white'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.textContent='{{ produit.nom }}';">
-                          </div>
-                          <div class="service-icon-wrapper d-none">
-                            <i class="fa fa-leaf"></i>
-                          </div>
-                          <div class="service-details">
-                            <h5>{{ produit.nom }}</h5>
-                            <p>{{ produit.description }}</p>
-                            <div class="service-price mb-3">
-                              <strong style="font-size: 1.3em; color: #0d6efd;">{{ produit.prix }}€</strong>
-                              {% if produit.stock <= 0 %}
-                                <span class="badge bg-danger ms-2">Rupture de stock</span>
-                              {% elseif produit.stock < 5 %}
-                                <span class="badge bg-warning ms-2">Stock limité: {{ produit.stock }}</span>
-                              {% endif %}
-                            </div>
-                            <ul class="service-benefits">
-                              <li><i class="fa fa-check-circle"></i>Produit de qualité</li>
-                              <li><i class="fa fa-check-circle"></i>Disponible</li>
-                              <li><i class="fa fa-check-circle"></i>Livraison rapide</li>
-                            </ul>
-                            <div class="service-actions" style="display: flex; gap: 10px;">
-                              <a href="{{ path('produit_show', {'id': produit.id}) }}" class="service-link">
-                                <span>Voir détail</span>
-                                <i class="fa fa-arrow-right"></i>
-                              </a>
-                              {% if produit.stock > 0 %}
-                                <a href="/cart/" class="btn btn-sm btn-success" style="padding: 0.5rem 1rem; font-size: 0.9em;">
-                                  <i class="fa fa-shopping-cart"></i> Panier
-                                </a>
-                              {% endif %}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    {% endfor %}
+                  <div class="service-details">
+                    <h5>{{ produit.nom }}</h5>
+                    <p>{{ produit.description|slice(0, 120) }}{% if produit.description|length > 120 %}...{% endif %}</p>
+                    <ul class="service-benefits"><li><i class="fa fa-check-circle"></i>{{ produit.categorie }}</li><li><i class="fa fa-check-circle"></i>{{ produit.prix }} €</li></ul>
+                    <a href="{{ path('produit_show', {id: produit.id}) }}" class="service-link"><span>Voir le produit</span><i class="fa fa-arrow-right"></i></a>
+                    {% if produit.stock > 0 %}
+                      <a href="{{ path('cart_add_with_id', {id: produit.id}) }}?quantity=1" class="btn btn-success btn-sm ms-2"><i class="bi bi-cart-plus"></i> Panier</a>
+                    {% endif %}
                   </div>
                 </div>
-
-                <div class="tab-pane fade" id="services-specialty" role="tabpanel">
-                  <div class="row g-4">
-                    {% set specialtyProducts = produits|filter(p => p.categorie == 'Équipements de monitoring') %}
-                    {% for produit in specialtyProducts %}
-                      <div class="col-lg-6">
-                        <div class="service-item {% if loop.first %}featured{% endif %}">
-                          <div class="service-image">
-                            <img src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 200px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;" onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.style.color='white'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.textContent='{{ produit.nom }}';">
-                          </div>
-                          <div class="service-icon-wrapper d-none">
-                            <i class="fa fa-heart-pulse"></i>
-                          </div>
-                          <div class="service-details">
-                            <h5>{{ produit.nom }}</h5>
-                            <p>{{ produit.description }}</p>
-                            <div class="service-price mb-3">
-                              <strong style="font-size: 1.3em; color: #0d6efd;">{{ produit.prix }}€</strong>
-                              {% if produit.stock <= 0 %}
-                                <span class="badge bg-danger ms-2">Rupture de stock</span>
-                              {% elseif produit.stock < 5 %}
-                                <span class="badge bg-warning ms-2">Stock limité: {{ produit.stock }}</span>
-                              {% endif %}
-                            </div>
-                            <ul class="service-benefits">
-                              <li><i class="fa fa-check-circle"></i>Produit de qualité</li>
-                              <li><i class="fa fa-check-circle"></i>Disponible</li>
-                              <li><i class="fa fa-check-circle"></i>Livraison rapide</li>
-                            </ul>
-                            <div class="service-actions" style="display: flex; gap: 10px;">
-                              <a href="{{ path('produit_show', {'id': produit.id}) }}" class="service-link">
-                                <span>Voir détail</span>
-                                <i class="fa fa-arrow-right"></i>
-                              </a>
-                              {% if produit.stock > 0 %}
-                                <button onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom }}')" class="btn btn-sm btn-success" style="padding: 0.5rem 1rem; font-size: 0.9em;">
-                                  <i class="fa fa-shopping-cart"></i> Panier
-                                </button>
-                              {% endif %}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    {% endfor %}
-                  </div>
-                </div>
-
-                <div class="tab-pane fade" id="services-diagnostics" role="tabpanel">
-                  <div class="row g-4">
-                    {% set wellnessProducts = produits|filter(p => p.categorie == 'Bien-être et accessoires') %}
-                    {% for produit in wellnessProducts %}
-                      <div class="col-lg-6">
-                        <div class="service-item {% if loop.first %}featured{% endif %}">
-                          <div class="service-image">
-                            <img src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 200px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;" onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.style.color='white'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.textContent='{{ produit.nom }}';">
-                          </div>
-                          <div class="service-icon-wrapper d-none">
-                            <i class="fa fa-spa"></i>
-                          </div>
-                          <div class="service-details">
-                            <h5>{{ produit.nom }}</h5>
-                            <p>{{ produit.description }}</p>
-                            <div class="service-price mb-3">
-                              <strong style="font-size: 1.3em; color: #0d6efd;">{{ produit.prix }}€</strong>
-                              {% if produit.stock <= 0 %}
-                                <span class="badge bg-danger ms-2">Rupture de stock</span>
-                              {% elseif produit.stock < 5 %}
-                                <span class="badge bg-warning ms-2">Stock limité: {{ produit.stock }}</span>
-                              {% endif %}
-                            </div>
-                            <ul class="service-benefits">
-                              <li><i class="fa fa-check-circle"></i>Produit de qualité</li>
-                              <li><i class="fa fa-check-circle"></i>Disponible</li>
-                              <li><i class="fa fa-check-circle"></i>Livraison rapide</li>
-                            </ul>
-                            <div class="service-actions" style="display: flex; gap: 10px;">
-                              <a href="{{ path('produit_show', {'id': produit.id}) }}" class="service-link">
-                                <span>Voir détail</span>
-                                <i class="fa fa-arrow-right"></i>
-                              </a>
-                              {% if produit.stock > 0 %}
-                                <button onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom }}')" class="btn btn-sm btn-success" style="padding: 0.5rem 1rem; font-size: 0.9em;">
-                                  <i class="fa fa-shopping-cart"></i> Panier
-                                </button>
-                              {% endif %}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    {% endfor %}
-                  </div>
-                </div>
-
-                <div class="tab-pane fade" id="services-emergency" role="tabpanel">
-                  <div class="row g-4">
-                    {% set specialProducts = produits|filter(p => p.categorie == 'Produits spécialisés') %}
-                    {% for produit in specialProducts %}
-                      <div class="col-lg-6">
-                        <div class="service-item {% if loop.first %}featured{% endif %}">
-                          <div class="service-image">
-                            <img src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 200px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;" onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.style.color='white'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.textContent='{{ produit.nom }}';">
-                          </div>
-                          <div class="service-icon-wrapper d-none">
-                            <i class="fa fa-pills"></i>
-                          </div>
-                          <div class="service-details">
-                            <h5>{{ produit.nom }}</h5>
-                            <p>{{ produit.description }}</p>
-                            <div class="service-price mb-3">
-                              <strong style="font-size: 1.3em; color: #0d6efd;">{{ produit.prix }}€</strong>
-                              {% if produit.stock <= 0 %}
-                                <span class="badge bg-danger ms-2">Rupture de stock</span>
-                              {% elseif produit.stock < 5 %}
-                                <span class="badge bg-warning ms-2">Stock limité: {{ produit.stock }}</span>
-                              {% endif %}
-                            </div>
-                            <ul class="service-benefits">
-                              <li><i class="fa fa-check-circle"></i>Produit de qualité</li>
-                              <li><i class="fa fa-check-circle"></i>Disponible</li>
-                              <li><i class="fa fa-check-circle"></i>Livraison rapide</li>
-                            </ul>
-                            <div class="service-actions" style="display: flex; gap: 10px;">
-                              <a href="{{ path('produit_show', {'id': produit.id}) }}" class="service-link">
-                                <span>Voir détail</span>
-                                <i class="fa fa-arrow-right"></i>
-                              </a>
-                              {% if produit.stock > 0 %}
-                                <button onclick="ajouterAuPanier({{ produit.id }}, '{{ produit.nom }}')" class="btn btn-sm btn-success" style="padding: 0.5rem 1rem; font-size: 0.9em;">
-                                  <i class="fa fa-shopping-cart"></i> Panier
-                                </button>
-                              {% endif %}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    {% endfor %}
-                  </div>
-                </div>
-
               </div>
+              {% endfor %}
             </div>
-
-          </div>
+            <div class="text-center mt-4">
+              <a href="{{ path('produit_list') }}" class="btn boutique-cta">Voir tous les produits</a>
+            </div>
+          {% else %}
+            <div class="alert alert-info">Aucun produit disponible. <a href="{{ path('produit_list') }}">Catalogue</a></div>
+          {% endif %}
         </div>
+      </section>
 
-      </section><!-- /Services Section -->
 
     </main>
 
@@ -474,3 +265,5 @@
       }
     </script>
 {% endblock %}
+
+

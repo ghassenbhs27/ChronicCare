@@ -8,24 +8,18 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class ProduitService
 {
-    private $produitRepository;
-    private $entityManager;
-
-    public function __construct(ProduitRepository $produitRepository, EntityManagerInterface $entityManager)
-    {
-        $this->produitRepository = $produitRepository;
-        $this->entityManager = $entityManager;
+    public function __construct(
+        private readonly ProduitRepository $produitRepository,
+        private readonly EntityManagerInterface $entityManager
+    ) {
     }
 
-    /**
-     * Créer un nouveau produit
-     */
     public function createProduit(string $nom, string $description, $prix, int $stock, string $categorie): Produit
     {
         $produit = new Produit();
         $produit->setNom($nom);
         $produit->setDescription($description);
-        $produit->setPrix($prix);
+        $produit->setPrix((string) $prix);
         $produit->setStock($stock);
         $produit->setCategorie($categorie);
         $produit->setIsActive(true);
@@ -36,31 +30,20 @@ class ProduitService
         return $produit;
     }
 
-    /**
-     * Mettre à jour le stock d'un produit
-     */
     public function updateStock(Produit $produit, int $newStock): Produit
     {
         $produit->setStock($newStock);
         $this->entityManager->flush();
-
         return $produit;
     }
 
-    /**
-     * Réduire le stock (vente)
-     */
     public function decreaseStock(Produit $produit, int $quantity): bool
     {
-        $currentStock = $produit->getStock();
-
-        if ($currentStock < $quantity) {
-            return false; // Stock insuffisant
+        if ($produit->getStock() < $quantity) {
+            return false;
         }
-
-        $produit->setStock($currentStock - $quantity);
+        $produit->setStock($produit->getStock() - $quantity);
         $this->entityManager->flush();
-
         return true;
     }
 
@@ -79,7 +62,6 @@ class ProduitService
     {
         $skip = ($page - 1) * $limit;
         $products = $this->produitRepository->findAllActive();
-
         return array_slice($products, $skip, $limit);
     }
 
@@ -91,12 +73,8 @@ class ProduitService
         return $this->produitRepository->find($id);
     }
 
-    /**
-     * Compter le stock faible
-     */
     public function countLowStock(int $threshold = 10): int
     {
-        $lowStockProducts = $this->produitRepository->findLowStock($threshold);
-        return count($lowStockProducts);
+        return count($this->produitRepository->findLowStock($threshold));
     }
 }

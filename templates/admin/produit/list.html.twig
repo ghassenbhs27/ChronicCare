@@ -1,47 +1,58 @@
-{% extends 'base.html.twig' %}
+{% extends 'back/base.html.twig' %}
 
-{% block title %}Admin - Produits - ChronicCare{% endblock %}
+{% block page_title %}Produits{% endblock %}
+{% block page_subtitle %}Gestion du catalogue{% endblock %}
 
-{% block content %}
-<div class="container mt-5">
-    <h1>Gestion des Produits</h1>
+{% block body %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <a href="{{ path('admin_produit_create') }}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Nouveau produit</a>
+      <a href="{{ path('admin_produit_low_stock') }}" class="btn btn-warning ms-2"><i class="bi bi-exclamation-triangle"></i> Stock faible</a>
+    </div>
+  </div>
 
-    <a href="{{ path('admin_produit_create') }}" class="btn btn-success mb-3">+ Nouveau produit</a>
-    <a href="{{ path('admin_produit_low_stock') }}" class="btn btn-warning mb-3">Stock faible</a>
-
-    <table class="table table-striped">
-        <thead>
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
             <tr>
-                <th>Nom</th>
-                <th>Catégorie</th>
-                <th>Prix</th>
-                <th>Stock</th>
-                <th>Statut</th>
-                <th>Action</th>
+              <th>Nom</th>
+              <th>Catégorie</th>
+              <th>Prix</th>
+              <th>Stock</th>
+              <th>Statut</th>
+              <th>Actions</th>
             </tr>
-        </thead>
-        <tbody>
+          </thead>
+          <tbody>
             {% for produit in produits %}
             <tr>
-                <td>{{ produit.nom }}</td>
-                <td>{{ produit.categorie }}</td>
-                <td>{{ produit.prix }} €</td>
-                <td>{{ produit.stock }}</td>
-                <td>
-                    <span class="badge {% if produit.isActive %}badge-success{% else %}badge-danger{% endif %}">
-                        {% if produit.isActive %}Actif{% else %}Inactif{% endif %}
-                    </span>
-                </td>
-                <td>
-                    <a href="{{ path('admin_produit_edit', {id: produit.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
-                    <form action="{{ path('admin_produit_delete', {id: produit.id}) }}" method="POST" style="display:inline;">
-                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ produit.id) }}">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr?')">Supprimer</button>
-                    </form>
-                </td>
+              <td>{{ produit.nom }}</td>
+              <td>{{ produit.categorie }}</td>
+              <td>{{ produit.prix }} €</td>
+              <td>{{ produit.stock }}</td>
+              <td>
+                <span class="badge {% if produit.isActive %}bg-success{% else %}bg-secondary{% endif %}">
+                  {% if produit.isActive %}Actif{% else %}Inactif{% endif %}
+                </span>
+              </td>
+              <td>
+                <a href="{{ path('admin_produit_edit', {id: produit.id}) }}" class="btn btn-sm btn-outline-warning">Éditer</a>
+                <form action="{{ path('admin_produit_delete', {id: produit.id}) }}" method="post" class="d-inline" onsubmit="return confirm('Supprimer ce produit ?');">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ produit.id) }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                </form>
+              </td>
             </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Aucun produit</td></tr>
             {% endfor %}
-        </tbody>
-    </table>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -1,49 +1,63 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Historique Commandes - ChronicCare{% endblock %}
+{% block title %}Mes commandes - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
 
-{% block content %}
-<div class="container mt-5">
-    <h1>Historique Commandes</h1>
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
 
-    {% if commandes is empty %}
-        <div class="alert alert-info">
-            Vous n'avez aucune commande. <a href="{{ path('produit_list') }}">Commencer les achats</a>
-        </div>
-    {% else %}
-        <table class="table table-striped">
+<main class="main">
+  <div class="page-title">
+    <div class="container">
+      <h1>Mes commandes</h1>
+    </div>
+  </div>
+
+  <section class="services section light-background">
+    <div class="container">
+      {% if commandes is empty %}
+        <div class="alert alert-info">Vous n'avez aucune commande. <a href="{{ path('produit_list') }}">Commencer les achats</a></div>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table table-hover">
             <thead>
-                <tr>
-                    <th>Numéro</th>
-                    <th>Date</th>
-                    <th>Total</th>
-                    <th>Statut</th>
-                    <th>Action</th>
-                </tr>
+              <tr>
+                <th>N°</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Paiement</th>
+                <th>Statut</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
-                {% for commande in commandes %}
-                <tr>
-                    <td>{{ commande.numeroCommande }}</td>
-                    <td>{{ commande.createdAt|date('d/m/Y H:i') }}</td>
-                    <td>{{ commande.total }} €</td>
-                    <td>
-                        <span class="badge 
-                            {% if commande.statut == 'en_attente' %}badge-warning
-                            {% elseif commande.statut == 'validée' %}badge-info
-                            {% elseif commande.statut == 'expédiée' %}badge-primary
-                            {% elseif commande.statut == 'livrée' %}badge-success
-                            {% else %}badge-danger
-                            {% endif %}
-                        ">{{ commande.statut }}</span>
-                    </td>
-                    <td>
-                        <a href="{{ path('commande_show', {id: commande.id}) }}" class="btn btn-sm btn-info">Détails</a>
-                    </td>
-                </tr>
-                {% endfor %}
+              {% for c in commandes %}
+              <tr>
+                <td>{{ c.numeroCommande }}</td>
+                <td>{{ c.createdAt|date('d/m/Y H:i') }}</td>
+                <td>{{ c.total }} €</td>
+                <td>
+                  {% if c.methodePaiement == 'cash_on_delivery' %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-cash-coin"></i> Livraison</span>
+                  {% else %}
+                    <span class="badge bg-success"><i class="bi bi-credit-card"></i> Carte</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if c.statut == 'livrée' %}bg-success{% elseif c.statut == 'annulée' %}bg-danger{% elseif c.statut == 'expédiée' %}bg-info{% else %}bg-warning{% endif %}">{{ c.statut }}</span>
+                </td>
+                <td>
+                  <a href="{{ path('commande_show', {id: c.id}) }}" class="btn btn-sm btn-outline-primary">Détails</a>
+                </td>
+              </tr>
+              {% endfor %}
             </tbody>
-        </table>
-    {% endif %}
-</div>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+</main>
+
+{% include 'partials/_footer.html.twig' %}
 {% endblock %}

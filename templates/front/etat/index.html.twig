@@ -1,0 +1,109 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Etats de sante - Chronic Care{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main">
+    <div class="container py-5">
+      <nav aria-label="Fil d Ariane" class="mb-3">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('suivi_front_dashboard') }}">Mon suivi</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{{ isPro ? 'Etats patient' : 'Mes etats de sante' }}</li>
+        </ol>
+      </nav>
+
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <h1 class="mb-1">{{ isPro ? 'Etats du patient' : 'Mes etats de sante' }}</h1>
+          <p class="text-muted mb-0 small">
+            {{ isPro ? 'Consultez les etats du patient pour prescrire des activites adaptees.' : 'Releves de vos indicateurs : poids, glycemie, tension, temperature, etc.' }}
+          </p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          {% if not isPro %}
+            <a class="btn btn-primary" href="{{ path('front_etat_new') }}"><i class="bi bi-plus-lg me-1"></i> Nouveau releve</a>
+          {% endif %}
+          <a class="btn btn-outline-secondary" href="{{ path('suivi_front_dashboard') }}"><i class="bi bi-grid me-1"></i> Tableau de bord</a>
+          <a class="btn btn-outline-success btn-sm" href="{{ path('front_etat_export_excel', {q: q ?? '', sort: sort ?? 'dateReleve', dir: dir ?? 'DESC', patient: selectedPatient ? selectedPatient.id : null}) }}"><i class="bi bi-file-earmark-excel me-1"></i> Export CSV</a>
+        </div>
+      </div>
+
+      {% for label, messages in app.flashes %}
+        {% for message in messages %}
+          <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+          </div>
+        {% endfor %}
+      {% endfor %}
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          {% if isPro %}
+            <form method="get" class="row g-2 mb-3">
+              <div class="col-md-8">
+                <select name="patient" class="form-select form-select-sm" onchange="this.form.submit()">
+                  {% for p in patients %}
+                    <option value="{{ p.id }}" {{ selectedPatient and selectedPatient.id == p.id ? 'selected' : '' }}>{{ p.prenom }} {{ p.nom }} - {{ p.email }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4 text-muted small d-flex align-items-center">
+                {{ selectedPatient ? 'Patient selectionne: ' ~ selectedPatient.prenom ~ ' ' ~ selectedPatient.nom : 'Aucun patient selectionne' }}
+              </div>
+            </form>
+          {% endif %}
+
+          <form method="get" class="row g-2">
+            {% if isPro and selectedPatient %}
+              <input type="hidden" name="patient" value="{{ selectedPatient.id }}">
+            {% endif %}
+            <div class="col-md-6"><input type="text" name="q" value="{{ q ?? '' }}" class="form-control form-control-sm" placeholder="Rechercher (type, unite...)"></div>
+            <div class="col-md-3"><select name="sort" class="form-select form-select-sm"><option value="dateReleve" {{ (sort|default('')) == 'dateReleve' ? 'selected' : '' }}>Date</option><option value="type" {{ (sort|default('')) == 'type' ? 'selected' : '' }}>Type</option></select></div>
+            <div class="col-md-3"><button class="btn btn-primary btn-sm w-100" type="submit">Filtrer</button></div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="mb-0">Liste des releves</h6>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Type</th><th>Valeur</th><th>Unite</th><th>Date</th><th class="text-end">Actions</th></tr>
+              </thead>
+              <tbody>
+                {% for e in etats %}
+                  <tr>
+                    <td><span class="badge bg-light text-dark">{{ e.type }}</span></td>
+                    <td class="fw-medium">{{ e.valeur }}</td>
+                    <td>{{ e.unite }}</td>
+                    <td>{{ e.dateReleve ? e.dateReleve|date('d/m/Y') : '-' }}</td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-primary" href="{{ path('front_etat_show', {id: e.id}) }}">Voir</a>
+                      {% if not isPro %}
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('front_etat_edit', {id: e.id}) }}">Modifier</a>
+                        <form class="d-inline" method="post" action="{{ path('front_etat_delete', {id: e.id}) }}" onsubmit="return confirm('Supprimer ce releve ?');">
+                          <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ e.id) }}">
+                          <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                        </form>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="5" class="text-center text-muted py-4">Aucun releve.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

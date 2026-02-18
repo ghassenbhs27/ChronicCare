@@ -1,0 +1,175 @@
+{% extends 'back/base.html.twig' %}
+
+{% block page_title %}Activites{% endblock %}
+{% block page_subtitle %}Statistiques et liste des activites{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-primary bg-opacity-10 text-primary p-2">
+            <i class="bi bi-activity fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.totalActivites|default(0) }}</div>
+            <div class="text-muted small">Total activites</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-success bg-opacity-10 text-success p-2">
+            <i class="bi bi-clock fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.moyenneDuree|default(0)|round(0) }} min</div>
+            <div class="text-muted small">Duree moyenne</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-warning bg-opacity-10 text-warning p-2">
+            <i class="bi bi-fire fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.moyenneCalories|default(0)|round(0) }}</div>
+            <div class="text-muted small">Cal. moyenne</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body py-3 d-flex align-items-center gap-2">
+          <div class="rounded-2 bg-info bg-opacity-10 text-info p-2">
+            <i class="bi bi-graph-up fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ globalStats.totalCalories|default(0) }}</div>
+            <div class="text-muted small">Total calories</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-2">
+          <h6 class="mb-0">Activites par jour (7 derniers jours)</h6>
+        </div>
+        <div class="card-body">
+          <canvas id="chartActiviteByDay" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-2">
+          <h6 class="mb-0">Par type</h6>
+        </div>
+        <div class="card-body">
+          {% for row in trendByType %}
+            <div class="d-flex justify-content-between align-items-center small mb-2">
+              <span>{{ row.type }}</span>
+              <span class="badge bg-light text-dark">{{ row.nb }}</span>
+            </div>
+            <div class="progress mb-2" style="height: 6px;">
+              <div class="progress-bar" style="width: {{ (globalStats.totalActivites > 0 ? (row.nb / globalStats.totalActivites * 100) : 0)|round(1) }}%;"></div>
+            </div>
+          {% else %}
+            <p class="text-muted small mb-0">Aucune donnee</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <form method="get" class="row g-2 mb-3">
+        <div class="col-md-6"><input type="text" name="q" value="{{ q ?? '' }}" class="form-control form-control-sm" placeholder="Rechercher (type, notes, etat)..."></div>
+        <div class="col-md-2"><select name="sort" class="form-select form-select-sm"><option value="dateActivite" {{ (sort ?? '') == 'dateActivite' ? 'selected' : '' }}>Date</option><option value="type" {{ (sort ?? '') == 'type' ? 'selected' : '' }}>Type</option><option value="calories" {{ (sort ?? '') == 'calories' ? 'selected' : '' }}>Calories</option></select></div>
+        <div class="col-md-2"><select name="dir" class="form-select form-select-sm"><option value="DESC" {{ (dir ?? 'DESC') == 'DESC' ? 'selected' : '' }}>Desc</option><option value="ASC" {{ (dir ?? '') == 'ASC' ? 'selected' : '' }}>Asc</option></select></div>
+        <div class="col-md-2 d-flex gap-1">
+          <button class="btn btn-primary btn-sm" type="submit">Filtrer</button>
+          <a class="btn btn-outline-success btn-sm" href="{{ path('admin_activite_export_excel', {q: q ?? '', sort: sort ?? 'dateActivite', dir: dir ?? 'DESC'}) }}"><i class="bi bi-file-earmark-excel"></i></a>
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+          <thead class="table-light"><tr><th>ID</th><th>Type</th><th>Etat</th><th>Duree</th><th>Cal.</th><th>Date</th><th>Utilisateur</th><th></th></tr></thead>
+          <tbody>
+          {% for a in activites %}
+            <tr>
+              <td>{{ a.id }}</td>
+              <td>{{ a.type }}</td>
+              <td>{% if a.etat %}{{ a.etat.type }}: {{ a.etat.valeur }} {{ a.etat.unite }}{% else %}-{% endif %}</td>
+              <td>{{ a.duree }} min</td>
+              <td>{{ a.calories }}</td>
+              <td>{{ a.dateActivite ? a.dateActivite|date('d/m/Y') : '-' }}</td>
+              <td>{{ a.utilisateur ? a.utilisateur.prenom ~ ' ' ~ a.utilisateur.nom : '-' }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="{{ path('admin_activite_show', {id: a.id}) }}">Voir</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_activite_edit', {id: a.id}) }}">Editer</a>
+                <form class="d-inline" method="post" action="{{ path('admin_activite_delete', {id: a.id}) }}" onsubmit="return confirm('Supprimer ?');">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ a.id) }}">
+                  <button class="btn btn-sm btn-outline-danger">Supp.</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="8" class="text-center text-muted">Aucune activite.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+  var labels = {{ chartLabels|default([])|json_encode|raw }};
+  var data = {{ chartData|default([])|json_encode|raw }};
+  var ctx = document.getElementById('chartActiviteByDay');
+  if (ctx && labels.length) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Activites',
+          data: data,
+          borderColor: 'rgb(99, 102, 241)',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

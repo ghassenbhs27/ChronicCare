@@ -6,25 +6,198 @@
     <title>{% block title %}ChronicCare{% endblock %}</title>
 
     <!-- Vendor CSS Files -->
-    <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link
+      id="bootstrap-css-local"
+      href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}"
+      rel="stylesheet"
+      onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css';"
+    >
     <link href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/vendor/fontawesome-free/css/all.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/vendor/aos/aos.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
 
+    <style>
+      /* Modern Profile Modal */
+      .cc-modal .modal-dialog { max-width: 560px; }
+      .cc-modal .modal-content{
+        border: 0;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(16, 24, 40, .18);
+      }
+
+      .cc-modal .modal-header{
+        border: 0;
+        padding: 18px 22px;
+        background: linear-gradient(135deg, rgba(13,110,253,.10), rgba(0, 188, 212, .10));
+      }
+
+      .cc-modal .modal-title{
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: .2px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .cc-modal .modal-title .cc-badge{
+        width: 38px; height: 38px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13,110,253,.12);
+        color: #0d6efd;
+      }
+
+      .cc-modal .modal-body{
+        padding: 18px 22px 22px;
+        background: #fff;
+      }
+
+      .cc-profile{
+        display: grid;
+        grid-template-columns: 64px 1fr;
+        gap: 14px;
+        align-items: center;
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(100,116,139,.12);
+        background: rgba(248,250,252,.75);
+        margin-bottom: 14px;
+      }
+
+      .cc-avatar{
+        width: 64px; height: 64px;
+        border-radius: 18px;
+        background: rgba(13,110,253,.12);
+        color: #0d6efd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-weight: 800;
+      }
+
+      .cc-name{
+        font-weight: 900;
+        color: #0f172a;
+        margin: 0;
+        line-height: 1.2;
+      }
+      .cc-sub{
+        margin: 2px 0 0;
+        color: #64748b;
+        font-size: .92rem;
+      }
+
+      .cc-list{
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .cc-item{
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(100,116,139,.10);
+        background: #fff;
+      }
+      .cc-ico{
+        width: 34px; height: 34px;
+        border-radius: 12px;
+        background: rgba(0, 188, 212, .12);
+        color: #0891b2;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+      }
+      .cc-k{
+        color: #475569;
+        font-weight: 700;
+        font-size: .86rem;
+        margin: 0;
+      }
+      .cc-v{
+        color: #0f172a;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .cc-actions{
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+        justify-content: flex-end;
+      }
+
+      /* On reprend ton style pill */
+      .cc-btn{
+        border-radius: 50px;
+        padding: 10px 16px;
+        font-weight: 700;
+        border: 1px solid rgba(100,116,139,.18);
+        background: #fff;
+        color: #0f172a;
+        transition: .2s;
+      }
+      .cc-btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 24px rgba(16,24,40,.08); }
+
+      .cc-btn-primary{
+        border: 0;
+        background: #0d6efd;
+        color: #fff;
+      }
+      .cc-btn-primary:hover{ background:#0a58ca; }
+
+      .cc-hint{
+        font-size: .86rem;
+        color: #64748b;
+        margin-top: 10px;
+      }
+
+      .cc-filter-loading {
+        opacity: .75;
+        transition: opacity .12s ease;
+      }
+    </style>
+
     <!-- Main CSS File -->
     <link href="{{ asset('assets/css/main.css') }}" rel="stylesheet">
 
     {% block stylesheets %}{% endblock %}
+
+    {% block javascripts %}
+        {{ importmap('app') }}
+    {% endblock %}
 </head>
+
 <body class="{% block body_class %}{% endblock %}">
 {% block body %}
     {% block content %}{% endblock %}
 {% endblock %}
 
 <!-- Vendor JS Files -->
-<script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script
+  id="bootstrap-js-local"
+  src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"
+  onerror="window.__ccBootstrapJsLoadFailed=true"
+></script>
+<script>
+  if (typeof bootstrap === 'undefined' || window.__ccBootstrapJsLoadFailed) {
+    var ccBootstrapCdn = document.createElement('script');
+    ccBootstrapCdn.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js';
+    document.head.appendChild(ccBootstrapCdn);
+  }
+</script>
 <script src="{{ asset('assets/vendor/php-email-form/validate.js') }}"></script>
 <script src="{{ asset('assets/vendor/aos/aos.js') }}"></script>
 <script src="{{ asset('assets/vendor/purecounter/purecounter_vanilla.js') }}"></script>
@@ -35,6 +208,87 @@
 
 <!-- Main JS File -->
 <script src="{{ asset('assets/js/main.js') }}"></script>
+<script>
+  (function () {
+    // Fallback global: auto-submit GET filter forms even if main.js failed.
+    if (window.__ccAjaxFilterReady) return;
+    if (window.__ccFilterFallbackBound) return;
+    window.__ccFilterFallbackBound = true;
+
+    const debounce = (fn, wait) => {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), wait);
+      };
+    };
+
+    const submitForm = (form) => {
+      if (!(form instanceof HTMLFormElement)) return;
+      const method = (form.getAttribute('method') || 'get').toLowerCase();
+      if (method !== 'get') return;
+      const action = (form.getAttribute('action') || '').toLowerCase();
+      if (action.includes('/export') || action.includes('excel') || action.includes('pdf') || action.includes('csv')) return;
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.submit();
+    };
+
+    const debouncedByForm = new WeakMap();
+    const getDebounced = (form) => {
+      if (debouncedByForm.has(form)) return debouncedByForm.get(form);
+      const fn = debounce(() => submitForm(form), 120);
+      debouncedByForm.set(form, fn);
+      return fn;
+    };
+
+    document.addEventListener('input', function (e) {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (!target.matches('form[method="get"] input[name], form[method="GET"] input[name], form input[type="search"][name], form input[type="text"][name], form textarea[name]')) return;
+      const form = target.closest('form');
+      if (!form) return;
+      getDebounced(form)();
+    }, true);
+
+    document.addEventListener('change', function (e) {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (!target.matches('form[method="get"] select[name], form[method="GET"] select[name], form[method="get"] input[type="date"][name], form[method="GET"] input[type="date"][name]')) return;
+      const form = target.closest('form');
+      submitForm(form);
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (!target.matches('form[method="get"] input[name], form[method="GET"] input[name], form textarea[name]')) return;
+      const form = target.closest('form');
+      if (!form) return;
+      e.preventDefault();
+      submitForm(form);
+    }, true);
+  })();
+</script>
+
+<!-- Profile Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true" data-turbo-permanent>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Mon profil</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="profileModalBody">
+        <div class="text-center py-3">
+          <div class="spinner-border" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ asset('assets/js/profile-modal.js') }}"></script>
 
 </body>
 </html>

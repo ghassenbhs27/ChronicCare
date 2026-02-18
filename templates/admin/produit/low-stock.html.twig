@@ -1,36 +1,39 @@
-{% extends 'base.html.twig' %}
+{% extends 'back/base.html.twig' %}
 
-{% block title %}Admin - Stock Faible - ChronicCare{% endblock %}
+{% block page_title %}Stock faible{% endblock %}
+{% block page_subtitle %}Produits avec stock ≤ 10 unités{% endblock %}
 
-{% block content %}
-<div class="container mt-5">
-    <h1>Produits - Stock Faible</h1>
+{% block body %}
+<div class="container-fluid">
+  <a href="{{ path('admin_produit_list') }}" class="btn btn-outline-secondary mb-3"><i class="bi bi-arrow-left"></i> Retour</a>
 
-    <a href="{{ path('admin_produit_list') }}" class="btn btn-secondary mb-3">Retour</a>
-
-    {% if produits is empty %}
-        <div class="alert alert-info">Aucun produit avec stock faible</div>
-    {% else %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Stock</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for produit in produits %}
-                <tr>
-                    <td>{{ produit.nom }}</td>
-                    <td><span class="badge badge-danger">{{ produit.stock }}</span></td>
-                    <td>
-                        <a href="{{ path('admin_produit_edit', {id: produit.id}) }}" class="btn btn-sm btn-warning">Éditer</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Nom</th>
+              <th>Catégorie</th>
+              <th>Stock</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for produit in produits %}
+            <tr>
+              <td>{{ produit.nom }}</td>
+              <td>{{ produit.categorie }}</td>
+              <td><span class="badge {% if produit.stock == 0 %}bg-danger{% else %}bg-warning{% endif %}">{{ produit.stock }}</span></td>
+              <td><a href="{{ path('admin_produit_edit', {id: produit.id}) }}" class="btn btn-sm btn-outline-primary">Éditer</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-4">Aucun produit en stock faible</td></tr>
+            {% endfor %}
+          </tbody>
         </table>
-    {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

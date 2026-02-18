@@ -7,17 +7,12 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 class CartService
 {
-    private $requestStack;
     private const CART_SESSION_KEY = 'cart';
 
-    public function __construct(RequestStack $requestStack)
+    public function __construct(private readonly RequestStack $requestStack)
     {
-        $this->requestStack = $requestStack;
     }
 
-    /**
-     * Initier le panier si vide
-     */
     private function initCart(): void
     {
         $session = $this->requestStack->getSession();
@@ -26,9 +21,6 @@ class CartService
         }
     }
 
-    /**
-     * Ajouter un produit au panier
-     */
     public function addToCart(Produit $produit, int $quantity = 1): void
     {
         $this->initCart();
@@ -36,26 +28,24 @@ class CartService
         $cart = $session->get(self::CART_SESSION_KEY);
 
         $productId = $produit->getId();
+        $imageName = strtolower(str_replace([' ', 'é', 'è', 'ê', 'à'], ['-', 'e', 'e', 'e', 'a'], $produit->getNom())) . '.jpg';
 
-        // Si le produit existe déjà, augmenter la quantité
         if (isset($cart[$productId])) {
             $cart[$productId]['quantity'] += $quantity;
         } else {
-            // Ajouter le produit au panier
             $cart[$productId] = [
                 'id' => $productId,
                 'nom' => $produit->getNom(),
                 'prix' => $produit->getPrix(),
                 'quantity' => $quantity,
+                'categorie' => $produit->getCategorie(),
+                'image' => '/assets/img/products/' . $imageName,
             ];
         }
 
         $session->set(self::CART_SESSION_KEY, $cart);
     }
 
-    /**
-     * Retirer un produit du panier
-     */
     public function removeFromCart(int $productId): void
     {
         $this->initCart();
@@ -69,9 +59,6 @@ class CartService
         $session->set(self::CART_SESSION_KEY, $cart);
     }
 
-    /**
-     * Mettre à jour la quantité d'un produit
-     */
     public function updateQuantity(int $productId, int $quantity): void
     {
         $this->initCart();
@@ -89,61 +76,39 @@ class CartService
         $session->set(self::CART_SESSION_KEY, $cart);
     }
 
-    /**
-     * Vider le panier
-     */
     public function clearCart(): void
     {
-        $session = $this->requestStack->getSession();
-        $session->set(self::CART_SESSION_KEY, []);
+        $this->requestStack->getSession()->set(self::CART_SESSION_KEY, []);
     }
 
-    /**
-     * Obtenir le contenu du panier
-     */
     public function getCart(): array
     {
         $this->initCart();
-        $session = $this->requestStack->getSession();
-        return $session->get(self::CART_SESSION_KEY, []);
+        return $this->requestStack->getSession()->get(self::CART_SESSION_KEY, []);
     }
 
-    /**
-     * Obtenir le nombre d'articles dans le panier
-     */
     public function getCartCount(): int
     {
         $cart = $this->getCart();
         $count = 0;
-
         foreach ($cart as $item) {
             $count += $item['quantity'];
         }
-
         return $count;
     }
 
-    /**
-     * Calculer le total du panier
-     */
     public function getCartTotal(): float
     {
         $cart = $this->getCart();
         $total = 0;
-
         foreach ($cart as $item) {
             $total += (float) $item['prix'] * $item['quantity'];
         }
-
         return round($total, 2);
     }
 
-    /**
-     * Vérifier si le panier est vide
-     */
     public function isEmpty(): bool
     {
-        $cart = $this->getCart();
-        return count($cart) === 0;
+        return count($this->getCart()) === 0;
     }
 }

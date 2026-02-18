@@ -2,157 +2,155 @@
 
 namespace App\Controller;
 
-use App\Entity\Produit;
-use App\Service\CartService;
 use App\Repository\ProduitRepository;
+use App\Service\CartService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/cart', name: 'cart_')]
 class CartController extends AbstractController
 {
-    private $cartService;
-    private $produitRepository;
-
-    public function __construct(CartService $cartService, ProduitRepository $produitRepository)
-    {
-        $this->cartService = $cartService;
-        $this->produitRepository = $produitRepository;
+    public function __construct(
+        private readonly CartService $cartService,
+        private readonly ProduitRepository $produitRepository
+    ) {
     }
 
-    /**
-     * Afficher le panier
-     */
-    #[Route('/', name: 'show')]
+    #[Route('', name: 'show', methods: ['GET'])]
     public function show(): Response
     {
-        $cart = $this->cartService->getCart();
-        $total = $this->cartService->getCartTotal();
-        $count = $this->cartService->getCartCount();
+        if ($redirect = $this->denyIfProfessionalOrAdmin()) {
+            return $redirect;
+        }
 
         return $this->render('cart/show.html.twig', [
-            'cart' => $cart,
-            'total' => $total,
-            'count' => $count,
+            'cart' => $this->cartService->getCart(),
+            'total' => $this->cartService->getCartTotal(),
+            'count' => $this->cartService->getCartCount(),
         ]);
     }
 
-    /**
-     * Ajouter un produit au panier (supporte both URL params et query params)
-     */
     #[Route('/add', name: 'add', methods: ['GET', 'POST'])]
-    #[Route('/add/{id}', name: 'add_with_id', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
-    public function add(?int $id = null, Request $request): Response
+    #[Route('/add/{id}', name: 'add_with_id', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
+    public function add(?int $id, Request $request): Response
     {
-        // Accepter l'id soit via URL soit via query parameter
-        if ($id === null) {
-            $id = $request->query->getInt('id');
+        if ($redirect = $this->denyIfProfessionalOrAdmin($request)) {
+            return $redirect;
         }
 
-        if (!$id) {
-            $errorResponse = [
-                'success' => false,
-                'message' => 'ID produit manquant'
-            ];
-
-            // Si c'est une requête AJAX, retourner JSON
+        $productId = $id ?? $request->query->getInt('id');
+        if (!$productId) {
             if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
-                return new JsonResponse($errorResponse);
+                return new JsonResponse(['success' => false, 'message' => 'ID produit manquant']);
             }
-
-            throw $this->createNotFoundException('Produit non trouvé');
+            throw $this->createNotFoundException('Produit non trouve');
         }
 
-        $produit = $this->produitRepository->find($id);
-
+        $produit = $this->produitRepository->find($productId);
         if (!$produit) {
-            $errorResponse = [
-                'success' => false,
-                'message' => 'Produit non trouvé'
-            ];
-
             if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
-                return new JsonResponse($errorResponse);
+                return new JsonResponse(['success' => false, 'message' => 'Produit non trouve']);
             }
-
-            throw $this->createNotFoundException('Produit non trouvé');
+            throw $this->createNotFoundException('Produit non trouve');
         }
 
-        $quantity = $request->query->getInt('quantity', 1);
-
-        if ($quantity < 1) {
-            $quantity = 1;
-        }
-
+        $quantity = max(1, $request->query->getInt('quantity', 1));
         $this->cartService->addToCart($produit, $quantity);
 
-        // Si c'est une requête AJAX, retourner JSON enrichi
         if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
-            // Construction de l'URL de l'image (relative)
             $imageName = strtolower(str_replace([' ', 'é', 'è', 'ê', 'à'], ['-', 'e', 'e', 'e', 'a'], $produit->getNom())) . '.jpg';
-            $imageUrl = '/assets/img/products/' . $imageName;
             return new JsonResponse([
                 'success' => true,
-                'message' => 'Produit ajouté au panier',
+                'message' => 'Produit ajoute au panier',
                 'cartCount' => $this->cartService->getCartCount(),
                 'cartTotal' => $this->cartService->getCartTotal(),
                 'price' => $produit->getPrix(),
                 'name' => $produit->getNom(),
-                'image' => $imageUrl,
-                'details' => 'Catégorie : ' . $produit->getCategorie(),
-                'cartMessage' => 'Il y a ' . $this->cartService->getCartCount() . ' articles dans votre panier.',
+                'image' => '/assets/img/products/' . $imageName,
+                'details' => 'Categorie : ' . $produit->getCategorie(),
+                'cartMessage' => $this->cartService->getCartCount() . ' article(s) dans votre panier.',
             ]);
         }
 
-        $this->addFlash('success', 'Produit ajouté au panier');
+        $this->addFlash('success', 'Produit ajoute au panier');
 
-        return $this->redirectToRoute('produit_list');
+        return $this->redirect($request->headers->get('Referer', $this->generateUrl('boutique')));
     }
 
-    /**
-     * Retirer un produit du panier
-     */
-    #[Route('/remove/{id}', name: 'remove', requirements: ['id' => '\d+'])]
+    #[Route('/remove/{id}', name: 'remove', requirements: ['id' => '\\d+'], methods: ['GET'])]
     public function remove(int $id): Response
     {
-        $this->cartService->removeFromCart($id);
+        if ($redirect = $this->denyIfProfessionalOrAdmin()) {
+            return $redirect;
+        }
 
-        $this->addFlash('success', 'Produit retiré du panier');
+        $this->cartService->removeFromCart($id);
+        $this->addFlash('success', 'Produit retire du panier');
 
         return $this->redirectToRoute('cart_show');
     }
 
-    /**
-     * Mettre à jour la quantité
-     */
-    #[Route('/update/{id}', name: 'update', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/update/{id}', name: 'update', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function update(int $id, Request $request): Response
     {
-        $quantity = $request->request->getInt('quantity', 1);
+        if ($redirect = $this->denyIfProfessionalOrAdmin()) {
+            return $redirect;
+        }
 
+        $quantity = $request->request->getInt('quantity', 1);
         if ($quantity < 1) {
             $this->cartService->removeFromCart($id);
         } else {
             $this->cartService->updateQuantity($id, $quantity);
         }
 
-        $this->addFlash('success', 'Panier mis à jour');
+        if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return new JsonResponse([
+                'success' => true,
+                'cartTotal' => $this->cartService->getCartTotal(),
+                'cartCount' => $this->cartService->getCartCount(),
+            ]);
+        }
+
+        $this->addFlash('success', 'Panier mis a jour');
 
         return $this->redirectToRoute('cart_show');
     }
 
-    /**
-     * Vider le panier
-     */
-    #[Route('/clear', name: 'clear')]
+    #[Route('/clear', name: 'clear', methods: ['GET'])]
     public function clear(): Response
     {
-        $this->cartService->clearCart();
+        if ($redirect = $this->denyIfProfessionalOrAdmin()) {
+            return $redirect;
+        }
 
-        $this->addFlash('success', 'Panier vidé');
+        $this->cartService->clearCart();
+        $this->addFlash('success', 'Panier vide');
 
         return $this->redirectToRoute('cart_show');
+    }
+
+    private function denyIfProfessionalOrAdmin(?Request $request = null): ?Response
+    {
+        if (!$this->getUser()) {
+            return null;
+        }
+
+        if ($this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_COACH') || $this->isGranted('ROLE_NUTRITIONNISTE')) {
+            if ($request && $request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Le panier et les commandes sont reserves aux patients.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            $this->addFlash('warning', 'Le panier et les commandes sont reserves aux patients.');
+            return $this->redirectToRoute('boutique');
+        }
+
+        return null;
     }
 }

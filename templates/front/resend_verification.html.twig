@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Renvoyer l'email de vérification - Chronic Care{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main">
+    <section class="auth-section section light-background py-5">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-5 col-md-8">
+            <div class="auth-card card shadow-sm border-0 rounded-3 p-4">
+              <div class="text-center mb-4">
+                <h2><i class="bi bi-envelope-check text-primary"></i> Renvoyer l'email de vérification</h2>
+                <p class="text-muted">Entrez votre adresse email pour recevoir à nouveau le lien d'activation.</p>
+              </div>
+
+              {% if sent %}
+                <div class="alert alert-success">
+                  <i class="bi bi-check-circle me-2"></i>
+                  Un nouvel email de vérification a été envoyé à <strong>{{ email }}</strong>.
+                  Vérifiez aussi votre dossier spam.
+                </div>
+                <a href="{{ path('app_login') }}" class="btn btn-primary w-100">Retour à la connexion</a>
+              {% else %}
+                {% if error %}
+                  <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+                  </div>
+                {% endif %}
+
+                <form method="post" action="{{ path('app_resend_verification') }}">
+                  <input type="hidden" name="_token" value="{{ csrf_token('resend_verification') }}">
+                  <div class="mb-3">
+                    <label for="email" class="form-label">Adresse email</label>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="nom@exemple.com" value="{{ email }}" required autofocus>
+                  </div>
+                  <button type="submit" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-send me-2"></i>Renvoyer l'email
+                  </button>
+                  <a href="{{ path('app_login') }}" class="btn btn-outline-secondary w-100">Retour à la connexion</a>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}

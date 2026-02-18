@@ -7,35 +7,71 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
 class Evenement
 {
+    public const STATUT_EN_ATTENTE = 'en_attente';
+    public const STATUT_VALIDE = 'valide';
+    public const STATUT_REFUSE = 'refuse';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\Column(length: 20)]
+    #[Assert\NotBlank(message: 'Le statut est obligatoire.')]
+    #[Assert\Choice(
+        choices: [self::STATUT_EN_ATTENTE, self::STATUT_VALIDE, self::STATUT_REFUSE],
+        message: 'Le statut selectionne est invalide.'
+    )]
+    private string $statut = self::STATUT_VALIDE;
+
     #[ORM\ManyToOne(inversedBy: 'evenements')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: 'Le coach est obligatoire.')]
     private User $coach;
 
     #[ORM\Column(length: 200)]
+    #[Assert\NotBlank(message: 'Le titre est obligatoire.')]
+    #[Assert\Length(
+        max: 200,
+        maxMessage: 'Le titre ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $titre;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'La description est obligatoire.')]
+    #[Assert\Length(
+        max: 5000,
+        maxMessage: 'La description ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $description;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Assert\NotNull(message: 'La date de debut est obligatoire.')]
     private \DateTimeInterface $dateDebut;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Assert\NotNull(message: 'La date de fin est obligatoire.')]
+    #[Assert\GreaterThan(
+        propertyPath: 'dateDebut',
+        message: 'La date de fin doit etre posterieure a la date de debut.'
+    )]
     private \DateTimeInterface $dateFin;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le lieu est obligatoire.')]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: 'Le lieu ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $lieu;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    #[Assert\NotNull(message: 'La date de creation est obligatoire.')]
     private \DateTimeImmutable $createdAt;
 
     /**
@@ -124,6 +160,27 @@ class Evenement
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getStatut(): string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(string $statut): self
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
+    public function isEnAttente(): bool
+    {
+        return $this->statut === self::STATUT_EN_ATTENTE;
+    }
+
+    public function isValide(): bool
+    {
+        return $this->statut === self::STATUT_VALIDE;
     }
 
     /**

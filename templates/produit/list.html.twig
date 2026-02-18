@@ -1,59 +1,85 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Catalogue - ChronicCare{% endblock %}
+{% block title %}Catalogue produits - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
 
-{% block content %}
-<div class="container mt-5">
-    <h1>Catalogue Produits</h1>
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
 
-    <!-- Recherche et Filtres -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <form action="{{ path('produit_search') }}" method="GET" class="form-inline">
-                <input type="text" name="keyword" placeholder="Rechercher..." class="form-control mr-2" style="width: 300px;">
-                
-                <select name="categorie" class="form-control mr-2">
-                    <option value="">-- Toutes catégories --</option>
-                    {% for cat in categories %}
-                        <option value="{{ cat.categorie }}">{{ cat.categorie }}</option>
-                    {% endfor %}
-                </select>
-
-                <button type="submit" class="btn btn-primary">Rechercher</button>
-            </form>
-        </div>
+<main class="main">
+  <div class="page-title">
+    <div class="breadcrumbs">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}"><i class="bi bi-house"></i> Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('boutique') }}">Boutique</a></li>
+          <li class="breadcrumb-item active current">Catalogue</li>
+        </ol>
+      </nav>
     </div>
+    <div class="container">
+      <h1>Catalogue produits</h1>
+      <p>Découvrez tous nos produits disponibles</p>
+    </div>
+  </div>
 
-    <!-- Liste Produits -->
-    <div class="row">
+  <section class="services section light-background">
+    <div class="container">
+      <form action="{{ path('produit_search') }}" method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+          <input type="text" name="keyword" class="form-control" placeholder="Rechercher..." value="">
+        </div>
+        <div class="col-md-4">
+          <select name="categorie" class="form-select">
+            <option value="">Toutes les catégories</option>
+            {% for cat in categories %}
+              <option value="{{ cat.categorie }}">{{ cat.categorie }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Rechercher</button>
+        </div>
+      </form>
+
+      <div class="row g-4">
         {% for produit in produits %}
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ produit.nom }}</h5>
-                    <p class="card-text">{{ produit.description|slice(0, 50) }}...</p>
-                    
-                    <div class="d-flex justify-content-between">
-                        <span class="badge badge-info">{{ produit.categorie }}</span>
-                        <strong>{{ produit.prix }} €</strong>
-                    </div>
-
-                    <p class="mt-2">
-                        <small>Stock: {{ produit.stock }}</small>
-                    </p>
-
-                    <div class="mt-3">
-                        <a href="{{ path('produit_show', {id: produit.id}) }}" class="btn btn-sm btn-info">Détails</a>
-                        <a href="{{ path('cart_add', {id: produit.id}) }}?quantity=1" class="btn btn-sm btn-success">Ajouter</a>
-                    </div>
-                </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height:180px; overflow:hidden;">
+              <img src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" style="max-height:100%; object-fit:contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div style="display:none; width:100%; height:100%; background:linear-gradient(135deg,#0d6efd,#6610f2); color:#fff; font-weight:bold; font-size:2rem; align-items:center; justify-content:center; letter-spacing:2px;">
+                {{ produit.nom|upper|slice(0, 2) }}
+              </div>
             </div>
+            <div class="card-body">
+              <h5 class="card-title">{{ produit.nom }}</h5>
+              <p class="card-text text-muted small">{{ produit.description|slice(0, 80) }}{% if produit.description|length > 80 %}...{% endif %}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="badge bg-secondary">{{ produit.categorie }}</span>
+                <strong class="text-primary">{{ produit.prix }} €</strong>
+              </div>
+              <p class="mt-1 mb-0"><small class="text-muted">Stock: {{ produit.stock }}</small></p>
+              <div class="mt-3 d-flex gap-2">
+                <a href="{{ path('produit_show', {id: produit.id}) }}" class="btn btn-outline-primary btn-sm flex-grow-1">Détails</a>
+                {% if produit.stock > 0 %}
+                  <a href="{{ path('cart_add_with_id', {id: produit.id}) }}?quantity=1" class="btn btn-success btn-sm"><i class="bi bi-cart-plus"></i></a>
+                {% else %}
+                  <button class="btn btn-secondary btn-sm" disabled>Indisponible</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
         {% else %}
         <div class="col-12">
-            <p class="alert alert-info">Aucun produit disponible</p>
+          <div class="alert alert-info">Aucun produit disponible pour le moment.</div>
         </div>
         {% endfor %}
+      </div>
     </div>
-</div>
+  </section>
+</main>
+
+{% include 'partials/_footer.html.twig' %}
 {% endblock %}

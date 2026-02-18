@@ -42,7 +42,7 @@
 /* Color Presets - These classes override global colors when applied to any section or element, providing reuse of the sam color scheme. */
 
 .light-background {
-  --background-color: #f2f8f9;
+  --background-color: #ffffff;
   --surface-color: #ffffff;
 }
 
@@ -211,6 +211,58 @@ h6 {
   background: color-mix(in srgb, var(--accent-color), transparent 15%);
 }
 
+/* Bouton Se connecter (outline) */
+.header .btn-getstarted-outline {
+  background: transparent;
+  color: var(--accent-color);
+  border: 2px solid var(--accent-color);
+}
+
+.header .btn-getstarted-outline:hover {
+  background: color-mix(in srgb, var(--accent-color), transparent 90%);
+  color: var(--accent-color);
+}
+
+/* Bouton Panier - harmonisé avec la nav */
+.header .btn-nav-cart {
+  display: inline-flex;
+  align-items: center;
+  color: var(--nav-color);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 50px;
+  border: 1px solid color-mix(in srgb, var(--default-color), transparent 85%);
+  background: transparent;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+
+.header .btn-nav-cart:hover {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color), transparent 92%);
+}
+
+.header .btn-nav-cart.active {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color), transparent 88%);
+}
+
+.header .btn-nav-cart i {
+  font-size: 16px;
+}
+
+/* Section actions header - alignement */
+.header-actions {
+  margin-left: 8px;
+}
+
+.header-actions .btn-getstarted {
+  margin: 0;
+}
+
 @media (max-width: 1200px) {
   .header {
     padding-top: 10px;
@@ -234,6 +286,14 @@ h6 {
 
   .header .navmenu {
     order: 3;
+  }
+
+  .header .header-actions {
+    margin-left: 0;
+  }
+
+  .header .btn-nav-cart {
+    padding: 6px 10px;
   }
 }
 
@@ -5496,7 +5556,7 @@ section,
 }
 
 .terms-of-service .tos-content .content-section .disclaimer-box ul li::before {
-  content: "•";
+  content: "â€¢";
   position: absolute;
   left: 8px;
   color: var(--accent-color);
@@ -5692,7 +5752,7 @@ section,
 }
 
 .privacy .privacy-content .content-section ul li::before {
-  content: "•";
+  content: "â€¢";
   position: absolute;
   left: 8px;
   color: var(--accent-color);
@@ -5920,4 +5980,168 @@ section,
   padding-top: 60px;
   padding-bottom: 60px;
   /* Add your styles here */
+}
+/* Auth pages */
+.auth-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-section::before,
+.auth-section::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  z-index: 0;
+}
+
+.auth-section::before {
+  width: 320px;
+  height: 320px;
+  top: -140px;
+  right: -140px;
+  background: rgba(13, 110, 253, 0.15);
+}
+
+.auth-section::after {
+  width: 240px;
+  height: 240px;
+  bottom: -120px;
+  left: -110px;
+  background: rgba(26, 32, 44, 0.1);
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  border: 1px solid rgba(100, 116, 139, 0.1);
+  box-shadow: 0 20px 40px rgba(16, 24, 40, 0.08);
+}
+
+.auth-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(13, 110, 253, 0.15);
+  color: #0d6efd;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  margin: 0 auto 1rem;
+}
+
+.auth-header h2 {
+  margin-bottom: 0.35rem;
+}
+
+.auth-header p {
+  margin-bottom: 0;
+  color: #64748b;
+}
+
+.auth-form .form-label {
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.auth-form .form-control {
+  border-radius: 12px;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+  padding: 0.75rem 1rem;
+}
+
+.auth-form .form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.auth-card .btn-getstarted,
+.auth-card .btn-getstarted:focus {
+  color: #ffffff;
+  background: #0d6efd;
+  font-size: 15px;
+  padding: 12px 20px;
+  border-radius: 50px;
+  border: none;
+  transition: 0.3s;
+  display: inline-block;
+  text-align: center;
+}
+
+.auth-card .btn-getstarted:hover,
+.auth-card .btn-getstarted:focus:hover {
+  color: #ffffff;
+  background: #0a58ca;
+}
+
+.auth-divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0 1rem;
+}
+
+.auth-divider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(100, 116, 139, 0.15);
+}
+
+.auth-divider span {
+  position: relative;
+  background: #ffffff;
+  padding: 0 0.75rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.auth-trust {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.auth-trust i {
+  color: #0d6efd;
+  margin-right: 0.4rem;
+}
+
+.auth-link {
+  color: #0d6efd;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  color: #0a58ca;
+  text-decoration: underline;
+}
+
+.header-spacer {
+  height: 80px;
+}
+
+@media (max-width: 768px) {
+  .header-spacer {
+    height: 110px;
+  }
+}
+
+@media (max-width: 576px) {
+  .auth-card {
+    padding: 2rem;
+  }
+
+  .auth-trust {
+    grid-template-columns: 1fr;
+  }
 }

@@ -28,7 +28,6 @@ class AppFixtures extends Fixture
         $userSimulation->setMaladieChronique('Simulation');
         $userSimulation->setRoles(['ROLE_USER']);
 
-        // Hash the password
         $hashedPassword = $this->passwordHasher->hashPassword($userSimulation, 'simulation123');
         $userSimulation->setPassword($hashedPassword);
 

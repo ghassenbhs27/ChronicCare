@@ -1,0 +1,136 @@
+{% extends 'base.html.twig' %}
+
+{% set is_nutritionniste = app.user and ('ROLE_NUTRITIONNISTE' in app.user.roles) %}
+{% set pro_space_label = is_nutritionniste ? 'Espace Nutritionniste' : 'Espace Coach' %}
+{% set pro_stats_label = is_nutritionniste ? 'Statistiques nutritionniste' : 'Statistiques coach' %}
+
+{% block title %}Statistiques - {{ pro_space_label }}{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
+  <link href="{{ asset('assets/css/coach.css') }}" rel="stylesheet">
+  <style>
+    .stats-page { padding-top: 1.5rem; padding-bottom: 3rem; }
+    .stats-kpi { background: var(--surface-color); border-radius: 16px; border: 1px solid rgba(2,20,24,0.08); padding: 1.25rem; box-shadow: 0 4px 24px rgba(2,20,24,0.06); }
+    .stats-kpi .stats-kpi-value { font-size: 1.75rem; font-weight: 800; color: var(--heading-color); }
+    .stats-kpi .stats-kpi-label { font-size: 0.85rem; color: #64748b; margin-top: 0.25rem; }
+    .stats-chart-card { background: var(--surface-color); border-radius: 16px; border: 1px solid rgba(2,20,24,0.08); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 24px rgba(2,20,24,0.06); }
+    .stats-chart-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--heading-color); }
+    .stats-chart-container { position: relative; height: 280px; }
+  </style>
+{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main stats-page">
+    <div class="container">
+      <nav aria-label="Fil d'Ariane" class="forum-breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('evenement_index') }}">{{ pro_space_label }}</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Statistiques</li>
+        </ol>
+      </nav>
+
+      <header class="forum-hero text-start">
+        <h1 class="forum-hero-title"><i class="bi bi-bar-chart-line me-2"></i>{{ pro_stats_label }}</h1>
+        <p class="forum-hero-sub">Vue d ensemble de vos evenements, rendez-vous et inscriptions.</p>
+      </header>
+
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+          <a href="{{ path('front_etat_index') }}" class="stats-kpi text-decoration-none d-block h-100">
+            <div class="stats-kpi-value"><i class="bi bi-heart-pulse"></i></div>
+            <div class="stats-kpi-label">Etats patient</div>
+          </a>
+        </div>
+        <div class="col-12 col-md-4">
+          <a href="{{ path('front_activite_index') }}" class="stats-kpi text-decoration-none d-block h-100">
+            <div class="stats-kpi-value"><i class="bi bi-activity"></i></div>
+            <div class="stats-kpi-label">Activites patient</div>
+          </a>
+        </div>
+        <div class="col-12 col-md-4">
+          <a href="{{ path('pro_rdv_list') }}" class="stats-kpi text-decoration-none d-block h-100">
+            <div class="stats-kpi-value"><i class="bi bi-calendar2-week"></i></div>
+            <div class="stats-kpi-label">Mes RDV pro</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4">
+          <div class="stats-kpi">
+            <div class="stats-kpi-value">{{ eventsCount }}</div>
+            <div class="stats-kpi-label">Evenements crees</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="stats-kpi">
+            <div class="stats-kpi-value">{{ inscriptionsCount }}</div>
+            <div class="stats-kpi-label">Inscriptions totales</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="stats-kpi">
+            <div class="stats-kpi-value">{{ totalRdv }}</div>
+            <div class="stats-kpi-label">Rendez-vous pro</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="stats-chart-card">
+            <h3><i class="bi bi-calendar2-check me-2"></i>RDV par statut</h3>
+            <div class="stats-chart-container">
+              <canvas id="chartRdvStatut"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="stats-chart-card">
+            <h3><i class="bi bi-calendar3 me-2"></i>Rendez-vous par mois</h3>
+            <div class="stats-chart-container">
+              <canvas id="chartRdvByMonth"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12">
+          <div class="stats-chart-card">
+            <h3><i class="bi bi-calendar2-event me-2"></i>Evenements par mois</h3>
+            <div class="stats-chart-container">
+              <canvas id="chartEventsByMonth"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    (function() {
+      const opts = { responsive: true, maintainAspectRatio: false };
+      const chartRdvSt = {{ chart_rdv_statut|json_encode|raw }};
+      new Chart(document.getElementById('chartRdvStatut'), { type: 'doughnut', data: chartRdvSt, options: opts });
+      const chartRdvMonth = {{ chart_rdv_by_month|json_encode|raw }};
+      new Chart(document.getElementById('chartRdvByMonth'), {
+        type: 'bar',
+        data: chartRdvMonth,
+        options: { ...opts, scales: { y: { beginAtZero: true } } }
+      });
+      const chartEvents = {{ chart_events_by_month|json_encode|raw }};
+      new Chart(document.getElementById('chartEventsByMonth'), {
+        type: 'line',
+        data: chartEvents,
+        options: { ...opts, scales: { y: { beginAtZero: true } } }
+      });
+    })();
+  </script>
+{% endblock %}

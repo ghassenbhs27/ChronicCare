@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier activite{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main">
+    <div class="container py-5">
+      <h1 class="mb-4">Modifier l activite</h1>
+      {% if activite.utilisateur %}
+        <p class="text-muted small">Patient: {{ activite.utilisateur.prenom }} {{ activite.utilisateur.nom }}</p>
+      {% endif %}
+      {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
+        {{ form_widget(form) }}
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{{ path('front_activite_index', activite.utilisateur ? {patient: activite.utilisateur.id} : {}) }}">Annuler</a>
+      {{ form_end(form) }}
+    </div>
+  </main>
+{% endblock %}

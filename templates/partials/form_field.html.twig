@@ -1,0 +1,54 @@
+{# Template pour rendre un champ de formulaire avec validation côté serveur #}
+{# Usage: {% include 'partials/form_field.html.twig' with {'field': form.nom} %} #}
+
+{% set has_error = field.vars.errors|length > 0 %}
+
+<div class="form-group mb-3">
+    {% if field.vars.label %}
+        <label for="{{ field.vars.id }}" class="form-label">
+            {{ field.vars.label }}
+            {% if field.vars.required %}
+                <span class="text-danger" title="Champ obligatoire">*</span>
+            {% endif %}
+        </label>
+    {% endif %}
+
+    {% if field.vars.compound %}
+        {# Champ composé (repeater, choice, etc.) #}
+        {% set attr_class = field.vars.attr.class|default('') %}
+        {% set field_classes = ['form-control'] %}
+        {% if has_error %}
+            {% set field_classes = field_classes|merge(['is-invalid']) %}
+        {% endif %}
+        {{ form_widget(field, { attr: { class: field_classes|join(' ') } }) }}
+    {% else %}
+        {# Champ simple #}
+        {% set attr_class = field.vars.attr.class|default('') %}
+        {% set field_classes = ['form-control'] %}
+        {% if attr_class %}
+            {% set field_classes = field_classes|merge([attr_class]) %}
+        {% endif %}
+        {% if has_error %}
+            {% set field_classes = field_classes|merge(['is-invalid']) %}
+        {% endif %}
+        {{ form_widget(field, { attr: { class: field_classes|join(' ') } }) }}
+    {% endif %}
+
+    {# Afficher les erreurs du champ #}
+    {% if has_error %}
+        <div class="invalid-feedback d-block" style="color: #dc3545;">
+            {% for error in field.vars.errors %}
+                <div>
+                    <i class="fas fa-times-circle"></i> {{ error.message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Afficher l'aide si disponible #}
+    {% if field.vars.help %}
+        <small class="form-text text-muted d-block mt-1">
+            {{ field.vars.help }}
+        </small>
+    {% endif %}
+</div>

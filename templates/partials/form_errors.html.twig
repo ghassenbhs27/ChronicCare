@@ -1,0 +1,63 @@
+{# Template pour afficher les erreurs de validation côté serveur #}
+{# Usage: {% include 'partials/form_errors.html.twig' %} #}
+
+<div class="validation-errors-container">
+    {% if form.vars.errors|length > 0 %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <h4 class="alert-heading">
+                <i class="fas fa-exclamation-circle"></i> Erreurs de validation
+            </h4>
+            <hr>
+            <ul class="mb-0">
+                {% for error in form.vars.errors %}
+                    <li>
+                        <strong>{{ error.message }}</strong>
+                    </li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+
+    {# Afficher les erreurs des champs #}
+    {% for child in form %}
+        {% if child.vars.errors|length > 0 %}
+            <div class="alert alert-warning alert-dismissible fade show mt-2" role="alert">
+                <h5 class="alert-heading">
+                    <i class="fas fa-exclamation-triangle"></i> Erreur: {{ child.vars.label }}
+                </h5>
+                <ul class="mb-0">
+                    {% for error in child.vars.errors %}
+                        <li>{{ error.message }}</li>
+                    {% endfor %}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<style>
+    .validation-errors-container {
+        margin-bottom: 20px;
+    }
+
+    .form-group.has-error {
+        border-left: 4px solid #dc3545;
+        padding-left: 15px;
+    }
+
+    .form-control.is-invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath fill='%23dc3545' d='M8 4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0 0 1h3A.5.5 0 0 0 8 4z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+
+    .form-control.is-invalid:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+</style>

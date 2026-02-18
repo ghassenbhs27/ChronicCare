@@ -6,24 +6,31 @@ use App\Entity\Commande;
 use App\Entity\LigneCommande;
 use App\Entity\User;
 use App\Repository\CommandeRepository;
+use App\Repository\ProduitRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Workflow\WorkflowInterface;
 
 class CommandeService
 {
-    private $commandeRepository;
-    private $entityManager;
-
-    public function __construct(CommandeRepository $commandeRepository, EntityManagerInterface $entityManager)
-    {
-        $this->commandeRepository = $commandeRepository;
-        $this->entityManager = $entityManager;
+    public function __construct(
+        private readonly CommandeRepository $commandeRepository,
+        private readonly ProduitRepository $produitRepository,
+        private readonly ProduitService $produitService,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly WorkflowInterface $commandeWorkflow,
+        private readonly CommandeEventStore $eventStore
+    ) {
     }
 
-    /**
-     * Créer une nouvelle commande
-     */
-    public function createCommande(User $user, array $items): Commande
+    public function createCommande(User $user, array $items, ?string $adresse = null, string $methodePaiement = 'card'): ?Commande
     {
+        foreach ($items as $item) {
+            $produit = $this->produitRepository->find($item['id']);
+            if (!$produit || $produit->getStock() < $item['quantity']) {
+                return null;
+            }
+        }
+
         $commande = new Commande();
         $commande->setUtilisateur($user);
         $commande->setNumeroCommande($this->generateOrderNumber());
@@ -31,37 +38,47 @@ class CommandeService
 
         $total = 0;
 
-        // Ajouter les lignes de commande
         foreach ($items as $item) {
-            $ligneCommande = new LigneCommande();
-            $ligneCommande->setProduit($item['produit']);
-            $ligneCommande->setQuantite($item['quantity']);
-            $ligneCommande->setPrixUnitaire($item['produit']->getPrix());
+            $produit = $this->produitRepository->find($item['id']);
+            if (!$produit) {
+                continue;
+            }
 
-            $sousTotal = (float) $item['produit']->getPrix() * $item['quantity'];
-            $ligneCommande->setSousTotal($sousTotal);
-            $ligneCommande->setRemise(0);
+            $this->produitService->decreaseStock($produit, $item['quantity']);
+
+            $ligneCommande = new LigneCommande();
+            $ligneCommande->setProduit($produit);
+            $ligneCommande->setQuantite($item['quantity']);
+            $ligneCommande->setPrixUnitaire($produit->getPrix());
+
+            $sousTotal = (float) $produit->getPrix() * $item['quantity'];
+            $ligneCommande->setSousTotal((string) $sousTotal);
+            $ligneCommande->setRemise(null);
+
 
             $commande->addLigneCommande($ligneCommande);
             $total += $sousTotal;
         }
 
-        $commande->setTotal($total);
+        $commande->setTotal((string) round($total, 2));
+        $commande->setMethodePaiement($methodePaiement);
+        if ($adresse !== null) {
+            $commande->setAdresse($adresse);
+        }
+
 
         $this->entityManager->persist($commande);
         $this->entityManager->flush();
 
+        // Event Sourcing : Enregistrer la création
+        $this->eventStore->recordCommandeCreated($commande, $user);
+
         return $commande;
     }
 
-    /**
-     * Générer un numéro de commande unique
-     */
     private function generateOrderNumber(): string
     {
-        $date = new \DateTime();
-        $random = random_int(1000, 9999);
-        return 'CMD-' . $date->format('YmdHis') . '-' . $random;
+        return 'CMD-' . (new \DateTime())->format('YmdHis') . '-' . random_int(1000, 9999);
     }
 
     /**
@@ -70,40 +87,70 @@ class CommandeService
     public function calculateTotal(Commande $commande): float
     {
         $total = 0;
-
         foreach ($commande->getLigneCommandes() as $ligne) {
             $total += (float) $ligne->getSousTotal();
         }
-
         return round($total, 2);
     }
 
     /**
-     * Mettre à jour le statut d'une commande
+     * DEPRECATED : Utiliser applyTransition() avec le Workflow à la place
      */
     public function updateStatus(Commande $commande, string $newStatus): Commande
     {
-        $validStatuts = ['en_attente', 'validée', 'expédiée', 'livrée', 'annulée'];
-
+        $validStatuts = ['en_attente', 'validee', 'expediee', 'livree', 'annulee'];
         if (in_array($newStatus, $validStatuts)) {
+            $oldStatus = $commande->getStatut();
             $commande->setStatut($newStatus);
             $this->entityManager->flush();
+            
+            $this->eventStore->recordStatusChanged($commande, $oldStatus, $newStatus);
         }
-
         return $commande;
     }
 
     /**
-     * Obtenir toutes les commandes d'un utilisateur
+     * Applique une transition du workflow
      */
+    public function applyTransition(Commande $commande, string $transitionName): bool
+    {
+        if (!$this->commandeWorkflow->can($commande, $transitionName)) {
+            return false;
+        }
+        $this->commandeWorkflow->apply($commande, $transitionName);
+        $this->entityManager->flush();
+        return true;
+    }
+
+    /**
+     * Récupère les transitions disponibles pour une commande
+     */
+    public function getAvailableTransitions(Commande $commande): array
+    {
+        return $this->commandeWorkflow->getEnabledTransitions($commande);
+    }
+
+    /**
+     * Vérifie si une transition est possible
+     */
+    public function canApplyTransition(Commande $commande, string $transitionName): bool
+    {
+        return $this->commandeWorkflow->can($commande, $transitionName);
+    }
+
+    /**
+     * Récupère l'historique complet d'une commande
+     */
+    public function getCommandeHistory(Commande $commande): array
+    {
+        return $this->eventStore->getCommandeHistory($commande);
+    }
+
     public function getUserCommandes(User $user): array
     {
         return $this->commandeRepository->findByUtilisateur($user);
     }
 
-    /**
-     * Récupérer une commande par ID
-     */
     public function getCommandeById(int $id): ?Commande
     {
         return $this->commandeRepository->find($id);
@@ -122,12 +169,9 @@ class CommandeService
      */
     public function cancelCommande(Commande $commande): Commande
     {
-        return $this->updateStatus($commande, 'annulée');
+        return $this->updateStatus($commande, 'annulee');
     }
 
-    /**
-     * Obtenir les commandes d'un statut donné
-     */
     public function getCommandesByStatus(string $status): array
     {
         return $this->commandeRepository->findByStatut($status);

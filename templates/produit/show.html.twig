@@ -1,21 +1,24 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ produit.nom }} - ChronicCare{% endblock %}
+{% block title %}{{ produit.nom }} - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
 
-{% block content %}
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
+
 <main class="main">
   <!-- Modal Ajout au Panier -->
   <div id="cartSuccessModal" class="modal" tabindex="-1" style="display:none; position:fixed; z-index:1050; left:0; top:0; width:100vw; height:100vh; overflow:auto; background:rgba(0,0,0,0.5);">
-    <div class="modal-dialog" style="max-width:600px; margin:5% auto;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:600px;">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Produit ajouté au panier avec succès</h5>
           <button type="button" class="btn-close" aria-label="Close" onclick="closeCartSuccessModal()"></button>
         </div>
-        <div class="modal-body d-flex align-items-center">
-          <img id="cartSuccessImage" src="" alt="Produit" style="width:120px; height:120px; object-fit:contain; margin-right:24px;">
+        <div class="modal-body d-flex align-items-center gap-3">
+          <img id="cartSuccessImage" src="" alt="Produit" style="width:120px; height:120px; object-fit:contain;">
           <div>
-            <div id="cartSuccessName" style="font-weight:bold;"></div>
+            <div id="cartSuccessName" class="fw-bold"></div>
             <div id="cartSuccessPrice"></div>
             <div id="cartSuccessDetails"></div>
             <div id="cartSuccessQuantity"></div>
@@ -27,9 +30,22 @@
             <span id="cartSuccessTotal"></span>
           </div>
           <button type="button" class="btn btn-secondary" onclick="closeCartSuccessModal()">Continuer mes achats</button>
-          <a href="/cart" class="btn btn-success">Commander</a>
+          <a href="{{ path('cart_show') }}" class="btn btn-success">Voir le panier</a>
         </div>
       </div>
+    </div>
+  </div>
+  <!-- Breadcrumbs -->
+  <div class="page-title">
+    <div class="breadcrumbs">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('boutique') }}">Boutique</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('produit_list') }}">Catalogue</a></li>
+          <li class="breadcrumb-item active">{{ produit.nom }}</li>
+        </ol>
+      </nav>
     </div>
   </div>
   <!-- Product Details Section -->
@@ -404,8 +420,7 @@
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        // Remplir le modal avec les infos du produit
-        document.getElementById('cartSuccessImage').src = document.querySelector('.product-image-wrapper img').src;
+        document.getElementById('cartSuccessImage').src = data.image || '';
         document.getElementById('cartSuccessName').textContent = productName;
         document.getElementById('cartSuccessPrice').textContent = 'Prix unitaire : ' + data.price + ' €';
         document.getElementById('cartSuccessDetails').textContent = data.details || '';
@@ -426,8 +441,6 @@
   function closeCartSuccessModal() {
     document.getElementById('cartSuccessModal').style.display = 'none';
   }
-
-  // (Supprimé: alert Redirection vers le paiement...)
 
   function toggleWishlist() {
     alert('Article ajouté aux favoris!');
@@ -461,4 +474,6 @@
     border-bottom: 1px solid #ddd;
   }
 </style>
+
+{% include 'partials/_footer.html.twig' %}
 {% endblock %}

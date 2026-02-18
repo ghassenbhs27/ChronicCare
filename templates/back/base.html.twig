@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>{% block title %}Back - ChronicCare{% endblock %}</title>
+
+  {# mêmes assets que le front #}
+  <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+  <link href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+  <link href="{{ asset('assets/vendor/fontawesome-free/css/all.css') }}" rel="stylesheet">
+  <link href="{{ asset('assets/vendor/aos/aos.css') }}" rel="stylesheet">
+  <link href="{{ asset('assets/vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet">
+  <link href="{{ asset('assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
+
+  <link href="{{ asset('assets/css/main.css') }}" rel="stylesheet">
+
+  <style>
+    .back-shell { min-height: 100vh; background: #f1f5f9; }
+    .back-sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: #fff;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #e5e7eb;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      z-index: 40;
+      box-shadow: 1px 0 0 0 rgba(0,0,0,0.03);
+    }
+    .back-sidebar .back-sidebar-inner {
+      padding: 20px 12px 20px 16px;
+      padding-right: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .back-sidebar .back-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px 14px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .back-sidebar .back-brand i {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      border-radius: 8px;
+      background: #111827;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .back-sidebar .back-brand span {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #111827;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+    .back-sidebar .back-nav-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #9ca3af;
+      padding: 16px 12px 8px;
+      margin: 0;
+    }
+    .back-sidebar .back-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
+      border: 1px solid #f3f4f6;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .back-sidebar .back-nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 0;
+      color: #4b5563;
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: background 0.15s ease, color 0.15s ease;
+      border-left: 3px solid transparent;
+      border-bottom: 1px solid #f3f4f6;
+      margin-left: 0;
+    }
+    .back-sidebar .back-nav a:last-of-type { border-bottom: none; }
+    .back-sidebar .back-nav a:hover {
+      background: #f9fafb;
+      color: #111827;
+    }
+    .back-sidebar .back-nav a.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-left-color: #2563eb;
+      padding-left: 14px;
+    }
+    .back-sidebar .back-nav a i {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: #6b7280;
+      background: #f9fafb;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .back-sidebar .back-nav a:hover i {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .back-sidebar .back-nav a.active i {
+      background: #2563eb;
+      color: #fff;
+    }
+    .back-sidebar .back-nav a.back-nav-external {
+      color: #6b7280;
+    }
+    .back-sidebar .back-nav a.back-nav-external:hover { color: #374151; }
+    .back-sidebar .back-divider {
+      height: 1px;
+      background: #f3f4f6;
+      margin: 12px 0;
+      flex-shrink: 0;
+    }
+    .back-sidebar .back-user {
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #f3f4f6;
+      flex-shrink: 0;
+    }
+    .back-sidebar .back-user-label {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+    .back-sidebar .back-user-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #374151;
+      word-break: break-word;
+    }
+    .back-content { padding: 28px; }
+    .back-topbar {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+  </style>
+
+  {% block stylesheets %}{% endblock %}
+</head>
+
+<body>
+{% include 'partials/_navbar.html.twig' %}
+
+<div class="back-shell d-flex">
+
+  <aside class="back-sidebar d-flex flex-column" id="adminSidebar">
+    <div class="back-sidebar-inner flex-grow-1 d-flex flex-column">
+      <div class="back-brand">
+        <i class="bi bi-grid-3x3-gap-fill"></i>
+        <span>ChronicCare Admin</span>
+      </div>
+
+      <p class="back-nav-label">Navigation</p>
+      <nav class="back-nav">
+        <a href="{{ path('admin_dashboard') }}" title="Dashboard" class="{% if app.request.get('_route') starts with 'admin_dashboard' %}active{% endif %}">
+          <i class="bi bi-speedometer2"></i>
+          <span class="back-nav-link-text">Dashboard</span>
+        </a>
+        <a href="{{ path('app_user_index') }}" title="Utilisateurs" class="{% if app.request.get('_route') starts with 'app_user_' %}active{% endif %}">
+          <i class="bi bi-people"></i>
+          <span class="back-nav-link-text">Utilisateurs</span>
+        </a>
+        <a href="{{ path('admin_activite_index') }}" title="Activités" class="{% if app.request.get('_route') starts with 'admin_activite_' %}active{% endif %}">
+          <i class="bi bi-activity"></i>
+          <span class="back-nav-link-text">Activités</span>
+        </a>
+        <a href="{{ path('admin_etat_vue_globale') }}" title="Vue globale santé" class="{% if app.request.get('_route') == 'admin_etat_vue_globale' %}active{% endif %}">
+          <i class="bi bi-heart-pulse"></i>
+          <span class="back-nav-link-text">Vue globale santé</span>
+        </a>
+        <a href="{{ path('admin_etat_index') }}" title="États suivi" class="{% if app.request.get('_route') == 'admin_etat_index' %}active{% endif %}">
+          <i class="bi bi-list-ul"></i>
+          <span class="back-nav-link-text">États suivi</span>
+        </a>
+        <a href="{{ path('admin_statistics_index') }}" title="Statistiques" class="{% if app.request.get('_route') starts with 'admin_statistics' %}active{% endif %}">
+          <i class="bi bi-bar-chart-line"></i>
+          <span class="back-nav-link-text">Statistiques</span>
+        </a>
+        <a href="{{ path('admin_evenement_index') }}" title="Gestion des événements" class="{% if app.request.get('_route') starts with 'admin_evenement' %}active{% endif %}">
+          <i class="bi bi-calendar-event"></i>
+          <span class="back-nav-link-text">Événements</span>
+        </a>
+
+        <p class="back-nav-label">Boutique</p>
+        <a href="{{ path('admin_produit_list') }}" title="Produits" class="{% if app.request.get('_route') starts with 'admin_produit' %}active{% endif %}">
+          <i class="bi bi-box-seam"></i>
+          <span class="back-nav-link-text">Produits</span>
+        </a>
+        <a href="{{ path('admin_produit_low_stock') }}" title="Stock faible" class="{% if app.request.get('_route') == 'admin_produit_low_stock' %}active{% endif %}">
+          <i class="bi bi-exclamation-triangle"></i>
+          <span class="back-nav-link-text">Stock faible</span>
+        </a>
+        <a href="{{ path('admin_commande_list') }}" title="Commandes" class="{% if app.request.get('_route') starts with 'admin_commande' %}active{% endif %}">
+          <i class="bi bi-cart-check"></i>
+          <span class="back-nav-link-text">Commandes</span>
+        </a>
+        <a href="{{ path('admin_commande_stats') }}" title="Stats ventes" class="{% if app.request.get('_route') == 'admin_commande_stats' %}active{% endif %}">
+          <i class="bi bi-graph-up"></i>
+          <span class="back-nav-link-text">Stats ventes</span>
+        </a>
+      </nav>
+
+      <div class="back-divider"></div>
+
+      <div class="back-user">
+        <div class="back-user-label">Connecté</div>
+        <div class="back-user-name">{{ app.user ? app.user.fullName : '—' }}</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-grow-1">
+    <div class="back-content">
+
+      <div class="back-topbar mb-4">
+        <div>
+          <h5 class="mb-0">{% block page_title %}Back office{% endblock %}</h5>
+          <div class="text-muted small">{% block page_subtitle %}{% endblock %}</div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <a class="btn btn-outline-primary btn-sm" href="{{ path('admin_dashboard') }}" title="Dashboard admin">
+            <i class="bi bi-speedometer2"></i>
+          </a>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ path('index') }}">
+            <i class="bi bi-house"></i>
+          </a>
+          <a class="btn btn-outline-danger btn-sm" href="{{ path('app_logout') }}">
+            <i class="bi bi-box-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      {% for label, messages in app.flashes %}
+        {% for message in messages %}
+          <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endfor %}
+
+      {% block body %}{% endblock %}
+    </div>
+  </main>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true" data-turbo-permanent>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Mon profil</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="profileModalBody">
+        <div class="text-center py-3">
+          <div class="spinner-border" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('assets/vendor/aos/aos.js') }}"></script>
+<script src="{{ asset('assets/js/main.js') }}"></script>
+<script src="{{ asset('assets/js/profile-modal.js') }}"></script>
+<script>
+(function() {
+  var STORAGE_KEY = 'chroniccare_admin_sidebar_collapsed';
+  var sidebar = document.getElementById('adminSidebar');
+  var toggle = document.getElementById('adminSidebarToggle');
+  if (!sidebar || !toggle) return;
+  function applyState(collapsed) {
+    if (collapsed) {
+      sidebar.classList.add('collapsed');
+      sidebar.setAttribute('data-collapsed', 'true');
+    } else {
+      sidebar.classList.remove('collapsed');
+      sidebar.setAttribute('data-collapsed', 'false');
+    }
+    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (e) {}
+  }
+  var saved = false;
+  try { saved = localStorage.getItem(STORAGE_KEY) === '1'; } catch (e) {}
+  applyState(saved);
+  toggle.addEventListener('click', function() {
+    var collapsed = sidebar.classList.contains('collapsed');
+    applyState(!collapsed);
+  });
+})();
+</script>
+{% block javascripts %}{% endblock %}
+</body>
+</html>

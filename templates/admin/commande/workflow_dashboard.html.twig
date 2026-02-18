@@ -1,0 +1,199 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Workflow Commandes - Dashboard Admin{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="bi bi-diagram-3"></i> State Machine - Gestion des Commandes
+            </h1>
+        </div>
+    </div>
+
+    {# Statistiques des statuts #}
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning">
+                        <i class="bi bi-hourglass-split"></i> En attente
+                    </h5>
+                    <h2>{{ statistics.en_attente }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success">
+                        <i class="bi bi-check-circle"></i> Validées
+                    </h5>
+                    <h2>{{ statistics.validee }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-info">
+                        <i class="bi bi-box-seam"></i> Expédiées
+                    </h5>
+                    <h2>{{ statistics.expediee }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary">
+                        <i class="bi bi-check2-all"></i> Livrées
+                    </h5>
+                    <h2>{{ statistics.livree }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-danger">
+                        <i class="bi bi-x-circle"></i> Annulées
+                    </h5>
+                    <h2>{{ statistics.annulee }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-secondary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">
+                        <i class="bi bi-clock-history"></i> Événements
+                    </h5>
+                    <h2>{{ event_stats.total_events }}</h2>
+                    <small>Total</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Liste des commandes récentes #}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-check"></i> Commandes Récentes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Numéro</th>
+                                <th>Client</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for commande in commandes %}
+                            <tr>
+                                <td>
+                                    <strong>{{ commande.numeroCommande }}</strong>
+                                </td>
+                                <td>
+                                    {{ commande.utilisateur.prenom }} {{ commande.utilisateur.nom }}
+                                </td>
+                                <td>{{ commande.total }} €</td>
+                                <td>
+                                    {% set badge_class = {
+                                        'en_attente': 'warning',
+                                        'validee': 'success',
+                                        'expediee': 'info',
+                                        'livree': 'primary',
+                                        'annulee': 'danger'
+                                    } %}
+                                    <span class="badge bg-{{ badge_class[commande.statut] ?? 'secondary' }}">
+                                        {{ commande.statut|replace({'_': ' '})|upper }}
+                                    </span>
+                                </td>
+                                <td>{{ commande.createdAt|date('d/m/Y H:i') }}</td>
+                                <td>
+                                    <a href="{{ path('admin_commande_workflow_details', {id: commande.id}) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Voir workflow
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">
+                                    Aucune commande
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Stats des événements récents #}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-activity"></i> Derniers Événements (Event Sourcing)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>{{ event_stats.status_changes }}</strong> changements de statut 
+                        dans les 30 derniers jours
+                    </div>
+                    
+                    {% if event_stats.recent_events|length > 0 %}
+                    <div class="timeline">
+                        {% for event in event_stats.recent_events %}
+                        <div class="d-flex mb-3">
+                            <div class="me-3">
+                                <span class="{{ event.badgeClass }}">
+                                    <i class="{{ event.icon }}"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <strong>{{ event.formattedMessage }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    Commande {{ event.commande.numeroCommande }}
+                                    • {{ event.createdAt|date('d/m/Y H:i:s') }}
+                                    {% if event.triggeredBy %}
+                                        • Par {{ event.triggeredBy.prenom }} {{ event.triggeredBy.nom }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Lien vers le graphe #}
+    <div class="row mt-4 mb-4">
+        <div class="col-12 text-center">
+            <a href="{{ path('admin_commande_workflow_graph') }}" class="btn btn-lg btn-outline-primary">
+                <i class="bi bi-diagram-3"></i> Visualiser le Workflow (Diagramme)
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

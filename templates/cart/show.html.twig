@@ -1,60 +1,166 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Panier - ChronicCare{% endblock %}
+{% block title %}Panier - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
 
-{% block content %}
-<div class="container mt-5">
-    <h1>Panier</h1>
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
 
-    {% if cart is empty %}
+<main class="main">
+  <div class="page-title">
+    <div class="container">
+      <h1>Mon panier</h1>
+      <p>{{ count }} article(s)</p>
+    </div>
+  </div>
+
+  <section class="services section light-background">
+    <div class="container">
+      {% if cart is empty %}
         <div class="alert alert-info">
-            Votre panier est vide. <a href="{{ path('produit_list') }}">Continuer les achats</a>
+          Votre panier est vide.
+          <a href="{{ path('produit_list') }}">Voir le catalogue</a> ou <a href="{{ path('boutique') }}">retour à la boutique</a>.
         </div>
-    {% else %}
-        <table class="table">
+      {% else %}
+        <div class="table-responsive">
+          <table class="table table-hover">
             <thead>
-                <tr>
-                    <th>Produit</th>
-                    <th>Prix</th>
-                    <th>Quantité</th>
-                    <th>Sous-total</th>
-                    <th>Action</th>
-                </tr>
+              <tr>
+                <th style="width:90px;"></th>
+                <th>Produit</th>
+                <th>Prix unitaire</th>
+                <th>Quantité</th>
+                <th>Sous-total</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
-                {% for item in cart %}
-                <tr>
-                    <td>{{ item.nom }}</td>
-                    <td>{{ item.prix }} €</td>
-                    <td>
-                        <form action="{{ path('cart_update', {id: item.id}) }}" method="POST" class="form-inline">
-                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control" style="width: 80px;">
-                            <button type="submit" class="btn btn-sm btn-warning ml-2">MAJ</button>
-                        </form>
-                    </td>
-                    <td>{{ (item.prix * item.quantity)|number_format(2, ',', ' ') }} €</td>
-                    <td>
-                        <a href="{{ path('cart_remove', {id: item.id}) }}" class="btn btn-sm btn-danger">Retirer</a>
-                    </td>
-                </tr>
-                {% endfor %}
+              {% for item in cart %}
+              <tr data-item-id="{{ item.id }}" data-unit-price="{{ item.prix }}">
+                <td>
+                  <div class="d-flex align-items-center justify-content-center bg-light rounded" style="width:70px; height:70px; overflow:hidden;">
+                    {% set imagePath = item.image|default('/assets/img/products/' ~ item.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') %}
+                    <img src="{{ imagePath }}" alt="{{ item.nom }}" style="max-width:100%; max-height:100%; object-fit:contain;"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div style="display:none; width:70px; height:70px; background:linear-gradient(135deg,#0d6efd,#6610f2); border-radius:8px; color:#fff; font-weight:bold; font-size:1.3rem; align-items:center; justify-content:center;">
+                      {{ item.nom|upper|slice(0, 2) }}
+                    </div>
+                  </div>
+                </td>
+                <td class="align-middle">
+                  <div class="fw-semibold">{{ item.nom }}</div>
+                  {% if item.categorie is defined and item.categorie %}
+                    <small class="text-muted"><span class="badge bg-secondary bg-opacity-25 text-dark">{{ item.categorie }}</span></small>
+                  {% endif %}
+                </td>
+                <td class="align-middle">{{ item.prix }} €</td>
+                <td class="align-middle">
+                  <form action="{{ path('cart_update', {id: item.id}) }}" method="post" class="d-inline-flex align-items-center gap-1 cart-qty-form">
+                    <div class="input-group input-group-sm" style="width:130px;">
+                      <button type="button" class="btn btn-outline-secondary cart-qty-btn" data-delta="-1">−</button>
+                      <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control text-center cart-qty-input" style="width:50px;">
+                      <button type="button" class="btn btn-outline-secondary cart-qty-btn" data-delta="1">+</button>
+                    </div>
+                  </form>
+                </td>
+                <td class="align-middle cart-subtotal">{{ (item.prix * item.quantity)|number_format(2, ',', ' ') }} €</td>
+                <td class="align-middle">
+                  <a href="{{ path('cart_remove', {id: item.id}) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                </td>
+              </tr>
+              {% endfor %}
             </tbody>
-        </table>
+          </table>
+        </div>
 
         <div class="row mt-4">
-            <div class="col-md-8"></div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5>Total: <strong>{{ total|number_format(2, ',', ' ') }} €</strong></h5>
-                        
-                        <a href="{{ path('commande_create') }}" class="btn btn-lg btn-success btn-block mt-3">Passer la commande</a>
-                        <a href="{{ path('cart_clear') }}" class="btn btn-outline-danger btn-block mt-2">Vider le panier</a>
-                        <a href="{{ path('produit_list') }}" class="btn btn-outline-secondary btn-block mt-2">Continuer les achats</a>
-                    </div>
-                </div>
+          <div class="col-md-8"></div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-body">
+                <h5>Total: <strong id="cartTotal">{{ total|number_format(2, ',', ' ') }} €</strong></h5>
+                {% if app.user %}
+                  <a href="{{ path('commande_create') }}" class="btn btn-success w-100 mt-3">Passer la commande</a>
+                {% else %}
+                  <a href="{{ path('app_login') }}" class="btn btn-primary w-100 mt-3">Connexion pour commander</a>
+                {% endif %}
+                <a href="{{ path('cart_clear') }}" class="btn btn-outline-danger w-100 mt-2">Vider le panier</a>
+                <a href="{{ path('produit_list') }}" class="btn btn-outline-secondary w-100 mt-2">Continuer les achats</a>
+              </div>
             </div>
+          </div>
         </div>
-    {% endif %}
-</div>
+      {% endif %}
+    </div>
+  </section>
+</main>
+
+<script>
+(function() {
+  function fmt(n) {
+    return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  }
+
+  function recalcAll() {
+    let grandTotal = 0;
+    document.querySelectorAll('tr[data-unit-price]').forEach(function(row) {
+      const price = parseFloat(row.getAttribute('data-unit-price'));
+      const input = row.querySelector('.cart-qty-input');
+      const qty = Math.max(1, parseInt(input.value) || 1);
+      const sub = price * qty;
+      grandTotal += sub;
+      row.querySelector('.cart-subtotal').textContent = fmt(sub);
+    });
+    const totalEl = document.getElementById('cartTotal');
+    if (totalEl) totalEl.textContent = fmt(grandTotal);
+  }
+
+  // +/- buttons
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.cart-qty-btn');
+    if (!btn) return;
+    const delta = parseInt(btn.getAttribute('data-delta'));
+    const input = btn.closest('.input-group').querySelector('.cart-qty-input');
+    let val = parseInt(input.value) || 1;
+    val = Math.max(1, val + delta);
+    input.value = val;
+    recalcAll();
+
+    // Silently update server
+    const form = btn.closest('.cart-qty-form');
+    if (form) {
+      fetch(form.action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: new URLSearchParams({ quantity: val })
+      });
+    }
+  });
+
+  // Direct input change
+  document.addEventListener('input', function(e) {
+    if (!e.target.classList.contains('cart-qty-input')) return;
+    recalcAll();
+  });
+
+  // On blur, sync with server
+  document.addEventListener('change', function(e) {
+    if (!e.target.classList.contains('cart-qty-input')) return;
+    const input = e.target;
+    const val = Math.max(1, parseInt(input.value) || 1);
+    input.value = val;
+    recalcAll();
+    const form = input.closest('.cart-qty-form');
+    if (form) {
+      fetch(form.action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: new URLSearchParams({ quantity: val })
+      });
+    }
+  });
+})();
+</script>
+
+{% include 'partials/_footer.html.twig' %}
 {% endblock %}

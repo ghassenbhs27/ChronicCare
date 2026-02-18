@@ -1,0 +1,117 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un produit - Validation côté serveur{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h1 class="mb-4">
+                <i class="fas fa-plus-circle"></i> Créer un produit
+            </h1>
+
+            {# Afficher les erreurs de validation globales #}
+            {% include 'partials/form_errors.html.twig' %}
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {# Protection CSRF #}
+                        {{ form_row(form._token) }}
+
+                        {# Champ Nom #}
+                        {% include 'partials/form_field.html.twig' with {'field': form.nom} %}
+
+                        {# Champ Description #}
+                        {% include 'partials/form_field.html.twig' with {'field': form.description} %}
+
+                        {# Champ Prix #}
+                        {% include 'partials/form_field.html.twig' with {'field': form.prix} %}
+
+                        {# Champ Stock #}
+                        {% include 'partials/form_field.html.twig' with {'field': form.stock} %}
+
+                        {# Champ Catégorie #}
+                        {% include 'partials/form_field.html.twig' with {'field': form.categorie} %}
+
+                        {# Champ Actif #}
+                        <div class="form-check mb-3">
+                            {{ form_widget(form.isActive, {
+                                attr: {
+                                    class: 'form-check-input' ~ (form.isActive.vars.errors|length > 0 ? ' is-invalid' : '')
+                                }
+                            }) }}
+                            <label class="form-check-label" for="{{ form.isActive.vars.id }}">
+                                {{ form.isActive.vars.label }}
+                            </label>
+                            {% if form.isActive.vars.errors|length > 0 %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.isActive.vars.errors %}
+                                        {{ error.message }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {# Boutons d'action #}
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Créer le produit
+                            </button>
+                            <a href="{{ path('produit_index') }}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {# Information d'aide #}
+            <div class="alert alert-info mt-4" role="alert">
+                <h4 class="alert-heading"><i class="fas fa-info-circle"></i> Validation côté serveur</h4>
+                <p class="mb-0">
+                    ✅ Tous les champs sont validés sur le serveur<br>
+                    ✅ Les messages d'erreur s'affichent après soumission<br>
+                    ✅ Aucune validation JavaScript n'est utilisée<br>
+                    ✅ Sécurité garantie même sans JavaScript
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .needs-validation .form-control.is-invalid {
+            border-color: #dc3545 !important;
+        }
+
+        .invalid-feedback {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .form-label .text-danger {
+            margin-left: 4px;
+        }
+
+        .alert {
+            border-left: 4px solid;
+        }
+
+        .alert-danger {
+            border-left-color: #dc3545;
+        }
+
+        .alert-warning {
+            border-left-color: #ffc107;
+        }
+
+        .alert-info {
+            border-left-color: #0dcaf0;
+        }
+    </style>
+{% endblock %}

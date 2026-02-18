@@ -1,39 +1,79 @@
 security:
-    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
-    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+
+    role_hierarchy:
+        ROLE_NUTRITIONNISTE: [ROLE_COACH]
+
     providers:
-        users_in_memory: { memory: null }
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
         main:
             lazy: true
-            provider: users_in_memory
+            provider: app_user_provider
+            user_checker: App\Security\UserChecker
 
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                default_target_path: index
+                enable_csrf: true
 
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
+            logout:
+                path: app_logout
+                target: app_login
 
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800
+                path: /
+                always_remember_me: false
+
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/register/success, roles: PUBLIC_ACCESS }
+        - { path: ^/verify-email, roles: PUBLIC_ACCESS }
+        - { path: ^/resend-verification, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/evenements, roles: PUBLIC_ACCESS }
+        - { path: ^/evenements/\d+$, roles: PUBLIC_ACCESS }
+        - { path: ^/products, roles: PUBLIC_ACCESS }
+        - { path: ^/cart, roles: PUBLIC_ACCESS }
+        - { path: ^/boutique, roles: PUBLIC_ACCESS }
+
+        - { path: ^/coach, roles: [ROLE_COACH, ROLE_NUTRITIONNISTE] }
+        - { path: ^/nutritionniste, roles: ROLE_NUTRITIONNISTE }
+
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/admin/users, roles: ROLE_ADMIN }
+
+        - { path: ^/suivi/etat, roles: ROLE_ADMIN }
+
+        - { path: ^/publication, roles: PUBLIC_ACCESS }
+        - { path: ^/commentaire, roles: PUBLIC_ACCESS }
+        - { path: ^/professionnels, roles: PUBLIC_ACCESS }
+
+        - { path: ^/patient/rdvs?, roles: ROLE_USER }
+        - { path: ^/commandes, roles: ROLE_PATIENT }
+
+        - { path: ^/pro/, roles: [ROLE_COACH, ROLE_NUTRITIONNISTE] }
+
+        - { path: ^/statistiques, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:
         password_hashers:
-            # By default, password hashers are resource intensive and take time. This is
-            # important to generate secure password hashes. In tests however, secure hashes
-            # are not important, waste resources and increase test times. The following
-            # reduces the work factor to the lowest possible values.
             Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
                 algorithm: auto
-                cost: 4 # Lowest possible value for bcrypt
-                time_cost: 3 # Lowest possible value for argon
-                memory_cost: 10 # Lowest possible value for argon
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

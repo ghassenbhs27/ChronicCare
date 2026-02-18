@@ -16,10 +16,7 @@ class ProduitRepository extends ServiceEntityRepository
         parent::__construct($registry, Produit::class);
     }
 
-    /**
-     * Trouver tous les produits actifs
-     * @return Produit[]
-     */
+    /** @return Produit[] */
     public function findAllActive(): array
     {
         return $this->createQueryBuilder('p')
@@ -30,10 +27,7 @@ class ProduitRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * Rechercher des produits par nom ou description
-     * @return Produit[]
-     */
+    /** @return Produit[] */
     public function searchByKeyword(string $keyword): array
     {
         return $this->createQueryBuilder('p')
@@ -46,10 +40,7 @@ class ProduitRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * Filtrer les produits par catégorie
-     * @return Produit[]
-     */
+    /** @return Produit[] */
     public function findByCategorie(string $categorie): array
     {
         return $this->createQueryBuilder('p')
@@ -62,42 +53,7 @@ class ProduitRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * Filtrer les produits par plage de prix
-     * @return Produit[]
-     */
-    public function findByPriceRange(float $minPrice, float $maxPrice): array
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.prix >= :minPrice AND p.prix <= :maxPrice')
-            ->setParameter('minPrice', $minPrice)
-            ->setParameter('maxPrice', $maxPrice)
-            ->andWhere('p.isActive = :active')
-            ->setParameter('active', true)
-            ->orderBy('p.prix', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * Obtenir tous les catégories uniques
-     * @return array
-     */
-    public function findAllCategories(): array
-    {
-        return $this->createQueryBuilder('p')
-            ->select('DISTINCT p.categorie')
-            ->andWhere('p.isActive = :active')
-            ->setParameter('active', true)
-            ->orderBy('p.categorie', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * Produits avec stock faible
-     * @return Produit[]
-     */
+    /** @return Produit[] */
     public function findLowStock(int $threshold = 10): array
     {
         return $this->createQueryBuilder('p')
@@ -106,5 +62,32 @@ class ProduitRepository extends ServiceEntityRepository
             ->orderBy('p.stock', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    /** @return Produit[] */
+    public function findByPriceRange(float $min, float $max): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.prix >= :min')
+            ->andWhere('p.prix <= :max')
+            ->setParameter('min', (string) $min)
+            ->setParameter('max', (string) $max)
+            ->andWhere('p.isActive = :active')
+            ->setParameter('active', true)
+            ->orderBy('p.prix', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** @return array<array{categorie: string}> */
+    public function findAllCategories(): array
+    {
+        return $this->createQueryBuilder('p')
+            ->select('DISTINCT p.categorie')
+            ->andWhere('p.isActive = :active')
+            ->setParameter('active', true)
+            ->orderBy('p.categorie', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
     }
 }

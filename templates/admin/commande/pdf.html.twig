@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapport commandes et ventes</title>
+  <style>
+    body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; color:#111; }
+    .header { margin-bottom: 16px; border-bottom: 2px solid #0d6efd; padding-bottom: 8px; }
+    .title { font-size: 18px; font-weight: 700; margin: 0 0 4px 0; }
+    .meta { color:#555; font-size: 10px; }
+    .kpi { margin: 12px 0; padding: 10px; background: #f8f9fa; border-radius: 6px; }
+    .kpi strong { font-size: 16px; color: #0d6efd; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 10px; }
+    th, td { border: 1px solid #ddd; padding: 6px; }
+    th { background: #f3f6ff; text-align: left; }
+    ul { margin: 0; padding-left: 18px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title">Rapport commandes et ventes - Chronic Care</div>
+    <div class="meta">Généré le {{ generatedAt|date('d/m/Y à H:i') }}</div>
+  </div>
+
+  <div class="kpi">
+    <strong>Total des ventes :</strong> {{ (totalVentes ?? 0)|number_format(2, ',', ' ') }} €
+  </div>
+
+  <h4 style="margin: 16px 0 8px 0;">Commandes par statut</h4>
+  <ul>
+    {% for stat in countByStatut %}
+      <li>{{ stat.statut }} : {{ stat.count }} commande(s)</li>
+    {% else %}
+      <li>Aucune donnée</li>
+    {% endfor %}
+  </ul>
+
+  <h4 style="margin: 16px 0 8px 0;">Dernières commandes</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Client</th>
+        <th>Total</th>
+        <th>Statut</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in recentCommandes %}
+      <tr>
+        <td>{{ c.numeroCommande }}</td>
+        <td>{{ c.utilisateur.nom }} {{ c.utilisateur.prenom }}</td>
+        <td>{{ c.total }} €</td>
+        <td>{{ c.statut }}</td>
+        <td>{{ c.createdAt|date('d/m/Y H:i') }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">Aucune commande</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</body>
+</html>

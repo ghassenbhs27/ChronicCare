@@ -6,47 +6,33 @@ use App\Entity\Produit;
 use App\Form\ProduitFormType;
 use App\Repository\ProduitRepository;
 use App\Service\ProduitService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/products', name: 'admin_produit_')]
-// #[IsGranted('ROLE_ADMIN')] // Désactivé temporairement pour la simulation admin
+#[IsGranted('ROLE_ADMIN')]
 class AdminProduitController extends AbstractController
 {
-
-    private $produitRepository;
-    private $produitService;
-    private $entityManager;
-
-    public function __construct(ProduitRepository $produitRepository, ProduitService $produitService, \Doctrine\ORM\EntityManagerInterface $entityManager)
-    {
-        $this->produitRepository = $produitRepository;
-        $this->produitService = $produitService;
-        $this->entityManager = $entityManager;
+    public function __construct(
+        private readonly ProduitRepository $produitRepository,
+        private readonly ProduitService $produitService,
+        private readonly EntityManagerInterface $entityManager
+    ) {
     }
 
-
-
-    /**
-     * Lister tous les produits
-     */
-    #[Route('/', name: 'list')]
+    #[Route('', name: 'list', methods: ['GET'])]
     public function index(): Response
     {
-        $produits = $this->produitRepository->findAll();
-
         return $this->render('admin/produit/list.html.twig', [
-            'produits' => $produits,
+            'produits' => $this->produitRepository->findAll(),
         ]);
     }
 
-    /**
-     * Créer un nouveau produit
-     */
-    #[Route('/create', name: 'create')]
+    #[Route('/create', name: 'create', methods: ['GET', 'POST'])]
     public function create(Request $request): Response
     {
         $produit = new Produit();
@@ -54,32 +40,19 @@ class AdminProduitController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->produitService->createProduit(
-                $form->getData()->getNom(),
-                $form->getData()->getDescription(),
-                $form->getData()->getPrix(),
-                $form->getData()->getStock(),
-                $form->getData()->getCategorie()
-            );
-
+            $this->entityManager->persist($produit);
+            $this->entityManager->flush();
             $this->addFlash('success', 'Produit créé avec succès');
-
             return $this->redirectToRoute('admin_produit_list');
         }
 
-        return $this->render('admin/produit/create.html.twig', [
-            'form' => $form,
-        ]);
+        return $this->render('admin/produit/create.html.twig', ['form' => $form]);
     }
 
-    /**
-     * Éditer un produit
-     */
-    #[Route('/{id}/edit', name: 'edit', requirements: ['id' => '\d+'])]
+    #[Route('/{id}/edit', name: 'edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function edit(int $id, Request $request): Response
     {
         $produit = $this->produitRepository->find($id);
-
         if (!$produit) {
             throw $this->createNotFoundException('Produit non trouvé');
         }
@@ -88,35 +61,23 @@ class AdminProduitController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Correction : utiliser l'EntityManager injecté pour sauvegarder
-            $this->entityManager->persist($produit);
             $this->entityManager->flush();
-
             $this->addFlash('success', 'Produit modifié avec succès');
-
             return $this->redirectToRoute('admin_produit_list');
         }
 
-        return $this->render('admin/produit/edit.html.twig', [
-            'produit' => $produit,
-            'form' => $form,
-        ]);
+        return $this->render('admin/produit/edit.html.twig', ['produit' => $produit, 'form' => $form]);
     }
 
-    /**
-     * Supprimer un produit
-     */
     #[Route('/{id}/delete', name: 'delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(int $id, Request $request): Response
     {
         $produit = $this->produitRepository->find($id);
-
         if (!$produit) {
             throw $this->createNotFoundException('Produit non trouvé');
         }
 
         if ($this->isCsrfTokenValid('delete' . $id, $request->request->get('_token'))) {
-            // Correction : utiliser l'EntityManager injecté pour supprimer
             $this->entityManager->remove($produit);
             $this->entityManager->flush();
             $this->addFlash('success', 'Produit supprimé avec succès');
@@ -125,16 +86,11 @@ class AdminProduitController extends AbstractController
         return $this->redirectToRoute('admin_produit_list');
     }
 
-    /**
-     * Voir les produits avec stock faible
-     */
-    #[Route('/low-stock', name: 'low_stock')]
+    #[Route('/low-stock', name: 'low_stock', methods: ['GET'])]
     public function lowStock(): Response
     {
-        $produits = $this->produitRepository->findLowStock(10);
-
         return $this->render('admin/produit/low-stock.html.twig', [
-            'produits' => $produits,
+            'produits' => $this->produitRepository->findLowStock(10),
         ]);
     }
 }

@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Prendre rendez-vous - Chronic Care{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main py-5">
+    <div class="container">
+      <h1 class="mb-4"><i class="bi bi-calendar-plus me-2"></i>Prendre rendez-vous</h1>
+      <p class="text-muted mb-4">Avec {{ professionnel.prenom }} {{ professionnel.nom }}</p>
+
+      {% for label, messages in app.flashes %}
+        {% for message in messages %}
+          <div class="alert alert-{{ label }}">{{ message }}</div>
+        {% endfor %}
+      {% endfor %}
+
+      <div class="card mb-4">
+        <div class="card-body">
+          {{ form_start(form, { attr: { novalidate: 'novalidate', id: 'rdv-form' } }) }}
+            <div class="mb-3">
+              {{ form_label(form.dateRdv) }}
+              {{ form_widget(form.dateRdv, { attr: { class: 'form-control', id: 'rdv-date-input' } }) }}
+              {{ form_errors(form.dateRdv) }}
+              <div id="date-error" class="text-danger mt-1" style="display:none;">
+                <i class="bi bi-exclamation-triangle"></i> Ce créneau est déjà réservé. Veuillez choisir un autre créneau.
+              </div>
+            </div>
+            <div class="mb-3">
+              {{ form_label(form.motif) }}
+              {{ form_widget(form.motif, { attr: { class: 'form-control' } }) }}
+              {{ form_errors(form.motif) }}
+            </div>
+            <button class="btn btn-primary" type="submit" id="rdv-submit-btn">Confirmer</button>
+          {{ form_end(form) }}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h5><i class="bi bi-clock me-2"></i>Créneaux disponibles</h5>
+          <p class="text-muted small">Cliquez sur un créneau pour le sélectionner automatiquement.</p>
+          {% if slots is empty %}
+            <p class="text-muted mb-0">Aucun créneau disponible prochainement.</p>
+          {% else %}
+            <div class="d-flex flex-wrap gap-2">
+              {% for slot in slots|slice(0, 20) %}
+                <button type="button" class="btn btn-outline-primary btn-sm slot-btn" data-date="{{ slot|date('Y-m-d\\TH:i') }}">
+                  {{ slot|date('d/m/Y H:i') }}
+                </button>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <script>
+      (function() {
+        var bookedDates = {{ bookedDates|json_encode|raw }};
+        var dateInput = document.getElementById('rdv-date-input');
+        var errorDiv = document.getElementById('date-error');
+        var submitBtn = document.getElementById('rdv-submit-btn');
+        var slotBtns = document.querySelectorAll('.slot-btn');
+
+        function checkDate() {
+          if (!dateInput.value) return;
+          var selected = dateInput.value.substring(0, 16);
+          if (bookedDates.indexOf(selected) !== -1) {
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = true;
+            dateInput.classList.add('is-invalid');
+          } else {
+            errorDiv.style.display = 'none';
+            submitBtn.disabled = false;
+            dateInput.classList.remove('is-invalid');
+          }
+        }
+
+        dateInput.addEventListener('change', checkDate);
+        dateInput.addEventListener('input', checkDate);
+
+        slotBtns.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            dateInput.value = this.getAttribute('data-date');
+            slotBtns.forEach(function(b) { b.classList.remove('btn-primary'); b.classList.add('btn-outline-primary'); });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            checkDate();
+          });
+        });
+      })();
+      </script>
+    </div>
+  </main>
+{% endblock %}

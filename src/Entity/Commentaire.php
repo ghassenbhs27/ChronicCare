@@ -3,8 +3,11 @@
 namespace App\Entity;
 
 use App\Repository\CommentaireRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommentaireRepository::class)]
 class Commentaire
@@ -18,11 +21,18 @@ class Commentaire
     #[ORM\JoinColumn(nullable: false)]
     private Publication $publication;
 
-    #[ORM\ManyToOne(inversedBy: 'commentaires')]
-    #[ORM\JoinColumn(nullable: false)]
-    private User $auteur;
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?User $auteur = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Le commentaire ne peut pas etre vide.')]
+    #[Assert\Length(
+        min: 3,
+        max: 3000,
+        minMessage: 'Le commentaire doit contenir au moins {{ limit }} caracteres.',
+        maxMessage: 'Le commentaire ne peut pas depasser {{ limit }} caracteres.'
+    )]
     private string $contenu;
 
     #[ORM\Column]
@@ -34,9 +44,16 @@ class Commentaire
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    /**
+     * @var Collection<int, CommentaireLike>
+     */
+    #[ORM\OneToMany(targetEntity: CommentaireLike::class, mappedBy: 'commentaire', orphanRemoval: true)]
+    private Collection $likes;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->likes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -55,12 +72,12 @@ class Commentaire
         return $this;
     }
 
-    public function getAuteur(): User
+    public function getAuteur(): ?User
     {
         return $this->auteur;
     }
 
-    public function setAuteur(User $auteur): self
+    public function setAuteur(?User $auteur): self
     {
         $this->auteur = $auteur;
         return $this;
@@ -96,6 +113,48 @@ class Commentaire
     public function incrementLikes(): void
     {
         $this->likeCount++;
+    }
+
+    public function decrementLikes(): self
+    {
+        if ($this->likeCount > 0) {
+            $this->likeCount--;
+        }
+        return $this;
+    }
+
+    public function getNomAuteur(): string
+    {
+        if ($this->isAnonymous) {
+            return 'Anonyme';
+        }
+        if (!$this->auteur) {
+            return 'Utilisateur inconnu';
+        }
+        return trim($this->auteur->getNom() . ' ' . $this->auteur->getPrenom());
+    }
+
+    /**
+     * @return Collection<int, CommentaireLike>
+     */
+    public function getLikes(): Collection
+    {
+        return $this->likes;
+    }
+
+    public function isLikedByUser(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        foreach ($this->likes as $like) {
+            if ($like->getUser() === $user) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

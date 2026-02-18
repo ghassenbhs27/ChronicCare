@@ -1,0 +1,237 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande {{ commande.numeroCommande }} - Workflow & Event Sourcing{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <a href="{{ path('admin_commande_workflow_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à la liste
+            </a>
+            <h1 class="mt-3">
+                <i class="bi bi-box-seam"></i> Commande {{ commande.numeroCommande }}
+                {% set badge_class = {
+                    'en_attente': 'warning',
+                    'validee': 'info',
+                    'expediee': 'primary',
+                    'livree': 'success',
+                    'annulee': 'danger'
+                } %}
+                <span class="badge bg-{{ badge_class[commande.statut] ?? 'secondary' }}">
+                    {{ commande.statut|replace({'_': ' '})|title }}
+                </span>
+            </h1>
+            <p class="text-muted">
+                <i class="bi bi-person"></i> Par {{ commande.utilisateur.email }} - 
+                <i class="bi bi-calendar"></i> {{ commande.createdAt|date('d/m/Y à H:i') }}
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            {# Détails de la commande #}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-cart-fill"></i> Articles commandés</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th class="text-center">Quantité</th>
+                                <th class="text-end">Prix unitaire</th>
+                                <th class="text-end">Sous-total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ligne in commande.ligneCommandes %}
+                            <tr>
+                                <td>{{ ligne.produit.nom }}</td>
+                                <td class="text-center">{{ ligne.quantite }}</td>
+                                <td class="text-end">{{ ligne.prixUnitaire }} €</td>
+                                <td class="text-end"><strong>{{ ligne.sousTotal }} €</strong></td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="table-active">
+                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                <td class="text-end"><strong class="text-success fs-5">{{ commande.total }} €</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    {% if commande.adresse %}
+                    <div class="alert alert-info mt-3 mb-0">
+                        <strong><i class="bi bi-geo-alt-fill"></i> Adresse de livraison:</strong><br>
+                        {{ commande.adresse }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# 🔥 NOUVEAU : Historique Event Sourcing #}
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Historique complet (Event Sourcing)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if history is empty %}
+                        <p class="text-muted text-center py-3">
+                            <i class="bi bi-inbox"></i> Aucun événement enregistré
+                        </p>
+                    {% else %}
+                        <div class="timeline">
+                            {% for event in history %}
+                            <div class="border-start border-3 border-primary ps-3 pb-4 mb-3 position-relative">
+                                <div class="position-absolute" style="left: -8px; top: 0;">
+                                    <span class="bg-primary rounded-circle d-inline-block" style="width: 12px; height: 12px;"></span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <strong class="text-primary">{{ event.eventType }}</strong>
+                                        {% if event.oldValue %}
+                                            <span class="badge bg-secondary">{{ event.oldValue }}</span>
+                                            <i class="bi bi-arrow-right"></i>
+                                        {% endif %}
+                                        {% if event.newValue %}
+                                            <span class="badge bg-success">{{ event.newValue }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> {{ event.createdAt|date('d/m/Y H:i:s') }}
+                                    </small>
+                                </div>
+                                
+                                {% if event.triggeredBy %}
+                                <div class="text-muted small mb-1">
+                                    <i class="bi bi-person-fill"></i> Par: <strong>{{ event.triggeredBy.email }}</strong>
+                                </div>
+                                {% endif %}
+
+                                {% if event.reason %}
+                                <div class="text-muted small mb-1">
+                                    <i class="bi bi-info-circle-fill"></i> {{ event.reason }}
+                                </div>
+                                {% endif %}
+
+                                {% if event.ipAddress %}
+                                <div class="text-muted small">
+                                    <i class="bi bi-globe"></i> IP: {{ event.ipAddress }}
+                                    {% if event.userAgent %}
+                                        <span class="ms-2">| {{ event.userAgent|slice(0, 60) }}...</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                {% if event.eventData %}
+                                <details class="mt-2">
+                                    <summary class="text-muted small" style="cursor: pointer;">
+                                        <i class="bi bi-code-square"></i> Voir les données JSON complètes
+                                    </summary>
+                                    <pre class="small mt-2 mb-0 bg-light p-2 rounded border"><code>{{ event.eventData|json_encode(constant('JSON_PRETTY_PRINT')) }}</code></pre>
+                                </details>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            {# 🔥 NOUVEAU : State Machine - Transitions disponibles #}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-diagram-3-fill"></i> Workflow - Transitions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        <strong>Statut actuel:</strong> 
+                        <span class="badge bg-{{ badge_class[commande.statut] ?? 'secondary' }}">
+                            {{ commande.statut|replace({'_': ' '})|title }}
+                        </span>
+                    </p>
+
+                    {% if availableTransitions is empty %}
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-check-circle-fill"></i> Aucune transition disponible.<br>
+                            <small>Cette commande est dans un état final ou n'a pas de transitions autorisées.</small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success">
+                            <i class="bi bi-lightning-fill"></i> <strong>{{ availableTransitions|length }}</strong> transition(s) possible(s)
+                        </div>
+
+                        {% for transition in availableTransitions %}
+                            {% set metadata = transition.metadata %}
+                            <form method="post" 
+                                  action="{{ path('admin_commande_workflow_apply_transition', {
+                                      id: commande.id, 
+                                      transition: transition.name
+                                  }) }}"
+                                  class="mb-3">
+                                <input type="hidden" name="_token" 
+                                       value="{{ csrf_token('commande_transition_' ~ commande.id) }}">
+                                
+                                <button type="submit" 
+                                        class="btn btn-{{ metadata.color ?? 'primary' }} w-100"
+                                        onclick="return confirm('⚠️ Confirmer la transition : {{ metadata.title ?? transition.name }} ?\n\n{{ metadata.description ?? '' }}')">
+                                    <i class="bi {{ metadata.icon ?? 'bi-arrow-right' }}"></i>
+                                    {{ metadata.title ?? transition.name }}
+                                </button>
+                                
+                                {% if metadata.description %}
+                                <small class="text-muted d-block mt-1">
+                                    {{ metadata.description }}
+                                </small>
+                                {% endif %}
+                            </form>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Diagramme du workflow #}
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-diagram-2"></i> Diagramme du Workflow</h6>
+                </div>
+                <div class="card-body">
+                    <div class="workflow-diagram text-center small">
+                        <div class="mb-2">
+                            <span class="badge bg-warning">en_attente</span>
+                        </div>
+                        <div class="mb-2">⬇️ <span class="text-muted small">valider</span></div>
+                        <div class="mb-2">
+                            <span class="badge bg-info">validee</span>
+                        </div>
+                        <div class="mb-2">⬇️ <span class="text-muted small">expedier</span></div>
+                        <div class="mb-2">
+                            <span class="badge bg-primary">expediee</span>
+                        </div>
+                        <div class="mb-2">⬇️ <span class="text-muted small">livrer</span></div>
+                        <div class="mb-2">
+                            <span class="badge bg-success">livree</span>
+                        </div>
+                        <hr class="my-3">
+                        <div class="text-muted small">
+                            ❌ <span class="text-muted small">annuler</span>
+                            <br><small>(depuis en_attente ou validee)</small>
+                            <br>⬇️
+                            <br><span class="badge bg-danger mt-1">annulee</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,37 +1,67 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Recherche Produits - ChronicCare{% endblock %}
+{% block title %}Recherche produits - Chronic Care{% endblock %}
+{% block body_class %}products-page{% endblock %}
 
-{% block content %}
-<div class="container mt-5">
-    <h1>Résultats de recherche</h1>
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
 
-    {% if keyword %}
-        <p>Recherche pour: <strong>{{ keyword }}</strong></p>
-    {% elseif categorie %}
-        <p>Catégorie: <strong>{{ categorie }}</strong></p>
-    {% endif %}
+<main class="main">
+  <div class="page-title">
+    <div class="container">
+      <h1>Recherche</h1>
+      <p>Résultats pour « {{ keyword ?: categorie ?: 'filtres' }} »</p>
+    </div>
+  </div>
 
-    <div class="row">
+  <section class="services section light-background">
+    <div class="container">
+      <form action="{{ path('produit_search') }}" method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+          <input type="text" name="keyword" class="form-control" placeholder="Mot-clé" value="{{ keyword }}">
+        </div>
+        <div class="col-md-4">
+          <select name="categorie" class="form-select">
+            <option value="">Catégorie</option>
+            {% for cat in categories %}
+              <option value="{{ cat.categorie }}" {{ categorie == cat.categorie ? 'selected' : '' }}>{{ cat.categorie }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-primary w-100">Rechercher</button>
+        </div>
+      </form>
+
+      <div class="row g-4">
         {% for produit in results %}
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ produit.nom }}</h5>
-                    <p class="card-text">{{ produit.prix }} €</p>
-                    
-                    <a href="{{ path('produit_show', {id: produit.id}) }}" class="btn btn-sm btn-info">Voir</a>
-                    <a href="{{ path('cart_add', {id: produit.id}) }}" class="btn btn-sm btn-success">Ajouter</a>
-                </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">{{ produit.nom }}</h5>
+              <p class="card-text text-muted small">{{ produit.description|slice(0, 80) }}...</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="badge bg-secondary">{{ produit.categorie }}</span>
+                <strong class="text-primary">{{ produit.prix }} €</strong>
+              </div>
+              <div class="mt-3">
+                <a href="{{ path('produit_show', {id: produit.id}) }}" class="btn btn-outline-primary btn-sm">Détails</a>
+                {% if produit.stock > 0 %}
+                  <a href="{{ path('cart_add_with_id', {id: produit.id}) }}?quantity=1" class="btn btn-success btn-sm"><i class="bi bi-cart-plus"></i></a>
+                {% endif %}
+              </div>
             </div>
+          </div>
         </div>
         {% else %}
-        <div class="col-12">
-            <p class="alert alert-info">Aucun résultat trouvé</p>
-        </div>
+        <div class="col-12"><div class="alert alert-info">Aucun résultat.</div></div>
         {% endfor %}
-    </div>
+      </div>
 
-    <a href="{{ path('produit_list') }}" class="btn btn-secondary mt-3">Retour au catalogue</a>
-</div>
+      <a href="{{ path('produit_list') }}" class="btn btn-outline-secondary mt-3"><i class="bi bi-arrow-left"></i> Retour au catalogue</a>
+    </div>
+  </section>
+</main>
+
+{% include 'partials/_footer.html.twig' %}
 {% endblock %}

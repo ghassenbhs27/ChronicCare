@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Verification de votre email{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block body %}
+<div class="header-spacer"></div>
+<main class="main">
+  <section class="auth-section section light-background">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-5 col-md-8">
+          <div class="auth-card">
+            <div class="auth-header text-center mb-4">
+              <div class="auth-icon"><i class="bi bi-envelope-check"></i></div>
+              <h2>Verification de votre email</h2>
+              <p>Un lien de reinitialisation a ete envoye a votre adresse. Cliquez sur le lien dans l'email pour definir un nouveau mot de passe.</p>
+            </div>
+
+            {% for message in app.flashes('reset_password_error') %}
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+
+            <div class="mb-3 text-muted text-center">Si vous ne trouvez pas l'email, verifiez votre dossier spam.</div>
+
+            <div class="d-grid gap-2">
+              <a href="{{ path('app_reset_password_verify') }}" class="btn btn-outline-primary text-center">J'ai un code, le saisir</a>
+              <a href="{{ path('app_forgot_password_request') }}" class="auth-link text-center">Renvoyer un nouveau lien</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

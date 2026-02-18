@@ -1,19 +1,20 @@
-{% extends 'base.html.twig' %}
+{% extends 'back/base.html.twig' %}
 
-{% block title %}Admin - Éditer Produit - ChronicCare{% endblock %}
+{% block page_title %}Modifier {{ produit.nom }}{% endblock %}
+{% block page_subtitle %}Édition du produit{% endblock %}
 
-{% block content %}
-<div class="container mt-5">
-    <h1>Éditer: {{ produit.nom }}</h1>
-
-    <div class="row mt-4">
-        <div class="col-md-8 offset-md-2">
-            {{ form_start(form) }}
-            {{ form_widget(form) }}
-            <button type="submit" class="btn btn-lg btn-warning mt-3">Mettre à jour</button>
-            <a href="{{ path('admin_produit_list') }}" class="btn btn-lg btn-secondary mt-3">Annuler</a>
-            {{ form_end(form) }}
-        </div>
+{% block body %}
+<div class="container-fluid">
+  <div class="card border-0 shadow-sm" style="max-width: 600px;">
+    <div class="card-body">
+      {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
+      {{ form_widget(form) }}
+      <div class="d-flex gap-2 mt-3">
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a href="{{ path('admin_produit_list') }}" class="btn btn-outline-secondary">Annuler</a>
+      </div>
+      {{ form_end(form) }}
     </div>
+  </div>
 </div>
 {% endblock %}

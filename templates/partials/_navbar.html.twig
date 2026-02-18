@@ -1,0 +1,135 @@
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between flex-wrap">
+
+    <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0" title="Chronic Care">
+      <svg class="my-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g id="bgCarrier" stroke-width="0"></g>
+        <g id="tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+        <g id="iconCarrier">
+          <path d="M22 22L2 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path d="M17 22V6C17 4.11438 17 3.17157 16.4142 2.58579C15.8284 2 14.8856 2 13 2H11C9.11438 2 8.17157 2 7.58579 2.58579C7 3.17157 7 4.11438 7 6V22" stroke="currentColor" stroke-width="1.5"></path>
+          <path opacity="0.5" d="M21 22V8.5C21 7.09554 21 6.39331 20.6629 5.88886C20.517 5.67048 20.3295 5.48298 20.1111 5.33706C19.6067 5 18.9045 5 17.5 5" stroke="currentColor" stroke-width="1.5"></path>
+          <path opacity="0.5" d="M3 22V8.5C3 7.09554 3 6.39331 3.33706 5.88886C3.48298 5.67048 3.67048 5.48298 3.88886 5.33706C4.39331 5 5.09554 5 6.5 5" stroke="currentColor" stroke-width="1.5"></path>
+          <path d="M12 22V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path opacity="0.5" d="M10 12H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path opacity="0.5" d="M5.5 11H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path opacity="0.5" d="M5.5 14H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path opacity="0.5" d="M17 11H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path opacity="0.5" d="M17 14H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path opacity="0.5" d="M5.5 8H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path opacity="0.5" d="M17 8H18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path opacity="0.5" d="M10 15H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path d="M12 9V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="M14 7L10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        </g>
+      </svg>
+      <h1 class="sitename">Chronic Care</h1>
+    </a>
+
+    {% set current_route = app.request.attributes.get('_route') ?? '' %}
+    {% set minimal_nav = minimal_nav|default(false) %}
+    {% set is_patient = app.user and is_granted('ROLE_USER') and not is_granted('ROLE_ADMIN') and not is_granted('ROLE_COACH') and not is_granted('ROLE_NUTRITIONNISTE') %}
+    {% set is_nutritionniste = app.user and ('ROLE_NUTRITIONNISTE' in app.user.roles) %}
+    {% set is_coach_or_nutritionniste = app.user and (('ROLE_COACH' in app.user.roles) or ('ROLE_NUTRITIONNISTE' in app.user.roles)) %}
+    {% set pro_space_label = is_nutritionniste ? 'Espace Nutritionniste' : 'Espace Coach' %}
+    {% set user_role_label = is_granted('ROLE_ADMIN') ? 'Administrateur' : (is_granted('ROLE_NUTRITIONNISTE') ? 'Nutritionniste' : (is_granted('ROLE_COACH') ? 'Coach' : 'Patient')) %}
+    {% set suivi_routes = ['suivi_front_dashboard', 'front_activite_index', 'front_activite_show', 'front_activite_new', 'front_activite_edit', 'front_etat_index', 'front_etat_show', 'front_etat_new', 'front_etat_edit', 'patient_rdv_list'] %}
+
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        {% if minimal_nav %}
+          <li><a href="{{ path('index') }}" class="{{ current_route == 'index' or current_route == 'home' ? 'active' : '' }}"><i class="bi bi-house-door"></i> Accueil</a></li>
+          <li><a href="{{ path('contact') }}" class="{{ current_route == 'contact' ? 'active' : '' }}"><i class="bi bi-envelope"></i> Contact</a></li>
+        {% elseif not app.user %}
+          <li><a href="{{ path('index') }}" class="{{ current_route == 'index' or current_route == 'home' ? 'active' : '' }}"><i class="bi bi-house-door"></i> Accueil</a></li>
+          <li><a href="{{ path('nutritionnistes') }}" class="{{ current_route == 'nutritionnistes' ? 'active' : '' }}"><i class="bi bi-person-badge"></i> Nutritionnistes</a></li>
+          <li><a href="{{ path('coachs') }}" class="{{ current_route == 'coachs' ? 'active' : '' }}"><i class="bi bi-person-walking"></i> Coachs</a></li>
+          <li><a href="{{ path('front_evenements') }}" class="{{ current_route == 'front_evenements' or current_route == 'front_evenement_show' ? 'active' : '' }}"><i class="bi bi-calendar2-event"></i> Événements</a></li>
+          <li><a href="{{ path('publication_index') }}" class="{{ current_route starts with 'publication_' or current_route starts with 'commentaire_' ? 'active' : '' }}"><i class="bi bi-chat-dots"></i> Forum</a></li>
+          <li><a href="{{ path('boutique') }}" class="{{ current_route == 'boutique' or current_route starts with 'produit_' or current_route starts with 'cart_' ? 'active' : '' }}"><i class="bi bi-shop"></i> Boutique</a></li>
+          <li><a href="{{ path('contact') }}" class="{{ current_route == 'contact' ? 'active' : '' }}"><i class="bi bi-envelope"></i> Contact</a></li>
+        {% else %}
+          {# Forum dans la nav pour coachs et visiteurs ; pour le patient tout passe par Mon suivi #}
+          {% if not is_granted('ROLE_ADMIN') and not is_patient %}
+            <li><a href="{{ path('publication_index') }}" class="{{ current_route starts with 'publication_' or current_route starts with 'commentaire_' ? 'active' : '' }}"><i class="bi bi-chat-dots"></i> Forum</a></li>
+          {% endif %}
+          {% if is_coach_or_nutritionniste and not is_granted('ROLE_ADMIN') %}
+            <li><a href="{{ path('evenement_index') }}" class="{{ current_route starts with 'evenement_' or current_route starts with 'exercice_' ? 'active' : '' }}"><i class="bi bi-calendar2-event"></i> {{ pro_space_label }}</a></li>
+            <li><a href="{{ path('front_etat_index') }}" class="{{ current_route starts with 'front_etat_' ? 'active' : '' }}"><i class="bi bi-heart-pulse"></i> Etats patient</a></li>
+            <li><a href="{{ path('front_activite_index') }}" class="{{ current_route starts with 'front_activite_' ? 'active' : '' }}"><i class="bi bi-activity"></i> Activites patient</a></li>
+          {% endif %}
+          {% if is_patient %}
+            <li><a href="{{ path('suivi_front_dashboard') }}" class="{{ current_route in suivi_routes or current_route starts with 'patient_rdv' ? 'active' : '' }}"><i class="bi bi-graph-up-arrow"></i> Mon suivi</a></li>
+            <li><a href="{{ path('front_evenements') }}" class="{{ current_route == 'front_evenements' or current_route == 'front_evenement_show' ? 'active' : '' }}"><i class="bi bi-calendar2-event"></i> Événements</a></li>
+            <li><a href="{{ path('front_mes_inscriptions') }}" class="{{ current_route == 'front_mes_inscriptions' ? 'active' : '' }}"><i class="bi bi-journal-check"></i> Mes inscriptions</a></li>
+            <li><a href="{{ path('commande_history') }}" class="{{ current_route starts with 'commande_' ? 'active' : '' }}"><i class="bi bi-bag-check"></i> Mes commandes</a></li>
+          {% endif %}
+          {% if is_coach_or_nutritionniste and not is_granted('ROLE_ADMIN') %}
+            <li><a href="{{ path('pro_rdv_list') }}" class="{{ current_route == 'pro_rdv_list' ? 'active' : '' }}"><i class="bi bi-calendar2-week"></i> Mes RDV pro</a></li>
+          {% endif %}
+          {% if is_patient or ((is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE')) and not is_granted('ROLE_ADMIN')) %}
+            <li><a href="{{ path('app_statistics') }}" class="{{ current_route == 'app_statistics' ? 'active' : '' }}"><i class="bi bi-bar-chart-line"></i> Statistiques</a></li>
+          {% endif %}
+          {# Boutique et Contact pour tous les utilisateurs connectés #}
+          <li><a href="{{ path('boutique') }}" class="{{ current_route == 'boutique' or current_route starts with 'produit_' or current_route starts with 'cart_' ? 'active' : '' }}"><i class="bi bi-shop"></i> Boutique</a></li>
+          <li><a href="{{ path('contact') }}" class="{{ current_route == 'contact' ? 'active' : '' }}"><i class="bi bi-envelope"></i> Contact</a></li>
+        {% endif %}
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+
+    <div class="header-actions d-flex gap-2 align-items-center flex-nowrap">
+      {% if not minimal_nav and is_patient %}
+      <a href="{{ path('cart_show') }}" class="btn btn-nav-cart {{ current_route == 'cart_show' ? 'active' : '' }}" title="Panier">
+        <i class="bi bi-cart3"></i>
+        <span class="d-none d-md-inline ms-1">Panier</span>
+      </a>
+      {% endif %}
+      {% if app.user %}
+        <div class="dropdown">
+          <button class="btn btn-getstarted d-flex align-items-center gap-1 dropdown-toggle" type="button" id="navbarProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Profil">
+            {% if app.user.profileImage %}
+              <img src="{{ asset('uploads/profiles/' ~ app.user.profileImage) }}" alt="{{ app.user.fullName }}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+            {% elseif app.user.photoProfil %}
+              <img src="{{ asset('uploads/profile/' ~ app.user.photoProfil) }}" alt="Profil" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
+            {% else %}
+              <i class="bi bi-person-circle fs-5"></i>
+            {% endif %}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarProfileDropdown">
+            <li class="px-3 py-2 border-bottom">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                {% if app.user.profileImage %}
+                  <img src="{{ asset('uploads/profiles/' ~ app.user.profileImage) }}" alt="{{ app.user.fullName }}" class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;">
+                {% else %}
+                  <i class="bi bi-person-circle fs-2"></i>
+                {% endif %}
+                <div>
+                  <span class="fw-semibold d-block">{{ app.user.fullName }}</span>
+                  <span class="small text-muted">{{ user_role_label }}</span>
+                </div>
+              </div>
+            </li>
+            <li>
+              <a class="dropdown-item d-flex align-items-center gap-2" href="#" data-open-profile-modal data-url="{{ path('app_profile_modal') }}">
+                <i class="bi bi-pencil-square"></i> Modifier profil
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="{{ path('app_logout') }}">
+                <i class="bi bi-box-arrow-right"></i> Déconnexion
+              </a>
+            </li>
+          </ul>
+        </div>
+      {% else %}
+        <a class="btn-getstarted btn-getstarted-outline" href="{{ path('connexion') }}">Se connecter</a>
+        <a class="btn-getstarted" href="{{ path('inscription') }}">S'inscrire</a>
+      {% endif %}
+    </div>
+
+  </div>
+</header>
+
+<div class="header-spacer"></div>

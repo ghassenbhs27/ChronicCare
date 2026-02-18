@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ publication.id ? 'Modifier la publication' : 'Nouvelle publication' }} - Forum Chronic Care{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main forum-form-page">
+    <div class="container">
+      <nav aria-label="Fil d'Ariane" class="forum-breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('publication_index') }}">Forum</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{{ publication.id ? 'Modifier' : 'Nouvelle publication' }}</li>
+        </ol>
+      </nav>
+
+      <div class="forum-form-card">
+        <header class="forum-form-header">
+          <h1 class="forum-form-title">{{ publication.id ? 'Modifier la publication' : 'Nouvelle publication' }}</h1>
+        </header>
+        <div class="forum-form-body">
+          <form method="post">
+            <input type="hidden" name="_token" value="{{ csrf_token('publication_form') }}">
+            <div class="mb-4">
+              <label for="titre" class="form-label">Titre <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="titre" name="titre" value="{{ publication.titre }}" placeholder="Ex. : Conseils nutrition pour l'été" required>
+            </div>
+            <div class="mb-4">
+              <label for="categorie" class="form-label">Catégorie <span class="text-danger">*</span></label>
+              <select class="form-select" id="categorie" name="categorie" required>
+                <option value="nutrition" {{ publication.categorie == 'nutrition' ? 'selected' }}>Nutrition</option>
+                <option value="exercice" {{ publication.categorie == 'exercice' ? 'selected' }}>Exercice</option>
+                <option value="sante_mentale" {{ publication.categorie == 'sante_mentale' ? 'selected' }}>Santé mentale</option>
+                <option value="bien_etre" {{ publication.categorie == 'bien_etre' ? 'selected' }}>Bien-être</option>
+                <option value="autre" {{ publication.categorie == 'autre' ? 'selected' }}>Autre</option>
+              </select>
+            </div>
+            <div class="mb-4">
+              <label for="contenu" class="form-label">Contenu <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="contenu" name="contenu" rows="10" placeholder="Rédigez le contenu de votre publication..." required>{{ publication.contenu }}</textarea>
+            </div>
+            <div class="mb-4">
+              <label for="statut" class="form-label">Statut</label>
+              <select class="form-select" id="statut" name="statut">
+                <option value="brouillon" {{ publication.statut == 'brouillon' ? 'selected' }}>Brouillon</option>
+                <option value="publie" {{ publication.statut == 'publie' ? 'selected' }}>Publié</option>
+              </select>
+              <p class="form-text text-muted small mt-1">En brouillon, la publication ne sera pas visible par les patients.</p>
+            </div>
+            <div class="forum-form-actions">
+              <a href="{{ path('publication_index') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg me-1"></i> Annuler</a>
+              <button type="submit" class="btn btn-primary">{{ publication.id ? 'Mettre à jour' : 'Publier' }}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}
