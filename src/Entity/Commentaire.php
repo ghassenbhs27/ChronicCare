@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\CommentaireRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -42,9 +44,16 @@ class Commentaire
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    /**
+     * @var Collection<int, CommentaireLike>
+     */
+    #[ORM\OneToMany(targetEntity: CommentaireLike::class, mappedBy: 'commentaire', orphanRemoval: true)]
+    private Collection $likes;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->likes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -123,6 +132,29 @@ class Commentaire
             return 'Utilisateur inconnu';
         }
         return trim($this->auteur->getNom() . ' ' . $this->auteur->getPrenom());
+    }
+
+    /**
+     * @return Collection<int, CommentaireLike>
+     */
+    public function getLikes(): Collection
+    {
+        return $this->likes;
+    }
+
+    public function isLikedByUser(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        foreach ($this->likes as $like) {
+            if ($like->getUser() === $user) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

@@ -1,7 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Commander - Chronic Care{% endblock %}
-{% block body_class %}products-page{% endblock %}
+{% block body_class %}checkout-page{% endblock %}
 
 {% block body %}
 {% include 'partials/_navbar.html.twig' %}
@@ -9,64 +9,308 @@
 <main class="main">
   <div class="page-title">
     <div class="container">
-      <h1>Finaliser la commande</h1>
+      <h1>Finaliser votre commande</h1>
     </div>
   </div>
 
-  <section class="services section light-background">
+  <section class="checkout section light-background">
     <div class="container">
       <div class="row">
+        <!-- Formulaire multi-étapes -->
         <div class="col-lg-8">
-          <div class="card mb-4">
-            <div class="card-header"><h5 class="mb-0">Récapitulatif</h5></div>
-            <div class="card-body">
-              <table class="table table-sm">
-                <thead><tr><th>Produit</th><th>Qté</th><th>Prix</th><th>Total</th></tr></thead>
-                <tbody>
-                  {% for item in cart %}
-                  <tr>
-                    <td>{{ item.nom }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ item.prix }} €</td>
-                    <td>{{ (item.prix * item.quantity)|number_format(2, ',', ' ') }} €</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <form method="post" class="card">
+          <form method="post" id="checkoutForm" novalidate data-turbo="false">
             <input type="hidden" name="_token" value="{{ csrf_token('checkout') }}">
-            <div class="card-header"><h5 class="mb-0">Livraison & Paiement</h5></div>
-            <div class="card-body">
-              <div class="mb-3">
-                <label class="form-label">Adresse de livraison <span class="text-danger">*</span></label>
-                <textarea name="adresse" class="form-control" rows="2" required placeholder="Rue, code postal, ville..."></textarea>
+
+            <!-- Affichage des erreurs globales -->
+            {% if app.flashes('error') %}
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-circle-fill"></i> <strong>Erreur de validation</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <ul class="mb-0 mt-2">
+                  {% for message in app.flashes('error') %}
+                    <li>{{ message }}</li>
+                  {% endfor %}
+                </ul>
               </div>
-              <hr>
-              <h6>Paiement</h6>
-              <div class="mb-3">
-                <label class="form-label">Nom sur la carte</label>
-                <input type="text" name="cardHolder" class="form-control" required>
+            {% endif %}
+
+            <!-- ÉTAPE 1 : INFORMATIONS PERSONNELLES -->
+            <div class="card mb-3 checkout-section" id="section-1">
+              <div class="card-header bg-light d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-primary me-2">1</span>
+                  <h5 class="mb-0">INFORMATIONS PERSONNELLES</h5>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle-section="1">
+                  <i class="bi bi-pencil"></i> Modifier
+                </button>
               </div>
-              <div class="mb-3">
-                <label class="form-label">Numéro de carte</label>
-                <input type="text" name="cardNumber" class="form-control" placeholder="1234 5678 9012 3456" required>
+              <div class="card-body">
+                <p class="text-muted small mb-0">
+                  <i class="bi bi-info-circle"></i> 
+                  <a href="#" data-toggle-section="1">Se connecter avec un compte social</a> | 
+                  <a href="#" data-toggle-section="1">Connexion</a> | 
+                  <a href="#" data-toggle-section="1">Créer un compte</a>
+                </p>
               </div>
-              <div class="mb-3">
-                <label class="form-label">CVV</label>
-                <input type="text" name="cvv" class="form-control" placeholder="123" maxlength="4" required>
+            </div>
+
+            <!-- ÉTAPE 2 : ADRESSE DE LIVRAISON -->
+            <div class="card mb-3 checkout-section" id="section-2">
+              <div class="card-header bg-light d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-primary me-2">2</span>
+                  <h5 class="mb-0">ADRESSES</h5>
+                </div>
               </div>
-              <button type="submit" class="btn btn-success btn-lg w-100">Payer {{ total|number_format(2, ',', ' ') }} €</button>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Adresse de livraison <span class="text-danger">*</span></label>
+                  <textarea 
+                    name="adresse" 
+                    class="form-control form-control-lg" 
+                    rows="3" 
+                    placeholder="Rue, code postal, ville..."
+                    required>{{ app.request.get('adresse') }}</textarea>
+                  <small class="text-muted">
+                    <i class="bi bi-info-circle"></i> Minimum 10 caractères requis
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <!-- ÉTAPE 3 : MODE DE LIVRAISON -->
+            <div class="card mb-3 checkout-section" id="section-3">
+              <div class="card-header bg-light d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-primary me-2">3</span>
+                  <h5 class="mb-0">MODE DE LIVRAISON</h5>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="radio" name="livraison" id="livraison1" value="standard" checked>
+                  <label class="form-check-label" for="livraison1">
+                    <strong>Livraison Standard</strong> - Gratuit (4-7 jours ouvrables)
+                  </label>
+                </div>
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="radio" name="livraison" id="livraison2" value="express">
+                  <label class="form-check-label" for="livraison2">
+                    <strong>Livraison Express</strong> - 9,99 € (2-3 jours ouvrables)
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="livraison" id="livraison3" value="ultrarapide">
+                  <label class="form-check-label" for="livraison3">
+                    <strong>Ultra-rapide</strong> - 19,99 € (Lendemain avant 13h)
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- ÉTAPE 4 : PAIEMENT -->
+            <div class="card mb-3 checkout-section" id="section-4">
+              <div class="card-header bg-light d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-primary me-2">4</span>
+                  <h5 class="mb-0">PAIEMENT</h5>
+                </div>
+              </div>
+              <div class="card-body">
+
+                <!-- Choix du mode de paiement -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold">Mode de paiement <span class="text-danger">*</span></label>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="form-check card p-3 h-100" id="payment-card-option">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="payCard" value="card" checked>
+                        <label class="form-check-label w-100 d-flex align-items-center gap-2" for="payCard" style="cursor:pointer;">
+                          <i class="bi bi-credit-card-2-front fs-4 text-primary"></i>
+                          <div>
+                            <strong>Payer par carte</strong>
+                            <div class="text-muted small">Visa, Mastercard, etc.</div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-check card p-3 h-100" id="payment-cod-option">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="payCOD" value="cash_on_delivery">
+                        <label class="form-check-label w-100 d-flex align-items-center gap-2" for="payCOD" style="cursor:pointer;">
+                          <i class="bi bi-cash-stack fs-4 text-success"></i>
+                          <div>
+                            <strong>Paiement à la livraison</strong>
+                            <div class="text-muted small">Payez en espèces à la réception</div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Champs carte (affichés/masqués selon le choix) -->
+                <div id="cardFields">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Nom sur la carte <span class="text-danger">*</span></label>
+                    <input 
+                      type="text" 
+                      name="cardHolder" 
+                      class="form-control form-control-lg" 
+                      placeholder="Ex: Jean Dupont"
+                      value="{{ app.request.get('cardHolder') }}">
+                    <small class="text-muted">
+                      <i class="bi bi-info-circle"></i> Minimum 2 caractères
+                    </small>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Numéro de carte <span class="text-danger">*</span></label>
+                    <input 
+                      type="text" 
+                      name="cardNumber" 
+                      class="form-control form-control-lg" 
+                      placeholder="1234 5678 9012 3456"
+                      value="{{ app.request.get('cardNumber') }}"
+                      inputmode="numeric">
+                    <small class="text-muted">
+                      <i class="bi bi-info-circle"></i> 16 chiffres requis
+                    </small>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-bold">Expiration <span class="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        name="expiration" 
+                        class="form-control form-control-lg" 
+                        placeholder="MM/YY"
+                        value="{{ app.request.get('expiration') }}">
+                      <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> Format: MM/YY
+                      </small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-bold">CVV <span class="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        name="cvv" 
+                        class="form-control form-control-lg" 
+                        placeholder="123" 
+                        maxlength="4"
+                        value="{{ app.request.get('cvv') }}"
+                        inputmode="numeric">
+                      <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> 3 ou 4 chiffres
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Message paiement à la livraison -->
+                <div id="codMessage" style="display:none;">
+                  <div class="alert alert-success d-flex align-items-center gap-2 mb-0">
+                    <i class="bi bi-info-circle-fill fs-5"></i>
+                    <div>
+                      <strong>Paiement à la livraison sélectionné</strong><br>
+                      <span class="small">Vous paierez le montant total en espèces au livreur lors de la réception de votre commande. Veuillez préparer le montant exact.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-check mt-3">
+                  <input class="form-check-input" type="checkbox" id="terms" required>
+                  <label class="form-check-label small" for="terms">
+                    J'accepte les <a href="#">conditions d'utilisation</a> et la <a href="#">politique de confidentialité</a>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="d-flex gap-2">
+              <a href="{{ path('cart_show') }}" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-arrow-left"></i> Retour au panier
+              </a>
+              <button type="submit" class="btn btn-success btn-lg w-100" id="submitBtn">
+                <i class="bi bi-credit-card" id="submitIcon"></i> <span id="submitText">Payer {{ total|number_format(2, ',', ' ') }} €</span>
+              </button>
             </div>
           </form>
         </div>
+
+        <!-- Résumé du panier (Sticky) -->
         <div class="col-lg-4">
-          <div class="card sticky-top">
+          <div class="card sticky-top" style="top: 100px;">
+            <div class="card-header bg-light">
+              <h5 class="mb-0">
+                <i class="bi bi-bag"></i> Résumé de la commande
+              </h5>
+            </div>
             <div class="card-body">
-              <h5>Total: {{ total|number_format(2, ',', ' ') }} €</h5>
-              <a href="{{ path('cart_show') }}" class="btn btn-outline-secondary w-100 mt-2">Modifier le panier</a>
+              <!-- Articles -->
+              <div class="mb-3">
+                <h6 class="text-muted mb-2">Articles commandés</h6>
+                <div style="max-height: 300px; overflow-y: auto;">
+                  {% for item in cart %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                      <div class="flex-grow-1">
+                        <p class="mb-0 small"><strong>{{ item.nom }}</strong></p>
+                        <p class="mb-0 text-muted small">Qté: {{ item.quantity }}</p>
+                      </div>
+                      <div class="text-end">
+                        <p class="mb-0 small"><strong>{{ (item.prix * item.quantity)|number_format(2, ',', ' ') }} €</strong></p>
+                        <p class="mb-0 text-muted small">{{ item.prix }} € x {{ item.quantity }}</p>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <hr>
+
+              <!-- Détails de la commande -->
+              <div class="mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Sous-total:</span>
+                  <strong>{{ total|number_format(2, ',', ' ') }} €</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Livraison:</span>
+                  <strong id="shipping-cost">Gratuit</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Taxes:</span>
+                  <strong>0,00 €</strong>
+                </div>
+              </div>
+
+              <hr>
+
+              <!-- Total -->
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Total TTC:</h5>
+                <h5 class="mb-0 text-success" id="total-price">
+                  <strong>{{ total|number_format(2, ',', ' ') }} €</strong>
+                </h5>
+              </div>
+
+              <!-- Code promo (optionnel) -->
+              <div class="input-group mb-3">
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  placeholder="Code promo" 
+                  id="promoCode">
+                <button class="btn btn-outline-secondary" type="button">
+                  <i class="bi bi-check"></i>
+                </button>
+              </div>
+              <p class="text-muted small text-center mb-0">
+                <a href="#">Voir plus de codes promos ?</a>
+              </p>
             </div>
           </div>
         </div>
@@ -76,4 +320,108 @@
 </main>
 
 {% include 'partials/_footer.html.twig' %}
+
+<script>
+(function() {
+  // === Éléments DOM ===
+  const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
+  const cardFields = document.getElementById('cardFields');
+  const codMessage = document.getElementById('codMessage');
+  const submitIcon = document.getElementById('submitIcon');
+  const submitText = document.getElementById('submitText');
+  const cardOption = document.getElementById('payment-card-option');
+  const codOption = document.getElementById('payment-cod-option');
+  const livraisonRadios = document.querySelectorAll('input[name="livraison"]');
+  const totalPriceEl = document.getElementById('total-price');
+  const shippingCostEl = document.getElementById('shipping-cost');
+  const baseTotal = parseFloat({{ total }});
+
+  // Frais de livraison selon le mode choisi
+  const shippingPrices = {
+    standard: 0,
+    express: 9.99,
+    ultrarapide: 19.99
+  };
+
+  // Retourne le montant de livraison actuellement sélectionné
+  function getSelectedShipping() {
+    const selected = document.querySelector('input[name="livraison"]:checked');
+    return selected ? (shippingPrices[selected.value] || 0) : 0;
+  }
+
+  // Formate un nombre en prix FR (ex: 4 629,66 €)
+  function formatPrice(value) {
+    return value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  }
+
+  // Calcule et retourne le total actuel (sous-total + livraison)
+  function getCurrentTotal() {
+    return baseTotal + getSelectedShipping();
+  }
+
+  // === Mise à jour du résumé (livraison + total TTC) ===
+  function updateOrderSummary() {
+    const shipping = getSelectedShipping();
+    const total = baseTotal + shipping;
+
+    // Mettre à jour la ligne livraison
+    shippingCostEl.textContent = shipping === 0 ? 'Gratuit' : formatPrice(shipping);
+
+    // Mettre à jour le total TTC
+    totalPriceEl.innerHTML = '<strong>' + formatPrice(total) + '</strong>';
+
+    // Mettre à jour le bouton de paiement si mode carte
+    updateSubmitButton();
+  }
+
+  // === Mise à jour du bouton submit ===
+  function updateSubmitButton() {
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    if (paymentMethod === 'card') {
+      submitIcon.className = 'bi bi-credit-card';
+      submitText.textContent = 'Payer ' + formatPrice(getCurrentTotal());
+    } else {
+      submitIcon.className = 'bi bi-truck';
+      submitText.textContent = 'Confirmer la commande (' + formatPrice(getCurrentTotal()) + ')';
+    }
+  }
+
+  // === Gestion du choix de mode de paiement ===
+  function updatePaymentMethod() {
+    const selected = document.querySelector('input[name="paymentMethod"]:checked').value;
+    if (selected === 'card') {
+      cardFields.style.display = 'block';
+      codMessage.style.display = 'none';
+      cardOption.classList.add('border-primary');
+      codOption.classList.remove('border-success');
+    } else {
+      cardFields.style.display = 'none';
+      codMessage.style.display = 'block';
+      cardOption.classList.remove('border-primary');
+      codOption.classList.add('border-success');
+    }
+    updateSubmitButton();
+  }
+
+  // === Événements ===
+  paymentRadios.forEach(r => r.addEventListener('change', updatePaymentMethod));
+  livraisonRadios.forEach(r => r.addEventListener('change', updateOrderSummary));
+
+  // === Init ===
+  updateOrderSummary();
+  updatePaymentMethod();
+
+  // Gestion des boutons "Modifier"
+  const toggleButtons = document.querySelectorAll('[data-toggle-section]');
+  toggleButtons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const sectionId = this.getAttribute('data-toggle-section');
+      const section = document.getElementById('section-' + sectionId);
+      section.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+})();
+</script>
+
 {% endblock %}

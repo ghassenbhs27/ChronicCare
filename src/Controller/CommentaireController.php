@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Commentaire;
+use App\Entity\CommentaireLike;
 use App\Entity\Publication;
 use App\Repository\CommentaireRepository;
+use App\Repository\CommentaireLikeRepository;
 use App\Repository\PublicationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -79,6 +81,7 @@ class CommentaireController extends AbstractController
             throw $this->createNotFoundException('Commentaire non trouve');
         }
 
+        // Seul l'auteur peut modifier son propre commentaire (pas le coach, pas l'admin)
         $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur()->getId() === $this->getUser()->getId();
         if (!$isAuthor && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Vous ne pouvez modifier que vos propres commentaires.');
@@ -154,30 +157,35 @@ class CommentaireController extends AbstractController
     #[Route('/like/{id}', name: 'commentaire_like', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function like(
         int $id,
-        Request $request,
         CommentaireRepository $repository,
+        CommentaireLikeRepository $likeRepository,
         EntityManagerInterface $em
     ): Response {
-        $commentaire = $repository->find($id);
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['success' => false, 'error' => 'Vous devez être connecté pour liker.'], 403);
+        }
 
+        $commentaire = $repository->find($id);
         if (!$commentaire) {
             return $this->json(['success' => false, 'error' => 'Commentaire non trouve'], 404);
         }
 
-        $data = json_decode($request->getContent(), true);
-        if (!is_array($data)) {
-            return $this->json(['success' => false, 'error' => 'Requete invalide'], 400);
-        }
+        $existingLike = $likeRepository->findByUserAndCommentaire($user, $commentaire);
 
-        $action = $data['action'] ?? 'like';
-        if (!in_array($action, ['like', 'unlike'], true)) {
-            return $this->json(['success' => false, 'error' => 'Action invalide'], 400);
-        }
-
-        if ($action === 'like') {
-            $commentaire->incrementLikes();
-        } else {
+        if ($existingLike) {
+            // Unlike: remove the like
+            $em->remove($existingLike);
             $commentaire->decrementLikes();
+            $action = 'unliked';
+        } else {
+            // Like: add a new like
+            $like = new CommentaireLike();
+            $like->setUser($user);
+            $like->setCommentaire($commentaire);
+            $em->persist($like);
+            $commentaire->incrementLikes();
+            $action = 'liked';
         }
 
         $em->flush();
@@ -186,6 +194,7 @@ class CommentaireController extends AbstractController
             'success' => true,
             'likes' => $commentaire->getLikeCount(),
             'action' => $action,
+            'hasLiked' => $action === 'liked',
         ]);
     }
 }

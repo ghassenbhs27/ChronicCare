@@ -289,9 +289,52 @@
   </main>
 </div>
 
+<!-- Profile Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true" data-turbo-permanent>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Mon profil</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="profileModalBody">
+        <div class="text-center py-3">
+          <div class="spinner-border" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('assets/vendor/aos/aos.js') }}"></script>
 <script src="{{ asset('assets/js/main.js') }}"></script>
+<script src="{{ asset('assets/js/profile-modal.js') }}"></script>
+<script>
+(function() {
+  var STORAGE_KEY = 'chroniccare_admin_sidebar_collapsed';
+  var sidebar = document.getElementById('adminSidebar');
+  var toggle = document.getElementById('adminSidebarToggle');
+  if (!sidebar || !toggle) return;
+  function applyState(collapsed) {
+    if (collapsed) {
+      sidebar.classList.add('collapsed');
+      sidebar.setAttribute('data-collapsed', 'true');
+    } else {
+      sidebar.classList.remove('collapsed');
+      sidebar.setAttribute('data-collapsed', 'false');
+    }
+    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (e) {}
+  }
+  var saved = false;
+  try { saved = localStorage.getItem(STORAGE_KEY) === '1'; } catch (e) {}
+  applyState(saved);
+  toggle.addEventListener('click', function() {
+    var collapsed = sidebar.classList.contains('collapsed');
+    applyState(!collapsed);
+  });
+})();
+</script>
 {% block javascripts %}{% endblock %}
 </body>
 </html>

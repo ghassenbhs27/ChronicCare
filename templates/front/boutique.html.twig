@@ -43,6 +43,13 @@
         justify-content:center;
         background:#f6f8fb;
         border:1px solid rgba(16,24,40,0.04);
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none;
+      }
+      .service-image:hover {
+        transform: scale(1.08);
+        box-shadow: 0 8px 16px rgba(11, 207, 153, 0.2);
       }
       .service-image img{ width:100%; height:100%; object-fit:cover; display:block; }
 
@@ -121,9 +128,26 @@
               {% for produit in produits|slice(0, 8) %}
               <div class="col-lg-6">
                 <div class="service-item {{ loop.first ? 'featured' : '' }}">
-                  <div class="service-image">
-                    <img src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" onerror="this.style.display='none'">
-                  </div>
+                  <a href="{{ path('produit_show', {id: produit.id}) }}" class="service-image" title="Voir {{ produit.nom }}">
+                    {% set categoryLower = produit.categorie|lower %}
+                    {% if 'supplément' in categoryLower %}
+                      {% set iconClass = 'bi-capsule' %}
+                    {% elseif 'équipement' in categoryLower or 'monitoring' in categoryLower %}
+                      {% set iconClass = 'bi-heart-pulse' %}
+                    {% elseif 'bien-être' in categoryLower or 'yoga' in categoryLower %}
+                      {% set iconClass = 'bi-flower1' %}
+                    {% else %}
+                      {% set iconClass = 'bi-box-seam' %}
+                    {% endif %}
+                    <img id="img-{{ produit.id }}" src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" style="display:none;">
+                    <i id="icon-{{ produit.id }}" class="bi {{ iconClass }}" style="font-size:40px; color:#0bcf99;"></i>
+                    <script>
+                      document.getElementById('img-{{ produit.id }}').onload = function() {
+                        this.style.display = 'block';
+                        document.getElementById('icon-{{ produit.id }}').style.display = 'none';
+                      };
+                    </script>
+                  </a>
                   <div class="service-details">
                     <h5>{{ produit.nom }}</h5>
                     <p>{{ produit.description|slice(0, 120) }}{% if produit.description|length > 120 %}...{% endif %}</p>

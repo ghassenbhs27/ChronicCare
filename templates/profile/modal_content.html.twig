@@ -10,7 +10,9 @@
 {% if mode == 'view' %}
   <div class="cc-profile">
     <div class="cc-avatar">
-      {% if app.user.photoProfil %}
+      {% if app.user.profileImage %}
+        <img src="{{ asset('uploads/profiles/' ~ app.user.profileImage) }}" alt="{{ app.user.fullName }}" style="width: 100%; height: 100%; object-fit: cover;">
+      {% elseif app.user.photoProfil %}
         <img src="{{ asset('uploads/profile/' ~ app.user.photoProfil) }}" alt="Photo de profil" style="width:100%;height:100%;object-fit:cover;border-radius:18px;">
       {% else %}
         {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
@@ -47,6 +49,7 @@
       </div>
     </li>
 
+    {% if not is_granted('ROLE_ADMIN') %}
     <li class="cc-item">
       <span class="cc-ico"><i class="bi bi-gender-ambiguous"></i></span>
       <div>
@@ -70,6 +73,7 @@
         </p>
       </div>
     </li>
+    {% endif %}
   </ul>
 
   <div class="cc-actions">
@@ -96,7 +100,7 @@
     {{ form_start(form, {
       action: path('app_profile_edit'),
       method: 'POST',
-      attr: { id: 'profile-edit-form', novalidate: 'novalidate' }
+      attr: { id: 'profile-edit-form', novalidate: 'novalidate', enctype: 'multipart/form-data' }
     }) }}
 
     <div class="row g-3">
@@ -118,11 +122,28 @@
         <div class="text-danger small mt-1">{{ form_errors(form.email) }}</div>
       </div>
 
+      {% if form.genre is defined %}
       <div class="col-12">
         <label class="form-label fw-bold">Genre</label>
         {{ form_widget(form.genre) }}
         <div class="text-danger small mt-1">{{ form_errors(form.genre) }}</div>
       </div>
+      {% endif %}
+
+      {% if form.profileImage is defined %}
+      <div class="col-12">
+        <label class="form-label fw-bold">Photo de profil</label>
+        {% if app.user.profileImage %}
+          <div class="mb-3">
+            <img src="{{ asset('uploads/profiles/' ~ app.user.profileImage) }}" alt="{{ app.user.fullName }}" class="rounded" style="max-width: 150px; height: auto;">
+            <p class="small text-muted mt-2">Cliquez ci-dessous pour changer</p>
+          </div>
+        {% endif %}
+        {{ form_widget(form.profileImage) }}
+        <small class="text-muted d-block mt-2">{{ form.profileImage.vars.help }}</small>
+        <div class="text-danger small mt-1">{{ form_errors(form.profileImage) }}</div>
+      </div>
+      {% endif %}
 
       {% if form.mainRole is defined %}
         <div class="col-12">

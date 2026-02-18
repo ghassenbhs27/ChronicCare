@@ -1,0 +1,193 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Visualisation du Workflow Commande{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4 mb-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="bi bi-diagram-3"></i> State Machine - Diagramme du Workflow
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Diagramme de Transition des États</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mermaid" style="text-align: center;">
+stateDiagram-v2
+    [*] --> en_attente
+    
+    en_attente --> validee : valider<br/>(paiement confirmé)
+    en_attente --> annulee : annuler_depuis_attente<br/>(avant validation)
+    
+    validee --> expediee : expedier<br/>(envoi au transporteur)
+    validee --> annulee : annuler_depuis_validee<br/>(remboursement)
+    
+    expediee --> livree : livrer<br/>(livraison confirmée)
+    
+    livree --> [*]
+    annulee --> [*]
+    
+    note right of en_attente
+        🕐 En attente
+        Commande créée,
+        paiement en attente
+    end note
+    
+    note right of validee
+        ✅ Validée
+        Paiement confirmé,
+        prête à expédier
+    end note
+    
+    note right of expediee
+        📦 Expédiée
+        Envoyée au transporteur
+        avec numéro de tracking
+    end note
+    
+    note right of livree
+        ✓ Livrée
+        Client a reçu sa commande
+        État final
+    end note
+    
+    note right of annulee
+        ✗ Annulée
+        Commande annulée
+        État final
+    end note
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Transitions Autorisées</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Depuis</th>
+                                <th></th>
+                                <th>Vers</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="table-success">
+                                <td><span class="badge bg-warning">en_attente</span></td>
+                                <td>→</td>
+                                <td><span class="badge bg-success">validee</span></td>
+                                <td><strong>valider</strong></td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><span class="badge bg-success">validee</span></td>
+                                <td>→</td>
+                                <td><span class="badge bg-info">expediee</span></td>
+                                <td><strong>expedier</strong></td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><span class="badge bg-info">expediee</span></td>
+                                <td>→</td>
+                                <td><span class="badge bg-primary">livree</span></td>
+                                <td><strong>livrer</strong></td>
+                            </tr>
+                            <tr class="table-danger">
+                                <td><span class="badge bg-warning">en_attente</span></td>
+                                <td>→</td>
+                                <td><span class="badge bg-danger">annulee</span></td>
+                                <td><strong>annuler_depuis_attente</strong></td>
+                            </tr>
+                            <tr class="table-danger">
+                                <td><span class="badge bg-success">validee</span></td>
+                                <td>→</td>
+                                <td><span class="badge bg-danger">annulee</span></td>
+                                <td><strong>annuler_depuis_validee</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Transitions Interdites ❌</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-x-circle text-danger"></i>
+                            <strong>expediee</strong> → <strong>en_attente</strong>
+                            <br><small class="text-muted">Impossible de revenir en arrière</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-x-circle text-danger"></i>
+                            <strong>livree</strong> → <em>(aucune transition)</em>
+                            <br><small class="text-muted">État final, aucun retour possible</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-x-circle text-danger"></i>
+                            <strong>annulee</strong> → <em>(aucune transition)</em>
+                            <br><small class="text-muted">État final, aucun retour possible</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-x-circle text-danger"></i>
+                            <strong>expediee</strong> → <strong>annulee</strong>
+                            <br><small class="text-muted">Impossible d'annuler une fois expédiée</small>
+                        </li>
+                    </ul>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-shield-check"></i>
+                        <strong>Garanties du State Machine :</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Transitions invalides bloquées automatiquement</li>
+                            <li>Historique complet via Event Sourcing</li>
+                            <li>Guards de validation avant chaque transition</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 mb-4">
+        <div class="col-12 text-center">
+            <a href="{{ path('admin_commande_workflow_dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour au dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+{# Chargement de Mermaid.js pour le diagramme #}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({ 
+        startOnLoad: true,
+        theme: 'default',
+        themeVariables: {
+            primaryColor: '#0d6efd',
+            primaryTextColor: '#fff',
+            primaryBorderColor: '#0a58ca',
+            lineColor: '#6c757d',
+            secondaryColor: '#6c757d',
+            tertiaryColor: '#f8f9fa'
+        }
+    });
+</script>
+{% endblock %}

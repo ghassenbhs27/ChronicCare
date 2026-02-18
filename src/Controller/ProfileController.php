@@ -35,10 +35,39 @@ class ProfileController extends AbstractController
 
         $user = $this->getUser();
 
-        $form = $this->createForm(ProfileType::class, $user);
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $form = $this->createForm(ProfileType::class, $user, ['is_admin' => $isAdmin]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Handle profile image upload
+            $profileImageFile = $form->get('profileImage')->getData();
+            if ($profileImageFile) {
+                try {
+                    $originalFilename = pathinfo($profileImageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                    $safeFilename = $slugger->slug($originalFilename);
+                    $newFilename = $safeFilename . '-' . uniqid() . '.' . $profileImageFile->guessExtension();
+
+                    $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+
+                    // Delete old image if exists
+                    if ($user->getProfileImage()) {
+                        $oldImagePath = $uploadDir . '/' . $user->getProfileImage();
+                        if (file_exists($oldImagePath)) {
+                            unlink($oldImagePath);
+                        }
+                    }
+
+                    $profileImageFile->move($uploadDir, $newFilename);
+                    $user->setProfileImage($newFilename);
+                } catch (\Exception $e) {
+                    // Handle error silently or log it
+                }
+            }
+
             // updatedAt
             $user->setUpdatedAt(new \DateTimeImmutable());
 
@@ -47,9 +76,11 @@ class ProfileController extends AbstractController
             if ($newPassword) {
                 $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
             }
-            $role = $form->get('mainRole')->getData();
-            if ($role) {
-                $user->setRoles([$role]); // ou array_unique([...$user->getRoles(), $role])
+            if ($form->has('mainRole')) {
+                $role = $form->get('mainRole')->getData();
+                if ($role) {
+                    $user->setRoles([$role]);
+                }
             }
 
             /** @var UploadedFile|null $photoFile */

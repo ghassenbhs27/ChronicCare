@@ -1,0 +1,135 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Commandes - Workflow & Event Sourcing{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                <i class="bi bi-box-seam"></i> Gestion Avancée des Commandes
+                <span class="badge bg-secondary">{{ commandes|length }}</span>
+            </h1>
+            <p class="text-muted">🔥 Workflow State Machine + Event Sourcing</p>
+        </div>
+    </div>
+
+    {# 🔥 NOUVEAU : Statistiques par statut #}
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">En attente</h6>
+                    <h2 class="text-warning mb-0">{{ stats['en_attente'] ?? 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Validées</h6>
+                    <h2 class="text-info mb-0">{{ stats['validee'] ?? 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Expédiées</h6>
+                    <h2 class="text-primary mb-0">{{ stats['expediee'] ?? 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Livrées</h6>
+                    <h2 class="text-success mb-0">{{ stats['livree'] ?? 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Annulées</h6>
+                    <h2 class="text-danger mb-0">{{ stats['annulee'] ?? 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center bg-light">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Total</h6>
+                    <h2 class="mb-0">{{ commandes|length }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">📦 Liste des Commandes</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Numéro</th>
+                            <th>Client</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for commande in commandes %}
+                        <tr>
+                            <td><code>{{ commande.numeroCommande }}</code></td>
+                            <td>{{ commande.utilisateur.email }}</td>
+                            <td>{{ commande.createdAt|date('d/m/Y H:i') }}</td>
+                            <td><strong>{{ commande.total }} €</strong></td>
+                            <td>
+                                {% set badge_class = {
+                                    'en_attente': 'warning',
+                                    'validee': 'info',
+                                    'expediee': 'primary',
+                                    'livree': 'success',
+                                    'annulee': 'danger'
+                                } %}
+                                <span class="badge bg-{{ badge_class[commande.statut] ?? 'secondary' }}">
+                                    {{ commande.statut|replace({'_': ' '})|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ path('admin_commande_workflow_show', {id: commande.id}) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="bi bi-diagram-3"></i> Workflow & Histoire
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox"></i> Aucune commande
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-4">
+        <strong><i class="bi bi-info-circle"></i> Fonctionnalités Avancées:</strong>
+        <ul class="mb-0 mt-2">
+            <li>✅ <strong>State Machine:</strong> Transitions de workflow validées automatiquement</li>
+            <li>✅ <strong>Event Sourcing:</strong> Historique complet de chaque commande</li>
+            <li>✅ <strong>Guards:</strong> Règles métier qui bloquent les transitions invalides</li>
+            <li>✅ <strong>Audit Trail:</strong> Traçabilité complète (qui, quand, où, pourquoi)</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Workflow - Commande {{ commande.numeroCommande }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            {# Détails de la commande #}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box"></i> Commande {{ commande.numeroCommande }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Client :</strong> {{ commande.utilisateur.prenom }} {{ commande.utilisateur.nom }}</p>
+                            <p><strong>Email :</strong> {{ commande.utilisateur.email }}</p>
+                            <p><strong>Total :</strong> {{ commande.total }} €</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Date :</strong> {{ commande.createdAt|date('d/m/Y H:i') }}</p>
+                            <p><strong>Statut actuel :</strong> 
+                                {% set badge_class = {
+                                    'en_attente': 'warning',
+                                    'validee': 'success',
+                                    'expediee': 'info',
+                                    'livree': 'primary',
+                                    'annulee': 'danger'
+                                } %}
+                                <span class="badge bg-{{ badge_class[commande.statut] ?? 'secondary' }}">
+                                    {{ commande.statut|replace({'_': ' '})|upper }}
+                                </span>
+                            </p>
+                            {% if commande.adresse %}
+                            <p><strong>Adresse :</strong> {{ commande.adresse }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Transitions disponibles #}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-arrow-right-circle"></i> Actions Disponibles (State Machine)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if transitions|length > 0 %}
+                        <div class="row">
+                            {% for transition in transitions %}
+                                {% set meta = transition.metadata %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-{{ meta.color ?? 'secondary' }}">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="{{ meta.icon ?? 'bi-arrow-right' }}"></i>
+                                                {{ meta.title ?? transition.name }}
+                                            </h6>
+                                            <p class="card-text small">
+                                                {{ meta.description ?? 'Appliquer cette transition' }}
+                                            </p>
+                                            <form method="post" 
+                                                  action="{{ path('admin_commande_apply_transition', {
+                                                      id: commande.id, 
+                                                      transition: transition.name
+                                                  }) }}" 
+                                                  class="d-inline">
+                                                <input type="hidden" name="_token" 
+                                                       value="{{ csrf_token('transition_' ~ commande.id) }}">
+                                                <button type="submit" 
+                                                        class="btn btn-{{ meta.color ?? 'secondary' }} btn-sm"
+                                                        onclick="return confirm('Confirmer cette transition ?')">
+                                                    <i class="{{ meta.icon ?? 'bi-arrow-right' }}"></i>
+                                                    {{ meta.title ?? transition.name }}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Aucune transition disponible depuis le statut actuel.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Historique complet (Event Sourcing) #}
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Historique Complet
+                        <span class="badge bg-light text-dark">{{ history|length }}</span>
+                    </h5>
+                    <small>Event Sourcing - Traçabilité totale</small>
+                </div>
+                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    {% if history|length > 0 %}
+                        <div class="timeline">
+                            {% for event in history %}
+                            <div class="mb-4 pb-3 border-bottom">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-2">
+                                        <span class="{{ event.badgeClass }}">
+                                            <i class="{{ event.icon }}"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <strong>{{ event.formattedMessage }}</strong>
+                                        
+                                        {% if event.oldValue and event.newValue %}
+                                        <br>
+                                        <small class="text-muted">
+                                            <span class="badge bg-secondary">{{ event.oldValue }}</span>
+                                            <i class="bi bi-arrow-right"></i>
+                                            <span class="badge bg-primary">{{ event.newValue }}</span>
+                                        </small>
+                                        {% endif %}
+
+                                        {% if event.reason %}
+                                        <br>
+                                        <small class="text-info">
+                                            <i class="bi bi-info-circle"></i> {{ event.reason }}
+                                        </small>
+                                        {% endif %}
+
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar"></i> {{ event.createdAt|date('d/m/Y H:i:s') }}
+                                        </small>
+
+                                        {% if event.triggeredBy %}
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="bi bi-person"></i> 
+                                            {{ event.triggeredBy.prenom }} {{ event.triggeredBy.nom }}
+                                        </small>
+                                        {% endif %}
+
+                                        {% if event.ipAddress %}
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="bi bi-geo-alt"></i> {{ event.ipAddress }}
+                                        </small>
+                                        {% endif %}
+
+                                        {# Données additionnelles #}
+                                        {% if event.eventData|length > 0 %}
+                                        <details class="mt-2">
+                                            <summary class="text-muted small" style="cursor: pointer;">
+                                                <i class="bi bi-code-square"></i> Données techniques
+                                            </summary>
+                                            <pre class="small mb-0 mt-1">{{ event.eventData|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                                        </details>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucun événement enregistré.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Boutons d'action #}
+    <div class="row mt-3 mb-4">
+        <div class="col-12">
+            <a href="{{ path('admin_commande_workflow_dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour au dashboard
+            </a>
+            <a href="{{ path('commande_show', {id: commande.id}) }}" class="btn btn-outline-primary">
+                <i class="bi bi-eye"></i> Vue client
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline .border-bottom:last-child {
+    border-bottom: none !important;
+}
+details pre {
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+</style>
+{% endblock %}

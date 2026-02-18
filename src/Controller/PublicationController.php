@@ -3,8 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Publication;
+use App\Entity\PublicationLike;
+use App\Entity\PublicationView;
 use App\Repository\CommentaireRepository;
+use App\Repository\PublicationLikeRepository;
 use App\Repository\PublicationRepository;
+use App\Repository\PublicationViewRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -80,6 +84,8 @@ class PublicationController extends AbstractController
         Request $request,
         PublicationRepository $repository,
         CommentaireRepository $commentaireRepository,
+        PublicationLikeRepository $likeRepository,
+        PublicationViewRepository $viewRepository,
         EntityManagerInterface $em
     ): Response {
         $publication = $repository->find($id);
@@ -93,8 +99,14 @@ class PublicationController extends AbstractController
             throw $this->createNotFoundException('Publication non trouvee');
         }
 
-        $publication->setNbVues($publication->getNbVues() + 1);
-        $em->flush();
+        // Increment view count only for unique users
+        $user = $this->getUser();
+        if ($user && !$viewRepository->hasUserViewed($user, $publication)) {
+            $view = new PublicationView($user, $publication);
+            $em->persist($view);
+            $publication->setNbVues($publication->getNbVues() + 1);
+            $em->flush();
+        }
 
         $page = max(1, $request->query->getInt('page', 1));
         $limit = 7;
@@ -104,6 +116,11 @@ class PublicationController extends AbstractController
         $totalPages = max(1, (int) ceil($totalCommentaires / $limit));
         $canComment = $publication->getStatut() === Publication::STATUT_PUBLIE;
 
+        $userHasLiked = false;
+        if ($this->getUser()) {
+            $userHasLiked = $likeRepository->hasUserLiked($this->getUser(), $publication);
+        }
+
         return $this->render('publication/show.html.twig', [
             'publication' => $publication,
             'commentaires' => $commentaires,
@@ -111,6 +128,7 @@ class PublicationController extends AbstractController
             'totalPages' => $totalPages,
             'totalCommentaires' => $totalCommentaires,
             'can_comment' => $canComment,
+            'userHasLiked' => $userHasLiked,
         ]);
     }
 
@@ -250,31 +268,37 @@ class PublicationController extends AbstractController
     }
 
     #[Route('/like/{id}', name: 'publication_like', requirements: ['id' => '\\d+'], methods: ['POST'])]
-    public function like(int $id, Request $request, PublicationRepository $repository, EntityManagerInterface $em): Response
-    {
-        $publication = $repository->find($id);
+    public function like(
+        int $id,
+        PublicationRepository $repository,
+        PublicationLikeRepository $likeRepository,
+        EntityManagerInterface $em
+    ): Response {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['success' => false, 'error' => 'Vous devez etre connecte pour liker.'], 403);
+        }
 
+        $publication = $repository->find($id);
         if (!$publication) {
             return $this->json(['success' => false, 'error' => 'Publication non trouvee'], 404);
         }
 
-        $data = json_decode($request->getContent(), true);
-        if (!is_array($data)) {
-            return $this->json(['success' => false, 'error' => 'Requete invalide'], 400);
-        }
+        $existingLike = $likeRepository->findByUserAndPublication($user, $publication);
 
-        $action = $data['action'] ?? 'like';
-        if (!in_array($action, ['like', 'unlike'], true)) {
-            return $this->json(['success' => false, 'error' => 'Action invalide'], 400);
-        }
-
-        if ($action === 'like') {
-            $publication->setNbLikes($publication->getNbLikes() + 1);
+        if ($existingLike) {
+            // Unlike: remove the like
+            $em->remove($existingLike);
+            $publication->setNbLikes(max(0, $publication->getNbLikes() - 1));
+            $action = 'unliked';
         } else {
-            $currentLikes = $publication->getNbLikes();
-            if ($currentLikes > 0) {
-                $publication->setNbLikes($currentLikes - 1);
-            }
+            // Like: add a new like
+            $like = new PublicationLike();
+            $like->setUser($user);
+            $like->setPublication($publication);
+            $em->persist($like);
+            $publication->setNbLikes($publication->getNbLikes() + 1);
+            $action = 'liked';
         }
 
         $em->flush();
@@ -283,6 +307,7 @@ class PublicationController extends AbstractController
             'success' => true,
             'likes' => $publication->getNbLikes(),
             'action' => $action,
+            'hasLiked' => $action === 'liked',
         ]);
     }
 }

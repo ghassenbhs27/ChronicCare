@@ -1,0 +1,236 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une commande - Validation côté serveur{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h1 class="mb-4">
+                <i class="fas fa-shopping-cart"></i> Créer une nouvelle commande
+            </h1>
+
+            {# Afficher les erreurs de validation globales #}
+            {% include 'partials/form_errors.html.twig' %}
+
+            <div class="card shadow-lg border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-list-check"></i> Formulaire de commande</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {# Protection CSRF - OBLIGATOIRE #}
+                        {{ form_row(form._token) }}
+
+                        <fieldset class="border p-4 mb-4 rounded bg-light">
+                            <legend class="w-auto px-2">Informations de la commande</legend>
+
+                            {# Champ Numéro de commande #}
+                            <div class="form-group mb-3">
+                                <label for="{{ form.numeroCommande.vars.id }}" class="form-label">
+                                    Numéro de commande
+                                    <span class="text-danger" title="Champ obligatoire">*</span>
+                                </label>
+                                {% set has_error = form.numeroCommande.vars.errors|length > 0 %}
+                                <input type="text" 
+                                   id="{{ form.numeroCommande.vars.id }}"
+                                   name="{{ form.numeroCommande.vars.full_name }}"
+                                   value="{{ form.numeroCommande.vars.value }}"
+                                   class="form-control {{ has_error ? 'is-invalid' : '' }}"
+                                   placeholder="Ex: CMD-2025-001"
+                                   maxlength="50"
+                                   required>
+                                <small class="text-muted d-block mt-1">
+                                    Format: lettres majuscules, chiffres et tirets uniquement
+                                </small>
+                                {% if has_error %}
+                                    <div class="invalid-feedback d-block mt-2">
+                                        {% for error in form.numeroCommande.vars.errors %}
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="fas fa-exclamation-circle text-danger"></i>
+                                                <span>{{ error.message }}</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            {# Champ Statut #}
+                            <div class="form-group mb-3">
+                                <label for="{{ form.statut.vars.id }}" class="form-label">
+                                    Statut de la commande
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {% set has_error = form.statut.vars.errors|length > 0 %}
+                                <select id="{{ form.statut.vars.id }}"
+                                    name="{{ form.statut.vars.full_name }}"
+                                    class="form-control {{ has_error ? 'is-invalid' : '' }}"
+                                    required>
+                                    <option value="">-- Sélectionnez un statut --</option>
+                                    <option value="en_attente" {% if form.statut.vars.value == 'en_attente' %}selected{% endif %}>
+                                        En attente
+                                    </option>
+                                    <option value="validée" {% if form.statut.vars.value == 'validée' %}selected{% endif %}>
+                                        Validée
+                                    </option>
+                                    <option value="expédiée" {% if form.statut.vars.value == 'expédiée' %}selected{% endif %}>
+                                        Expédiée
+                                    </option>
+                                    <option value="livrée" {% if form.statut.vars.value == 'livrée' %}selected{% endif %}>
+                                        Livrée
+                                    </option>
+                                    <option value="annulée" {% if form.statut.vars.value == 'annulée' %}selected{% endif %}>
+                                        Annulée
+                                    </option>
+                                </select>
+                                {% if has_error %}
+                                    <div class="invalid-feedback d-block mt-2">
+                                        {% for error in form.statut.vars.errors %}
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                            {{ error.message }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            {# Champ Adresse #}
+                            <div class="form-group mb-3">
+                                <label for="{{ form.adresse.vars.id }}" class="form-label">
+                                    Adresse de livraison
+                                </label>
+                                {% set has_error = form.adresse.vars.errors|length > 0 %}
+                                <textarea id="{{ form.adresse.vars.id }}"
+                                    name="{{ form.adresse.vars.full_name }}"
+                                    class="form-control {{ has_error ? 'is-invalid' : '' }}"
+                                    rows="4"
+                                    placeholder="Ex: 123 Rue de Paris, 75001 Paris"
+                                    maxlength="500"
+                                    required>{{ form.adresse.vars.value }}</textarea>
+                                <small class="text-muted d-block mt-1">
+                                    Minimum 10 caractères, maximum 500 caractères
+                                </small>
+                                {% if has_error %}
+                                    <div class="invalid-feedback d-block mt-2">
+                                        {% for error in form.adresse.vars.errors %}
+                                            <div>
+                                                <i class="fas fa-exclamation-circle text-danger"></i>
+                                                {{ error.message }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </fieldset>
+
+                        {# Boutons d'action #}
+                        <div class="d-flex gap-2 justify-content-between align-items-center">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save"></i> Créer la commande
+                                </button>
+                                <a href="{{ path('commande_history') }}" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-arrow-left"></i> Annuler
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {# Section d'aide et d'information #}
+            <div class="row mt-5">
+                <div class="col-md-6">
+                    <div class="alert alert-info" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-shield-alt"></i> Sécurité
+                        </h5>
+                        <ul class="mb-0 ps-3">
+                            <li>✅ Validation côté serveur</li>
+                            <li>✅ Protection CSRF</li>
+                            <li>✅ Pas de dépendance JavaScript</li>
+                            <li>✅ Vérification des permissions</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-success" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-check-circle"></i> Validation
+                        </h5>
+                        <ul class="mb-0 ps-3">
+                            <li>✅ Format de numéro stricte</li>
+                            <li>✅ Choix de statut limité</li>
+                            <li>✅ Adresse validée</li>
+                            <li>✅ Messages d'erreur clairs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .form-control.is-invalid {
+            border-color: #dc3545 !important;
+            padding-right: calc(1.5em + 0.75rem);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath fill='%23dc3545' d='M8 4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0 0 1h3A.5.5 0 0 0 8 4z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        .form-control.is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        .invalid-feedback {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .form-label .text-danger {
+            margin-left: 4px;
+        }
+
+        fieldset {
+            border: 1px solid #dee2e6 !important;
+        }
+
+        legend {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .alert {
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            border-left-color: #0dcaf0;
+        }
+
+        .alert-success {
+            border-left-color: #198754;
+        }
+
+        .needs-validation {
+            margin-top: 1.5rem;
+        }
+
+        .card-header {
+            border-bottom: 3px solid;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+    </style>
+{% endblock %}

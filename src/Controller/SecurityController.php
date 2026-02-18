@@ -77,6 +77,27 @@ class SecurityController extends BaseController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Handle profile image upload
+            $profileImageFile = $form->get('profileImage')->getData();
+            if ($profileImageFile) {
+                try {
+                    $originalFilename = pathinfo($profileImageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                    $safeFilename = $slugger->slug($originalFilename);
+                    $newFilename = $safeFilename . '-' . uniqid() . '.' . $profileImageFile->guessExtension();
+
+                    $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+
+                    $profileImageFile->move($uploadDir, $newFilename);
+                    $user->setProfileImage($newFilename);
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de l\'image: ' . $e->getMessage());
+                    return $this->redirectToRoute('app_register');
+                }
+            }
+
             $plainPassword = $form->get('password')->getData();
             $requestedRole = (string) ($form->get('requestedRole')->getData() ?? 'ROLE_PATIENT');
             /** @var UploadedFile|null $photoFile */

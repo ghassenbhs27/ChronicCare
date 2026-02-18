@@ -158,6 +158,24 @@ class RDVRepository extends ServiceEntityRepository
         return (int) $count > 0;
     }
 
+    /**
+     * Returns all booked (non-cancelled) datetime strings for a professional.
+     * @return string[] Array of date strings in 'Y-m-d\TH:i' format
+     */
+    public function findBookedDatesByProfessionnel(int $professionnelId): array
+    {
+        $results = $this->createQueryBuilder('r')
+            ->select('r.dateRdv')
+            ->andWhere('r.professionnel = :professionnel')
+            ->andWhere('r.statut != :annule')
+            ->setParameter('professionnel', $professionnelId)
+            ->setParameter('annule', RDV::STATUT_ANNULE)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(fn($row) => $row['dateRdv']->format('Y-m-d\TH:i'), $results);
+    }
+
     //    /**
     //     * @return RDV[] Returns an array of RDV objects
     //     */

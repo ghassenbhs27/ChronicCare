@@ -100,7 +100,7 @@
 <div class="col-lg-6">
   <div class="appointment-form-wrapper" data-aos="fade-up" data-aos-delay="200">
     
-    {{ form_start(form, {'attr': {'class': 'appointment-form', 'novalidate': 'novalidate'}}) }}
+    {{ form_start(form, {'attr': {'class': 'appointment-form', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
       <div class="row gy-3">
 
         <div class="col-md-6">
@@ -131,6 +131,15 @@
         <div class="col-md-12">
           {{ form_widget(form.requestedRole, {'attr': {'class': 'form-select'}}) }}
           <div class="text-danger">{{ form_errors(form.requestedRole) }}</div>
+        </div>
+
+        <div class="col-md-12">
+          <label for="{{ form.profileImage.vars.id }}" class="form-label">{{ form.profileImage.vars.label }}</label>
+          <div class="input-group">
+            {{ form_widget(form.profileImage) }}
+            <small class="d-block text-muted mt-2">{{ form.profileImage.vars.help }}</small>
+          </div>
+          <div class="text-danger">{{ form_errors(form.profileImage) }}</div>
         </div>
 
         <div class="col-md-12">

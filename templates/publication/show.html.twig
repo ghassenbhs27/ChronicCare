@@ -45,9 +45,20 @@
         <div class="forum-article-body">
           {{ publication.contenu|nl2br }}
         </div>
-        <div class="forum-article-stats">
+        <div class="forum-article-stats d-flex align-items-center gap-4">
           <span><i class="bi bi-eye me-1"></i> {{ publication.nbVues }} vues</span>
-          <span><i class="bi bi-heart me-1"></i> {{ publication.nbLikes }} likes</span>
+
+          {% if app.user %}
+            <button type="button" id="likeBtn" class="btn btn-sm {{ userHasLiked ? 'btn-danger' : 'btn-outline-danger' }} d-flex align-items-center gap-1"
+                    onclick="toggleLike({{ publication.id }})" title="{{ userHasLiked ? 'Retirer le like' : 'Ajouter un like' }}">
+              <i class="bi {{ userHasLiked ? 'bi-heart-fill' : 'bi-heart' }}" id="likeIcon"></i>
+              <span id="likeCount">{{ publication.nbLikes }}</span>
+              <span class="d-none d-sm-inline" id="likeText">{{ userHasLiked ? 'Aimé' : "J'aime" }}</span>
+            </button>
+          {% else %}
+            <span class="text-muted" title="Connectez-vous pour liker"><i class="bi bi-heart me-1"></i> {{ publication.nbLikes }} likes</span>
+          {% endif %}
+
           <span><i class="bi bi-chat-dots me-1"></i> {{ totalCommentaires }} commentaire(s)</span>
         </div>
         <div class="forum-article-actions">
@@ -106,10 +117,25 @@
                   <span class="forum-comment-date">{{ commentaire.createdAt|date('d/m/Y à H:i') }}</span>
                 </div>
                 <div class="forum-comment-text">{{ commentaire.contenu|nl2br }}</div>
-                <div class="forum-comment-actions">
-                  <span class="small text-muted"><i class="bi bi-heart"></i> {{ commentaire.likeCount }}</span>
+                <div class="forum-comment-actions d-flex align-items-center gap-2">
+                  {% if app.user %}
+                    <button type="button"
+                            class="btn btn-sm {{ commentaire.isLikedByUser(app.user) ? 'btn-danger' : 'btn-outline-danger' }} d-flex align-items-center gap-1 comment-like-btn"
+                            data-comment-id="{{ commentaire.id }}"
+                            onclick="toggleCommentLike({{ commentaire.id }})"
+                            title="{{ commentaire.isLikedByUser(app.user) ? 'Retirer le like' : 'Aimer ce commentaire' }}"
+                            style="transition: all 0.2s ease;">
+                      <i class="bi {{ commentaire.isLikedByUser(app.user) ? 'bi-heart-fill' : 'bi-heart' }}" id="commentLikeIcon-{{ commentaire.id }}"></i>
+                      <span id="commentLikeCount-{{ commentaire.id }}">{{ commentaire.likeCount }}</span>
+                    </button>
+                  {% else %}
+                    <span class="small text-muted"><i class="bi bi-heart"></i> {{ commentaire.likeCount }}</span>
+                  {% endif %}
                   {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
                     <a href="{{ path('commentaire_edit', {id: commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                  {% endif %}
+                  {# Supprimer : l'auteur du commentaire OU le coach/admin #}
+                  {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN')) %}
                     <form method="post" action="{{ path('commentaire_delete', {id: commentaire.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce commentaire ?');">
                       <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ commentaire.id) }}">
                       <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
@@ -147,4 +173,101 @@
       </section>
     </div>
   </main>
+
+{% if app.user %}
+<script>
+  let isProcessing = false;
+
+  function toggleLike(publicationId) {
+    if (isProcessing) return;
+    isProcessing = true;
+
+    const btn = document.getElementById('likeBtn');
+    const icon = document.getElementById('likeIcon');
+    const count = document.getElementById('likeCount');
+    const text = document.getElementById('likeText');
+
+    btn.disabled = true;
+
+    fetch('/publication/like/' + publicationId, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        count.textContent = data.likes;
+
+        if (data.hasLiked) {
+          btn.classList.remove('btn-outline-danger');
+          btn.classList.add('btn-danger');
+          icon.classList.remove('bi-heart');
+          icon.classList.add('bi-heart-fill');
+          text.textContent = 'Aimé';
+          btn.title = 'Retirer le like';
+          // Animation
+          btn.style.transform = 'scale(1.2)';
+          setTimeout(() => btn.style.transform = 'scale(1)', 200);
+        } else {
+          btn.classList.remove('btn-danger');
+          btn.classList.add('btn-outline-danger');
+          icon.classList.remove('bi-heart-fill');
+          icon.classList.add('bi-heart');
+          text.textContent = "J'aime";
+          btn.title = 'Ajouter un like';
+        }
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      btn.disabled = false;
+      isProcessing = false;
+    });
+  }
+
+  function toggleCommentLike(commentId) {
+    const btn = document.querySelector('.comment-like-btn[data-comment-id="' + commentId + '"]');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+
+    const icon = document.getElementById('commentLikeIcon-' + commentId);
+    const count = document.getElementById('commentLikeCount-' + commentId);
+
+    fetch('/commentaire/like/' + commentId, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        count.textContent = data.likes;
+
+        if (data.hasLiked) {
+          btn.classList.remove('btn-outline-danger');
+          btn.classList.add('btn-danger');
+          icon.classList.remove('bi-heart');
+          icon.classList.add('bi-heart-fill');
+          btn.title = 'Retirer le like';
+          btn.style.transform = 'scale(1.2)';
+          setTimeout(() => btn.style.transform = 'scale(1)', 200);
+        } else {
+          btn.classList.remove('btn-danger');
+          btn.classList.add('btn-outline-danger');
+          icon.classList.remove('bi-heart-fill');
+          icon.classList.add('bi-heart');
+          btn.title = 'Aimer ce commentaire';
+        }
+      }
+    })
+    .catch(() => {})
+    .finally(() => { btn.disabled = false; });
+  }
+</script>
+{% endif %}
 {% endblock %}

@@ -106,6 +106,15 @@ class CartController extends AbstractController
         } else {
             $this->cartService->updateQuantity($id, $quantity);
         }
+
+        if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return new JsonResponse([
+                'success' => true,
+                'cartTotal' => $this->cartService->getCartTotal(),
+                'cartCount' => $this->cartService->getCartCount(),
+            ]);
+        }
+
         $this->addFlash('success', 'Panier mis a jour');
 
         return $this->redirectToRoute('cart_show');

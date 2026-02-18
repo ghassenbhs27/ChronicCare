@@ -59,7 +59,8 @@ final class RDVController extends AbstractController
         UserRepository $userRepository,
         RDVService $rdvService,
         NotificationService $notificationService,
-        CalendarService $calendarService
+        CalendarService $calendarService,
+        RDVRepository $rdvRepository
     ): Response {
         $user = $this->getUser();
         $demoMode = !$user instanceof User;
@@ -104,11 +105,13 @@ final class RDVController extends AbstractController
         }
 
         $slots = $calendarService->getAvailableSlots($professionnel);
+        $bookedDates = $rdvRepository->findBookedDatesByProfessionnel($professionnel->getId());
 
         return $this->render('rdv/patient_new.html.twig', [
             'form' => $form->createView(),
             'professionnel' => $professionnel,
             'slots' => $slots,
+            'bookedDates' => $bookedDates,
         ]);
     }
 
@@ -145,7 +148,7 @@ final class RDVController extends AbstractController
 
     #[IsGranted('ROLE_USER')]
     #[Route('/rdv/{id}/reschedule', name: 'patient_rdv_reschedule', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
-    public function reschedulePatient(Request $request, RDV $rdv, RDVService $rdvService): Response
+    public function reschedulePatient(Request $request, RDV $rdv, RDVService $rdvService, RDVRepository $rdvRepository, CalendarService $calendarService): Response
     {
         $user = $this->getUser();
         if ($user instanceof User && $rdv->getPatient()->getId() != $user->getId()) {
@@ -169,9 +172,15 @@ final class RDVController extends AbstractController
             }
         }
 
+        $professionnel = $rdv->getProfessionnel();
+        $bookedDates = $rdvRepository->findBookedDatesByProfessionnel($professionnel->getId());
+        $slots = $calendarService->getAvailableSlots($professionnel);
+
         return $this->render('rdv/patient_reschedule.html.twig', [
             'form' => $form->createView(),
             'rdv' => $rdv,
+            'bookedDates' => $bookedDates,
+            'slots' => $slots,
         ]);
     }
 }

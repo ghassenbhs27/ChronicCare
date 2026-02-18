@@ -93,6 +93,16 @@ class RegistrationFormType extends AbstractType
                 'attr' => ['class' => 'form-select'],
                 'constraints' => [new NotBlank(['message' => 'Veuillez choisir un role.'])],
             ])
+            ->add('profileImage', FileType::class, [
+                'label' => 'Photo de profil',
+                'mapped' => false,
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'accept' => 'image/jpeg,image/png,image/gif,image/webp',
+                ],
+                'help' => 'Formats autorises: JPEG, PNG, GIF, WebP (Max 5 MB)',
+            ])
             ->add('password', RepeatedType::class, [
                 'type' => PasswordType::class,
                 'mapped' => false,

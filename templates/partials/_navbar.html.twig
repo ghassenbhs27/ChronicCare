@@ -88,7 +88,9 @@
       {% if app.user %}
         <div class="dropdown">
           <button class="btn btn-getstarted d-flex align-items-center gap-1 dropdown-toggle" type="button" id="navbarProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Profil">
-            {% if app.user.photoProfil %}
+            {% if app.user.profileImage %}
+              <img src="{{ asset('uploads/profiles/' ~ app.user.profileImage) }}" alt="{{ app.user.fullName }}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+            {% elseif app.user.photoProfil %}
               <img src="{{ asset('uploads/profile/' ~ app.user.photoProfil) }}" alt="Profil" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
             {% else %}
               <i class="bi bi-person-circle fs-5"></i>
@@ -96,8 +98,17 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarProfileDropdown">
             <li class="px-3 py-2 border-bottom">
-              <span class="fw-semibold d-block">{{ app.user.fullName }}</span>
-              <span class="small text-muted">{{ user_role_label }}</span>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                {% if app.user.profileImage %}
+                  <img src="{{ asset('uploads/profiles/' ~ app.user.profileImage) }}" alt="{{ app.user.fullName }}" class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;">
+                {% else %}
+                  <i class="bi bi-person-circle fs-2"></i>
+                {% endif %}
+                <div>
+                  <span class="fw-semibold d-block">{{ app.user.fullName }}</span>
+                  <span class="small text-muted">{{ user_role_label }}</span>
+                </div>
+              </div>
             </li>
             <li>
               <a class="dropdown-item d-flex align-items-center gap-2" href="#" data-open-profile-modal data-url="{{ path('app_profile_modal') }}">

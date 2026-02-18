@@ -1,0 +1,59 @@
+framework:
+    workflows:
+        commande_workflow:
+            type: 'state_machine'
+            audit_trail:
+                enabled: true
+            marking_store:
+                type: 'method'
+                property: 'statut'
+            supports:
+                - App\Entity\Commande
+            initial_marking: en_attente
+            places:
+                - en_attente
+                - validee
+                - expediee
+                - livree
+                - annulee
+            transitions:
+                valider:
+                    from: en_attente
+                    to: validee
+                    metadata:
+                        title: 'Valider la commande'
+                        description: 'Confirmer le paiement et valider la commande'
+                        color: 'success'
+                        icon: 'bi-check-circle'
+                expedier:
+                    from: validee
+                    to: expediee
+                    metadata:
+                        title: 'Expédier la commande'
+                        description: 'La commande a été envoyée au transporteur'
+                        color: 'info'
+                        icon: 'bi-box-seam'
+                livrer:
+                    from: expediee
+                    to: livree
+                    metadata:
+                        title: 'Marquer comme livrée'
+                        description: 'La commande a été livrée au client'
+                        color: 'success'
+                        icon: 'bi-check2-all'
+                annuler_depuis_attente:
+                    from: en_attente
+                    to: annulee
+                    metadata:
+                        title: 'Annuler la commande'
+                        description: 'Annuler avant validation'
+                        color: 'danger'
+                        icon: 'bi-x-circle'
+                annuler_depuis_validee:
+                    from: validee
+                    to: annulee
+                    metadata:
+                        title: 'Annuler la commande'
+                        description: 'Annulation après validation (remboursement requis)'
+                        color: 'danger'
+                        icon: 'bi-x-circle'

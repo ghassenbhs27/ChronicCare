@@ -55,36 +55,82 @@ class CommandeController extends AbstractController
             return $this->redirectToRoute('cart_show');
         }
 
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('checkout', (string) $request->request->get('_token'))) {
-                $this->addFlash('error', 'Jeton de securite invalide.');
-                return $this->redirectToRoute('commande_create');
+        if ($request->isMethod('POST') && $this->isCsrfTokenValid('checkout', (string) $request->request->get('_token'))) {
+            // Validation côté serveur
+            $errors = [];
+            
+            // Validation adresse
+            $adresse = trim((string) $request->request->get('adresse', ''));
+            if (empty($adresse)) {
+                $errors[] = 'L\'adresse de livraison est obligatoire';
+            } elseif (strlen($adresse) < 10) {
+                $errors[] = 'L\'adresse doit contenir au moins 10 caracteres';
+            } elseif (preg_match('/[<>"\'{};]/', $adresse)) {
+                $errors[] = 'L\'adresse contient des caracteres non autorises';
             }
 
-            $adresse = trim((string) $request->request->get('adresse', ''));
-            $paymentData = [
-                'cardHolder' => trim((string) $request->request->get('cardHolder', '')),
-                'cardNumber' => preg_replace('/\s+/', '', (string) $request->request->get('cardNumber', '')),
-                'cvv' => trim((string) $request->request->get('cvv', '')),
-            ];
-
-            $errors = $this->validateCheckoutInput($adresse, $paymentData);
-            if ($errors !== []) {
+            // Determiner le mode de paiement
+            $paymentMethod = $request->request->get('paymentMethod', 'card');
+            
+            if ($paymentMethod === 'card') {
+                // Validation nom sur carte
+                $cardHolder = trim((string) $request->request->get('cardHolder', ''));
+                if (empty($cardHolder)) {
+                    $errors[] = 'Le nom sur la carte est obligatoire';
+                } elseif (strlen($cardHolder) < 2) {
+                    $errors[] = 'Le nom sur la carte doit contenir au moins 2 caracteres';
+                } elseif (!preg_match('/^[a-zA-ZÀ-ÿ\s\'-]+$/', $cardHolder)) {
+                    $errors[] = 'Le nom sur la carte ne peut contenir que des lettres';
+                }
+                
+                // Validation numero de carte
+                $cardNumber = preg_replace('/\s+/', '', (string) $request->request->get('cardNumber', ''));
+                if (empty($cardNumber)) {
+                    $errors[] = 'Le numero de carte est obligatoire';
+                } elseif (!preg_match('/^\d{16}$/', $cardNumber)) {
+                    $errors[] = 'Le numero de carte doit contenir exactement 16 chiffres';
+                }
+                
+                // Validation CVV
+                $cvv = trim((string) $request->request->get('cvv', ''));
+                if (empty($cvv)) {
+                    $errors[] = 'Le code CVV est obligatoire';
+                } elseif (!preg_match('/^\d{3,4}$/', $cvv)) {
+                    $errors[] = 'Le code CVV doit contenir 3 ou 4 chiffres';
+                }
+            }
+            
+            // Si erreurs de validation
+            if (!empty($errors)) {
                 foreach ($errors as $error) {
                     $this->addFlash('error', $error);
                 }
-
                 return $this->render('commande/checkout.html.twig', [
                     'cart' => $cart,
                     'total' => $this->cartService->getCartTotal(),
                 ]);
             }
+            
+            // Donnees validees, continuer le traitement
+            $paymentSuccess = false;
 
-            if ($this->paymentService->processPayment(null, $paymentData)) {
+            if ($paymentMethod === 'cash_on_delivery') {
+                $paymentSuccess = true;
+            } else {
+                $paymentData = [
+                    'cardHolder' => $cardHolder,
+                    'cardNumber' => $cardNumber,
+                    'cvv' => $cvv,
+                ];
+                $paymentSuccess = $this->paymentService->processPayment(null, $paymentData);
+            }
+
+            if ($paymentSuccess) {
                 $commande = $this->commandeService->createCommande(
                     $this->getUser(),
                     array_values($cart),
-                    $adresse
+                    $adresse,
+                    $paymentMethod
                 );
                 if (!$commande) {
                     $this->addFlash('error', 'Stock insuffisant pour certains produits. Verifiez le panier.');
@@ -96,6 +142,7 @@ class CommandeController extends AbstractController
             }
 
             $this->addFlash('error', 'Paiement refuse. Verifiez les informations.');
+            return $this->redirectToRoute('commande_create');
         }
 
         return $this->render('commande/checkout.html.twig', [

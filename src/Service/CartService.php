@@ -28,6 +28,8 @@ class CartService
         $cart = $session->get(self::CART_SESSION_KEY);
 
         $productId = $produit->getId();
+        $imageName = strtolower(str_replace([' ', 'é', 'è', 'ê', 'à'], ['-', 'e', 'e', 'e', 'a'], $produit->getNom())) . '.jpg';
+
         if (isset($cart[$productId])) {
             $cart[$productId]['quantity'] += $quantity;
         } else {
@@ -36,6 +38,8 @@ class CartService
                 'nom' => $produit->getNom(),
                 'prix' => $produit->getPrix(),
                 'quantity' => $quantity,
+                'categorie' => $produit->getCategorie(),
+                'image' => '/assets/img/products/' . $imageName,
             ];
         }
 

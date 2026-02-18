@@ -25,6 +25,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 20, nullable: true)]
+    #[Assert\Regex(
+        pattern: "/^(\+33|0)[1-9](\d{8})$/",
+        message: "Le téléphone doit être au format français valide (ex: 06 12 34 56 78 ou +33612345678)."
+    )]
+    #[Assert\Length(
+        min: 10,
+        max: 20,
+        minMessage: "Le numéro de téléphone doit contenir au moins 10 chiffres.",
+        maxMessage: "Le numéro de téléphone ne peut pas dépasser 20 chiffres."
+    )]
     private ?string $telephone = null;
 
     #[ORM\Column(length: 180, unique: true)]
@@ -81,6 +91,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoProfil = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $profileImage = null;
 
     /**
      * @var Collection<int, Evenement>
@@ -294,6 +307,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setGenre(string $genre): self
     {
         $this->genre = $genre;
+        return $this;
+    }
+
+    public function getProfileImage(): ?string
+    {
+        return $this->profileImage;
+    }
+
+    public function setProfileImage(?string $profileImage): self
+    {
+        $this->profileImage = $profileImage;
         return $this;
     }
 

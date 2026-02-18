@@ -55,8 +55,11 @@
           <h1 class="mb-2">{{ produit.nom }}</h1>
           <span class="badge bg-primary mb-3">{{ produit.categorie }}</span>
           <div class="mb-4">
-            <h2 class="text-primary">{{ produit.prix }} €</h2>
+            <h2 class="text-primary" id="totalPrice" data-unit-price="{{ produit.prix }}">{{ produit.prix }} €</h2>
             <small class="text-muted">TVA incluse</small>
+            <div class="mt-1 text-secondary" id="unitPriceHint" style="display:none; font-size:.9rem;">
+              <i class="bi bi-info-circle"></i> Prix unitaire : {{ produit.prix }} €
+            </div>
           </div>
           {% if produit.stock > 10 %}
             <div class="alert alert-success py-2"><i class="bi bi-check-circle"></i> {{ produit.stock }} en stock</div>
@@ -70,9 +73,9 @@
           <div class="mb-4">
             <label class="form-label">Quantité</label>
             <div class="input-group" style="width:140px;">
-              <button type="button" class="btn btn-outline-secondary" onclick="var i=document.getElementById('qty'); if(i.value>1)i.value--">−</button>
-              <input type="number" id="qty" class="form-control text-center" value="1" min="1" max="{{ produit.stock }}">
-              <button type="button" class="btn btn-outline-secondary" onclick="var i=document.getElementById('qty'); if(i.value<{{ produit.stock }})i.value++">+</button>
+              <button type="button" class="btn btn-outline-secondary" onclick="changeQty(-1)">−</button>
+              <input type="number" id="qty" class="form-control text-center" value="1" min="1" max="{{ produit.stock }}" oninput="updateTotal()">
+              <button type="button" class="btn btn-outline-secondary" onclick="changeQty(1)">+</button>
             </div>
           </div>
           <div class="d-flex gap-2 mb-4">
@@ -97,6 +100,30 @@
 </main>
 
 <script>
+function changeQty(delta) {
+  const input = document.getElementById('qty');
+  const min = parseInt(input.min) || 1;
+  const max = parseInt(input.max) || 999;
+  let val = parseInt(input.value) || 1;
+  val = Math.min(Math.max(val + delta, min), max);
+  input.value = val;
+  updateTotal();
+}
+
+function updateTotal() {
+  const input = document.getElementById('qty');
+  const priceEl = document.getElementById('totalPrice');
+  const hintEl = document.getElementById('unitPriceHint');
+  const unitPrice = parseFloat(priceEl.getAttribute('data-unit-price'));
+  let qty = parseInt(input.value) || 1;
+  const min = parseInt(input.min) || 1;
+  const max = parseInt(input.max) || 999;
+  qty = Math.min(Math.max(qty, min), max);
+  const total = (unitPrice * qty).toFixed(2);
+  priceEl.textContent = total + ' €';
+  hintEl.style.display = qty > 1 ? 'block' : 'none';
+}
+
 function addToCart(id, qty) {
   fetch('{{ path('cart_add') }}?id=' + id + '&quantity=' + (qty || 1), {
     headers: {'X-Requested-With': 'XMLHttpRequest'}

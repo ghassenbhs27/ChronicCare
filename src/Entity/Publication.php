@@ -75,11 +75,18 @@ class Publication
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'publication', orphanRemoval: true)]
     private Collection $commentaires;
 
+    /**
+     * @var Collection<int, PublicationLike>
+     */
+    #[ORM\OneToMany(targetEntity: PublicationLike::class, mappedBy: 'publication', orphanRemoval: true)]
+    private Collection $likes;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->statut = self::STATUT_PUBLIE;
         $this->commentaires = new ArrayCollection();
+        $this->likes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -202,5 +209,28 @@ class Publication
         $this->commentaires->removeElement($commentaire);
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, PublicationLike>
+     */
+    public function getLikes(): Collection
+    {
+        return $this->likes;
+    }
+
+    public function isLikedByUser(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        foreach ($this->likes as $like) {
+            if ($like->getUser() === $user) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
