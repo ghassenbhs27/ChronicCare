@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Publication;
+use App\Form\PublicationFormType;
 use App\Repository\CommentaireRepository;
 use App\Repository\PublicationRepository;
+use App\Service\FileUploadService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,7 +14,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/publication')]
 class PublicationController extends AbstractController
@@ -115,56 +116,38 @@ class PublicationController extends AbstractController
     }
 
     #[Route('/new', name: 'publication_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
-    {
+    public function new(
+        Request $request,
+        EntityManagerInterface $em,
+        FileUploadService $fileUploadService
+    ): Response {
         if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Seuls les coachs et administrateurs peuvent publier. Les patients peuvent commenter les publications.');
         }
 
         $publication = new Publication();
-        $publication->setTitre('');
-        $publication->setContenu('');
-        $publication->setCategorie(Publication::CATEGORIES[0]);
-        $publication->setStatut(Publication::STATUT_BROUILLON);
+        $form = $this->createForm(PublicationFormType::class, $publication);
+        $form->handleRequest($request);
 
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('publication_form', (string) $request->request->get('_token'))) {
-                $this->addFlash('error', 'Jeton de securite invalide.');
-                return $this->redirectToRoute('publication_new');
-            }
+        if ($form->isSubmitted() && $form->isValid()) {
+            $publication->setAuteur($this->getUser());
 
-            $publication->setTitre(trim((string) $request->request->get('titre', '')));
-            $publication->setContenu(trim((string) $request->request->get('contenu', '')));
-
-            $categorie = trim((string) $request->request->get('categorie', ''));
-            $publication->setCategorie(in_array($categorie, Publication::CATEGORIES, true) ? $categorie : null);
-
-            $statut = trim((string) $request->request->get('statut', Publication::STATUT_BROUILLON));
-            $publication->setStatut(in_array($statut, [Publication::STATUT_BROUILLON, Publication::STATUT_PUBLIE], true) ? $statut : Publication::STATUT_BROUILLON);
-
-            if ($this->getUser()) {
-                $publication->setAuteur($this->getUser());
-            }
-
-            $violations = $validator->validate($publication);
-            if (count($violations) > 0) {
-                foreach ($violations as $violation) {
-                    $this->addFlash('error', $violation->getMessage());
-                }
-
-                return $this->render('publication/form.html.twig', [
-                    'publication' => $publication,
-                ]);
+            // Handle file upload
+            $imageFile = $form->get('imageFile')->getData();
+            if ($imageFile) {
+                $filename = $fileUploadService->uploadFile($imageFile);
+                $publication->setImageUrl($filename);
             }
 
             $em->persist($publication);
             $em->flush();
 
-            $this->addFlash('success', 'Publication creee avec succes !');
+            $this->addFlash('success', 'Publication créée avec succès !');
             return $this->redirectToRoute('publication_index');
         }
 
         return $this->render('publication/form.html.twig', [
+            'form' => $form,
             'publication' => $publication,
         ]);
     }
@@ -175,7 +158,7 @@ class PublicationController extends AbstractController
         Request $request,
         PublicationRepository $repository,
         EntityManagerInterface $em,
-        ValidatorInterface $validator
+        FileUploadService $fileUploadService
     ): Response {
         if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Seuls les coachs et administrateurs peuvent modifier une publication.');
@@ -187,30 +170,19 @@ class PublicationController extends AbstractController
             throw $this->createNotFoundException('Publication non trouvee');
         }
 
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('publication_form', (string) $request->request->get('_token'))) {
-                $this->addFlash('error', 'Jeton de securite invalide.');
-                return $this->redirectToRoute('publication_edit', ['id' => $publication->getId()]);
-            }
+        $form = $this->createForm(PublicationFormType::class, $publication);
+        $form->handleRequest($request);
 
-            $publication->setTitre(trim((string) $request->request->get('titre', '')));
-            $publication->setContenu(trim((string) $request->request->get('contenu', '')));
-
-            $categorie = trim((string) $request->request->get('categorie', ''));
-            $publication->setCategorie(in_array($categorie, Publication::CATEGORIES, true) ? $categorie : null);
-
-            $statut = trim((string) $request->request->get('statut', Publication::STATUT_BROUILLON));
-            $publication->setStatut(in_array($statut, [Publication::STATUT_BROUILLON, Publication::STATUT_PUBLIE], true) ? $statut : Publication::STATUT_BROUILLON);
-
-            $violations = $validator->validate($publication);
-            if (count($violations) > 0) {
-                foreach ($violations as $violation) {
-                    $this->addFlash('error', $violation->getMessage());
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Handle file upload
+            $imageFile = $form->get('imageFile')->getData();
+            if ($imageFile) {
+                // Delete old image if exists
+                if ($publication->getImageUrl()) {
+                    $fileUploadService->deleteFile($publication->getImageUrl());
                 }
-
-                return $this->render('publication/form.html.twig', [
-                    'publication' => $publication,
-                ]);
+                $filename = $fileUploadService->uploadFile($imageFile);
+                $publication->setImageUrl($filename);
             }
 
             $em->flush();
@@ -220,13 +192,19 @@ class PublicationController extends AbstractController
         }
 
         return $this->render('publication/form.html.twig', [
+            'form' => $form,
             'publication' => $publication,
         ]);
     }
 
     #[Route('/delete/{id}', name: 'publication_delete', requirements: ['id' => '\\d+'], methods: ['POST'])]
-    public function delete(int $id, Request $request, PublicationRepository $repository, EntityManagerInterface $em): Response
-    {
+    public function delete(
+        int $id,
+        Request $request,
+        PublicationRepository $repository,
+        EntityManagerInterface $em,
+        FileUploadService $fileUploadService
+    ): Response {
         if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Seuls les coachs et administrateurs peuvent supprimer une publication.');
         }
@@ -240,6 +218,11 @@ class PublicationController extends AbstractController
         if (!$this->isCsrfTokenValid('delete_' . $publication->getId(), (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Jeton de securite invalide.');
             return $this->redirectToRoute('publication_show', ['id' => $publication->getId()]);
+        }
+
+        // Delete image file if exists
+        if ($publication->getImageUrl()) {
+            $fileUploadService->deleteFile($publication->getImageUrl());
         }
 
         $em->remove($publication);

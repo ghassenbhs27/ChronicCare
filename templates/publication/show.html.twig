@@ -42,6 +42,11 @@
             <span class="forum-meta-badge badge bg-{{ publication.statut == 'publie' ? 'success' : 'warning' }} text-dark">{{ publication.statut == 'publie' ? 'Publié' : 'Brouillon' }}</span>
           </div>
         </header>
+        {% if publication.imageUrl %}
+          <div class="forum-article-image mb-4">
+            <img src="{{ asset('uploads/forum/' ~ publication.imageUrl) }}" alt="{{ publication.titre }}" class="img-fluid rounded" style="max-width: 100%; height: auto;">
+          </div>
+        {% endif %}
         <div class="forum-article-body">
           {{ publication.contenu|nl2br }}
         </div>

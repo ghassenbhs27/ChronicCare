@@ -69,6 +69,9 @@ class Publication
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $imageUrl = null;
+
     /**
      * @var Collection<int, Commentaire>
      */
@@ -201,6 +204,17 @@ class Publication
     {
         $this->commentaires->removeElement($commentaire);
 
+        return $this;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
+    }
+
+    public function setImageUrl(?string $imageUrl): self
+    {
+        $this->imageUrl = $imageUrl;
         return $this;
     }
 }
