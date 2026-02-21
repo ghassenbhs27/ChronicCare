@@ -3,10 +3,14 @@ namespace App\Controller;
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use App\Entity\MedicalDossierAuditLog;
 use App\Entity\User;
 use App\Form\UserType;
+use App\Repository\MedicalDossierAuditLogRepository;
+use App\Repository\MedicalDossierRepository;
 use App\Repository\UserRepository;
 use App\Service\ActivityBadgeService;
+use App\Service\MedicalDossierAuditService;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
@@ -258,10 +262,36 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}/details', name: 'app_user_details', methods: ['GET'])]
-    public function details(User $user): Response
+    public function details(
+        User $user,
+        Request $request,
+        MedicalDossierRepository $medicalDossierRepository,
+        MedicalDossierAuditLogRepository $medicalDossierAuditLogRepository,
+        MedicalDossierAuditService $medicalDossierAuditService
+    ): Response
     {
+        $medicalDossier = $medicalDossierRepository->findOneByUser($user);
+        $medicalAuditLogs = [];
+        $actor = $this->getUser();
+        $actorUser = $actor instanceof User ? $actor : null;
+
+        if ($medicalDossier !== null) {
+            $medicalDossier->ensureDiseaseHistoryInitialized('legacy');
+            $medicalDossierAuditService->log(
+                dossier: $medicalDossier,
+                actor: $actorUser,
+                action: MedicalDossierAuditLog::ACTION_CONSULTATION,
+                request: $request,
+                targetDisease: $medicalDossier->getDisease(),
+                context: ['route' => 'app_user_details', 'channel' => 'admin']
+            );
+            $medicalAuditLogs = $medicalDossierAuditLogRepository->findRecentForDossier($medicalDossier, 150);
+        }
+
         return $this->render('back/users/details.html.twig', [
             'user' => $user,
+            'medicalDossier' => $medicalDossier,
+            'medicalAuditLogs' => $medicalAuditLogs,
         ]);
     }
 

@@ -1,0 +1,174 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Segmentation patients - Chronic Care{% endblock %}
+{% block page_title %}Segmentation patients{% endblock %}
+{% block page_subtitle %}Regroupement par profil similaire, risque et comportement{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="small text-muted">
+      Patients analyses: <strong>{{ segments.total_patients }}</strong>
+    </div>
+  </div>
+
+  <form method="get" action="{{ path('admin_patient_segment_index') }}" class="row g-2 mb-3">
+    <div class="col-auto">
+      <select name="days" class="form-select form-select-sm">
+        <option value="7" {{ days == 7 ? 'selected' : '' }}>7 jours</option>
+        <option value="14" {{ days == 14 ? 'selected' : '' }}>14 jours</option>
+        <option value="30" {{ days == 30 ? 'selected' : '' }}>30 jours</option>
+        <option value="60" {{ days == 60 ? 'selected' : '' }}>60 jours</option>
+        <option value="120" {{ days == 120 ? 'selected' : '' }}>120 jours</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary btn-sm">Recalculer</button>
+    </div>
+  </form>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white">
+      <h6 class="mb-0">Groupes profils similaires</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Profil</th>
+              <th>Effectif</th>
+              <th>Risque moyen</th>
+              <th>Patients (top 5)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for group in segments.profile_groups %}
+              <tr>
+                <td>{{ group.label }}</td>
+                <td><strong>{{ group.count }}</strong></td>
+                <td>{{ group.avg_risk_score }}</td>
+                <td class="small">
+                  {% for p in group.patients|slice(0, 5) %}
+                    <span class="d-inline-block me-2 mb-1">{{ p.full_name }} ({{ p.risk_score }})</span>
+                  {% else %}
+                    -
+                  {% endfor %}
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="4" class="text-center text-muted py-3">Aucune donnee.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white">
+          <h6 class="mb-0">Niveau de risque</h6>
+        </div>
+        <div class="card-body">
+          {% for key, group in segments.risk_groups %}
+            <div class="mb-3">
+              <div class="d-flex justify-content-between">
+                <span class="fw-semibold">{{ group.label }}</span>
+                <span class="badge {{ key == 'critical' ? 'bg-danger' : (key == 'high' ? 'bg-warning text-dark' : (key == 'medium' ? 'bg-info text-dark' : 'bg-success')) }}">{{ group.count }}</span>
+              </div>
+              <div class="small text-muted">
+                {% for p in group.patients|slice(0, 4) %}
+                  {{ p.full_name }} ({{ p.risk_score }}){% if not loop.last %}, {% endif %}
+                {% else %}
+                  Aucun patient
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white">
+          <h6 class="mb-0">Comportement patient</h6>
+        </div>
+        <div class="card-body">
+          {% for key, group in segments.behavior_groups %}
+            <div class="mb-3">
+              <div class="d-flex justify-content-between">
+                <span class="fw-semibold">{{ group.label }}</span>
+                <span class="badge bg-secondary">{{ group.count }}</span>
+              </div>
+              <div class="small text-muted">
+                {% for p in group.patients|slice(0, 4) %}
+                  {{ p.full_name }} (activite: {{ p.activity_count }}, alertes: {{ p.open_alerts }}){% if not loop.last %}, {% endif %}
+                {% else %}
+                  Aucun patient
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+      <h6 class="mb-0">Liste detaillee patients</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Patient</th>
+              <th>Profil</th>
+              <th>Risque</th>
+              <th>Comportement</th>
+              <th>Alertes ouvertes</th>
+              <th>Activite ({{ days }}j)</th>
+              <th>Baisse activite</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in segments.patient_rows %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ row.full_name }}</div>
+                  <div class="small text-muted">{{ row.email }}</div>
+                </td>
+                <td>{{ row.disease|replace({'_':' '})|title }} / {{ row.gender }}</td>
+                <td>
+                  <span class="badge {{ row.risk_level == 'critical' ? 'bg-danger' : (row.risk_level == 'high' ? 'bg-warning text-dark' : (row.risk_level == 'medium' ? 'bg-info text-dark' : 'bg-success')) }}">
+                    {{ row.risk_level|upper }}
+                  </span>
+                  <span class="small ms-1">{{ row.risk_score }}</span>
+                </td>
+                <td>{{ row.behavior|replace({'_':' '})|title }}</td>
+                <td>{{ row.open_alerts }} (max {{ row.max_security_risk }})</td>
+                <td>{{ row.activity_count }}</td>
+                <td>{{ row.activity_drop_percent }}%</td>
+                <td>
+                  <a class="btn btn-sm btn-outline-primary" href="{{ path('app_user_details', {id: row.user_id}) }}">Voir profil</a>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="8" class="text-center text-muted py-3">Aucun patient trouve.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

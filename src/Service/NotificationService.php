@@ -150,15 +150,18 @@ class NotificationService
         }
 
         $subject = sprintf(
-            '[SECURITY][%s] %s',
+            '[SECURITY][%s][%s] %s',
             strtoupper($alert->getSeverity()),
+            strtoupper($alert->getAlertType()),
             $alert->getEventType()
         );
 
         $userEmail = (string) ($alert->getUser()?->getEmail() ?? 'unknown');
         $text = sprintf(
-            "Alerte de securite detectee.\n\nType: %s\nSeverite: %s\nRisk score: %d\nUtilisateur: %s\nIP: %s\nDate: %s\nMessage: %s\n\nContexte: %s",
+            "Alerte de securite detectee.\n\nEvenement: %s\nCategorie: %s\nStatut: %s\nSeverite: %s\nRisk score: %d\nUtilisateur: %s\nIP: %s\nDate: %s\nMessage: %s\n\nContexte: %s",
             $alert->getEventType(),
+            $alert->getAlertType(),
+            $alert->getAlertStatus(),
             $alert->getSeverity(),
             $alert->getRiskScore(),
             $userEmail,

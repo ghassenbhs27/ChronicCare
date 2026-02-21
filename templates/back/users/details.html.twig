@@ -72,7 +72,18 @@
         </div>
         <div class="col-md-6">
           <div class="small text-muted">Photo profil</div>
-          <div class="fw-semibold">{{ user.photoProfil ?: 'N/A' }}</div>
+          {% if user.photoProfil %}
+            <div class="mb-2">
+              <img src="{{ asset('uploads/profile/' ~ user.photoProfil) }}" alt="Photo de profil" class="rounded border" style="max-width: 110px; max-height: 110px; object-fit: cover;">
+            </div>
+            <div class="fw-semibold">{{ user.photoProfil }}</div>
+          {% else %}
+            <div class="fw-semibold">N/A</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Maladie chronique</div>
+          <div class="fw-semibold">{{ user.medicalCondition ?: 'N/A' }}</div>
         </div>
         <div class="col-md-6">
           <div class="small text-muted">Cree le</div>
@@ -105,5 +116,167 @@
       </div>
     </div>
   </div>
+
+  <div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-white">
+      <h6 class="mb-0">Dossier medical virtuel</h6>
+    </div>
+    <div class="card-body">
+      {% if medicalDossier %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="small text-muted">Maladie cible</div>
+            <div class="fw-semibold">{{ medicalDossier.disease }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="small text-muted">Mode analyse IA</div>
+            <div class="fw-semibold">{{ medicalDossier.aiMode }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="small text-muted">Niveau de risque urgence</div>
+            <div class="fw-semibold text-uppercase">{{ medicalDossier.emergencyRiskLevel }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="small text-muted">Crise urgence possible</div>
+            <div class="fw-semibold">{{ medicalDossier.emergencyPossible ? 'Oui' : 'Non' }}</div>
+          </div>
+          <div class="col-12">
+            <div class="small text-muted">Synthese IA</div>
+            <div class="fw-semibold">{{ medicalDossier.aiSummary ?: 'N/A' }}</div>
+          </div>
+          <div class="col-12">
+            <div class="small text-muted">Pourquoi</div>
+            <div class="fw-semibold">{{ medicalDossier.emergencyReason ?: 'N/A' }}</div>
+          </div>
+          <div class="col-12">
+            <div class="small text-muted">Actions recommandees</div>
+            {% set actions = medicalDossier.recommendedActions ?? [] %}
+            {% if actions is not empty %}
+              <ul class="mb-0">
+                {% for action in actions %}
+                  <li>{{ action }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="fw-semibold">N/A</div>
+            {% endif %}
+          </div>
+          <div class="col-12">
+            <div class="small text-muted mb-1">Reponses patient</div>
+            {% set answers = medicalDossier.answers ?? [] %}
+            {% if answers is not empty %}
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th style="width: 40%;">Question</th>
+                      <th>Reponse</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in answers %}
+                      <tr>
+                        <td>{{ item.question|default('N/A') }}</td>
+                        <td>{{ item.answer|default('N/A') }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="fw-semibold">Aucune reponse enregistree.</div>
+            {% endif %}
+          </div>
+
+          <div class="col-12">
+            <div class="small text-muted mb-1">Historique des maladies</div>
+            {% set diseaseHistory = medicalDossier.diseaseHistory ?? [] %}
+            {% if diseaseHistory is not empty %}
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Maladie</th>
+                      <th>Risque</th>
+                      <th>Urgence</th>
+                      <th>Mode IA</th>
+                      <th>Mise a jour</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for entry in diseaseHistory %}
+                      {% set analysis = entry.analysis|default({}) %}
+                      <tr>
+                        <td>{{ entry.disease|default('N/A')|replace({'_':' '})|title }}</td>
+                        <td class="text-uppercase">{{ analysis.risk_level|default('unknown') }}</td>
+                        <td>{{ analysis.emergency_possible|default(false) ? 'Oui' : 'Non' }}</td>
+                        <td>{{ analysis.mode|default('FALLBACK') }}</td>
+                        <td>{{ entry.updated_at|default(entry.created_at|default('N/A')) }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="fw-semibold">Aucun historique de maladie disponible.</div>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div class="text-muted">Aucun dossier medical virtuel enregistre pour ce patient.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if medicalDossier %}
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header bg-white">
+        <h6 class="mb-0">Audit medical (consultations et modifications)</h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Acteur</th>
+                <th>Role</th>
+                <th>Action</th>
+                <th>Maladie</th>
+                <th>IP</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in medicalAuditLogs %}
+                <tr>
+                  <td class="small">{{ log.createdAt|date('d/m/Y H:i') }}</td>
+                  <td class="small">{{ log.actorEmail ?: 'system' }}</td>
+                  <td class="small">{{ log.actorRole ?: '-' }}</td>
+                  <td><span class="badge bg-secondary">{{ log.action|upper }}</span></td>
+                  <td>{{ log.targetDisease ?: '-' }}</td>
+                  <td class="small">{{ log.ipAddress ?: '-' }}</td>
+                  <td class="small">
+                    {% if log.changedFields %}
+                      <details>
+                        <summary>Changements</summary>
+                        <pre class="small mb-0">{{ log.changedFields|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                      </details>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-3">Aucun log d audit pour ce dossier.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

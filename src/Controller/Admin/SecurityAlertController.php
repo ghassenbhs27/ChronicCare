@@ -18,17 +18,17 @@ class SecurityAlertController extends AbstractController
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(Request $request, SecurityAlertRepository $alertRepository): Response
     {
-        $status = (string) $request->query->get('status', 'open');
+        $status = $this->normalizeStatusFilter((string) $request->query->get('status', SecurityAlert::STATUS_EN_COURS));
         $severity = (string) $request->query->get('severity', '');
+        $type = $this->normalizeTypeFilter((string) $request->query->get('type', ''));
 
         $qb = $alertRepository->createQueryBuilder('a')
             ->leftJoin('a.user', 'u')->addSelect('u')
             ->orderBy('a.createdAt', 'DESC');
 
-        if ($status === 'open') {
-            $qb->andWhere('a.isResolved = false');
-        } elseif ($status === 'resolved') {
-            $qb->andWhere('a.isResolved = true');
+        if ($status !== 'all') {
+            $qb->andWhere('a.alertStatus = :status')
+                ->setParameter('status', $status);
         }
 
         if ($severity !== '') {
@@ -36,11 +36,17 @@ class SecurityAlertController extends AbstractController
                 ->setParameter('severity', $severity);
         }
 
+        if ($type !== '') {
+            $qb->andWhere('a.alertType = :type')
+                ->setParameter('type', $type);
+        }
+
         $alerts = $qb->setMaxResults(200)->getQuery()->getResult();
 
         $openCount = (int) $alertRepository->createQueryBuilder('a')
             ->select('COUNT(a.id)')
-            ->andWhere('a.isResolved = false')
+            ->andWhere('a.alertStatus = :status')
+            ->setParameter('status', SecurityAlert::STATUS_EN_COURS)
             ->getQuery()
             ->getSingleScalarResult();
 
@@ -48,7 +54,149 @@ class SecurityAlertController extends AbstractController
             'alerts' => $alerts,
             'status' => $status,
             'severity' => $severity,
+            'type' => $type,
             'open_count' => $openCount,
+        ]);
+    }
+
+    #[Route('/history', name: 'history', methods: ['GET'])]
+    public function history(Request $request, SecurityAlertRepository $alertRepository): Response
+    {
+        $days = max(1, min(180, (int) $request->query->get('days', 30)));
+        $type = $this->normalizeTypeFilter((string) $request->query->get('type', ''));
+        $status = $this->normalizeHistoryStatusFilter((string) $request->query->get('status', 'all'));
+        $since = (new \DateTimeImmutable())->modify(sprintf('-%d days', $days));
+
+        $qb = $alertRepository->createQueryBuilder('a')
+            ->leftJoin('a.user', 'u')->addSelect('u')
+            ->andWhere('a.createdAt >= :since')
+            ->setParameter('since', $since)
+            ->orderBy('a.createdAt', 'DESC')
+            ->setMaxResults(500);
+
+        if ($type !== '') {
+            $qb->andWhere('a.alertType = :type')->setParameter('type', $type);
+        }
+
+        $historyRows = [];
+        foreach ($qb->getQuery()->getResult() as $alert) {
+            if (!$alert instanceof SecurityAlert) {
+                continue;
+            }
+
+            $historyEntries = $alert->getStatusHistory();
+            if ($historyEntries === []) {
+                $historyEntries = [[
+                    'status' => $alert->getAlertStatus(),
+                    'changed_at' => $alert->getCreatedAt()->format('Y-m-d H:i:s'),
+                    'source' => 'legacy',
+                    'note' => 'Historique detaille indisponible, statut courant uniquement.',
+                ]];
+            }
+
+            foreach ($historyEntries as $entry) {
+                if (!is_array($entry)) {
+                    continue;
+                }
+
+                $entryStatus = $this->normalizeStatusValue((string) ($entry['status'] ?? $alert->getAlertStatus()));
+                if ($status !== 'all' && $entryStatus !== $status) {
+                    continue;
+                }
+
+                $changedAt = $this->resolveHistoryDate(
+                    $entry['changed_at'] ?? null,
+                    $alert->getResolvedAt() ?? $alert->getCreatedAt()
+                );
+
+                $historyRows[] = [
+                    'changed_at' => $changedAt,
+                    'status' => $entryStatus,
+                    'source' => (string) ($entry['source'] ?? 'system'),
+                    'note' => (string) ($entry['note'] ?? ''),
+                    'alert_id' => $alert->getId(),
+                    'event_type' => $alert->getEventType(),
+                    'alert_type' => $alert->getAlertType(),
+                    'severity' => $alert->getSeverity(),
+                    'risk_score' => $alert->getRiskScore(),
+                    'user_email' => (string) ($alert->getUser()?->getEmail() ?? 'N/A'),
+                    'ip_address' => (string) ($alert->getIpAddress() ?? 'N/A'),
+                    'message' => $alert->getMessage(),
+                ];
+            }
+        }
+
+        usort(
+            $historyRows,
+            static fn (array $a, array $b): int => ($b['changed_at'] <=> $a['changed_at'])
+        );
+
+        $historyRows = array_slice($historyRows, 0, 1000);
+
+        return $this->render('back/security_alert/history.html.twig', [
+            'history_rows' => $historyRows,
+            'days' => $days,
+            'status' => $status,
+            'type' => $type,
+            'total_rows' => count($historyRows),
+        ]);
+    }
+
+    #[Route('/{id}/status', name: 'set_status', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function setStatus(
+        SecurityAlert $alert,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SecurityAlertRepository $alertRepository
+    ): Response {
+        if (!$this->isCsrfTokenValid('set_security_alert_status_' . $alert->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Jeton CSRF invalide.');
+
+            return $this->redirectToRoute('admin_security_alert_index');
+        }
+
+        $requestedStatus = (string) $request->request->get('alert_status', SecurityAlert::STATUS_TRAITEE);
+        $targetStatus = $this->normalizeStatusAction($requestedStatus);
+        if ($targetStatus === null) {
+            $this->addFlash('error', 'Statut d alerte invalide.');
+
+            return $this->redirectToRoute('admin_security_alert_index');
+        }
+
+        $actor = (string) ($this->getUser()?->getUserIdentifier() ?? 'admin');
+        $updatedCount = 0;
+
+        if ($targetStatus === SecurityAlert::STATUS_EN_COURS) {
+            if ($alert->getAlertStatus() !== SecurityAlert::STATUS_EN_COURS) {
+                $this->applyStatus($alert, SecurityAlert::STATUS_EN_COURS, $actor, 'Alerte reouverte.');
+                $updatedCount = 1;
+            }
+        } else {
+            $updatedCount = $this->closeOpenAlertsForCase(
+                $alert,
+                $targetStatus,
+                $actor,
+                $alertRepository
+            );
+        }
+
+        if ($updatedCount > 0 && $targetStatus !== SecurityAlert::STATUS_EN_COURS && $alert->getUser() !== null) {
+            $alert->getUser()?->setSecurityBlockedUntil(null);
+            $alert->getUser()?->setUpdatedAt(new \DateTimeImmutable());
+        }
+
+        $entityManager->flush();
+
+        if ($updatedCount > 0) {
+            $this->addFlash('success', sprintf('%d alerte(s) mise(s) a jour (%s).', $updatedCount, $targetStatus));
+        } else {
+            $this->addFlash('info', 'Aucune alerte a mettre a jour pour ce cas.');
+        }
+
+        return $this->redirectToRoute('admin_security_alert_index', [
+            'status' => $this->normalizeStatusFilter((string) $request->query->get('status', SecurityAlert::STATUS_EN_COURS)),
+            'severity' => (string) $request->query->get('severity', ''),
+            'type' => $this->normalizeTypeFilter((string) $request->query->get('type', '')),
         ]);
     }
 
@@ -66,12 +214,40 @@ class SecurityAlertController extends AbstractController
             return $this->redirectToRoute('admin_security_alert_index');
         }
 
-        $now = new \DateTimeImmutable();
-        $resolvedCount = 0;
+        $updatedCount = $this->closeOpenAlertsForCase(
+            $alert,
+            SecurityAlert::STATUS_TRAITEE,
+            (string) ($this->getUser()?->getUserIdentifier() ?? 'admin'),
+            $alertRepository
+        );
 
+        if ($updatedCount > 0 && $alert->getUser() !== null) {
+            $alert->getUser()?->setSecurityBlockedUntil(null);
+            $alert->getUser()?->setUpdatedAt(new \DateTimeImmutable());
+        }
+
+        $entityManager->flush();
+
+        $this->addFlash(
+            $updatedCount > 0 ? 'success' : 'info',
+            $updatedCount > 0
+                ? sprintf('%d alerte(s) marquee(s) comme traitee(s).', $updatedCount)
+                : 'Aucune alerte ouverte a traiter pour ce cas.'
+        );
+
+        return $this->redirectToRoute('admin_security_alert_index');
+    }
+
+    private function closeOpenAlertsForCase(
+        SecurityAlert $alert,
+        string $targetStatus,
+        string $actor,
+        SecurityAlertRepository $alertRepository
+    ): int {
         $qb = $alertRepository->createQueryBuilder('a')
-            ->andWhere('a.isResolved = false')
+            ->andWhere('a.alertStatus = :statusOpen')
             ->andWhere('a.eventType = :eventType')
+            ->setParameter('statusOpen', SecurityAlert::STATUS_EN_COURS)
             ->setParameter('eventType', $alert->getEventType());
 
         if ($alert->getUser() !== null) {
@@ -82,34 +258,91 @@ class SecurityAlertController extends AbstractController
             $qb->andWhere('a.id = :id')->setParameter('id', $alert->getId());
         }
 
-        $alertsToResolve = $qb->getQuery()->getResult();
-        foreach ($alertsToResolve as $item) {
-            if (!$item instanceof SecurityAlert || $item->isResolved()) {
+        $updatedCount = 0;
+        foreach ($qb->getQuery()->getResult() as $item) {
+            if (!$item instanceof SecurityAlert) {
                 continue;
             }
 
-            $item->setIsResolved(true);
-            $item->setResolvedAt($now);
-            $resolvedCount++;
+            $this->applyStatus($item, $targetStatus, $actor, 'Mise a jour manuelle depuis le back-office.');
+            $updatedCount++;
         }
 
-        $user = $alert->getUser();
-        if ($user !== null) {
-            $user->setSecurityBlockedUntil(null);
-            $user->setUpdatedAt($now);
+        return $updatedCount;
+    }
+
+    private function applyStatus(SecurityAlert $alert, string $status, string $actor, string $note): void
+    {
+        $alert->setAlertStatus($status);
+        $alert->addStatusHistoryEntry($status, $actor, $note);
+    }
+
+    private function normalizeStatusFilter(string $status): string
+    {
+        $status = $this->normalizeStatusValue($status);
+        $allowed = ['all', SecurityAlert::STATUS_EN_COURS, SecurityAlert::STATUS_TRAITEE, SecurityAlert::STATUS_IGNOREE];
+
+        return in_array($status, $allowed, true) ? $status : SecurityAlert::STATUS_EN_COURS;
+    }
+
+    private function normalizeStatusAction(string $status): ?string
+    {
+        $status = $this->normalizeStatusValue($status);
+        $allowed = [SecurityAlert::STATUS_EN_COURS, SecurityAlert::STATUS_TRAITEE, SecurityAlert::STATUS_IGNOREE];
+
+        return in_array($status, $allowed, true) ? $status : null;
+    }
+
+    private function normalizeHistoryStatusFilter(string $status): string
+    {
+        $status = $this->normalizeStatusValue($status);
+        $allowed = ['all', SecurityAlert::STATUS_EN_COURS, SecurityAlert::STATUS_TRAITEE, SecurityAlert::STATUS_IGNOREE];
+
+        return in_array($status, $allowed, true) ? $status : 'all';
+    }
+
+    private function normalizeTypeFilter(string $type): string
+    {
+        $type = strtolower(trim($type));
+        $allowed = [
+            '',
+            SecurityAlert::CATEGORY_MEDICALE,
+            SecurityAlert::CATEGORY_COMPORTEMENTALE,
+            SecurityAlert::CATEGORY_SECURITAIRE,
+            SecurityAlert::CATEGORY_TECHNIQUE,
+        ];
+
+        return in_array($type, $allowed, true) ? $type : '';
+    }
+
+    private function normalizeStatusValue(string $status): string
+    {
+        $status = strtolower(trim($status));
+
+        return match ($status) {
+            'open' => SecurityAlert::STATUS_EN_COURS,
+            'resolved', 'resolue' => SecurityAlert::STATUS_TRAITEE,
+            default => $status,
+        };
+    }
+
+    private function resolveHistoryDate(mixed $raw, \DateTimeImmutable $fallback): \DateTimeImmutable
+    {
+        if ($raw instanceof \DateTimeImmutable) {
+            return $raw;
         }
 
-        $entityManager->flush();
-
-        if ($resolvedCount > 0) {
-            $this->addFlash('success', sprintf('%d alerte(s) marquee(s) comme resolue(s).', $resolvedCount));
-        } else {
-            $this->addFlash('info', 'Aucune alerte ouverte a resoudre pour ce cas.');
+        if ($raw instanceof \DateTimeInterface) {
+            return \DateTimeImmutable::createFromInterface($raw);
         }
 
-        return $this->redirectToRoute('admin_security_alert_index', [
-            'status' => (string) $request->query->get('status', 'open'),
-            'severity' => (string) $request->query->get('severity', ''),
-        ]);
+        if (is_string($raw) && trim($raw) !== '') {
+            try {
+                return new \DateTimeImmutable($raw);
+            } catch (\Exception) {
+            }
+        }
+
+        return $fallback;
     }
 }

@@ -282,6 +282,93 @@ class ActiviteRepository extends ServiceEntityRepository
         return array_slice($out, 0, max(1, $limit));
     }
 
+    /**
+     * @param int[] $userIds
+     * @return array<int, int>
+     */
+    public function findActivityCountForUsersSince(array $userIds, \DateTimeImmutable $since): array
+    {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds), static fn (int $id): bool => $id > 0)));
+        if ($userIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('a')
+            ->select('u.id AS user_id')
+            ->addSelect('COUNT(a.id) AS total_count')
+            ->innerJoin('a.utilisateur', 'u')
+            ->andWhere('u.id IN (:userIds)')
+            ->andWhere('a.dateActivite >= :since')
+            ->setParameter('userIds', $userIds)
+            ->setParameter('since', $since)
+            ->groupBy('u.id')
+            ->getQuery()
+            ->getArrayResult();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $userId = (int) ($row['user_id'] ?? 0);
+            if ($userId <= 0) {
+                continue;
+            }
+            $out[$userId] = (int) ($row['total_count'] ?? 0);
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param int[] $userIds
+     * @return array<int, array{current_count:int,previous_count:int,drop_count:int,drop_percent:float}>
+     */
+    public function findActivityDropStatsForUsers(array $userIds, int $windowDays = 7): array
+    {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds), static fn (int $id): bool => $id > 0)));
+        if ($userIds === []) {
+            return [];
+        }
+
+        $now = new \DateTimeImmutable();
+        $currentStart = $now->modify(sprintf('-%d days', $windowDays));
+        $previousStart = $now->modify(sprintf('-%d days', $windowDays * 2));
+
+        $rows = $this->createQueryBuilder('a')
+            ->select('u.id AS user_id')
+            ->addSelect('SUM(CASE WHEN a.dateActivite >= :currentStart THEN 1 ELSE 0 END) AS current_count')
+            ->addSelect('SUM(CASE WHEN a.dateActivite >= :previousStart AND a.dateActivite < :currentStart THEN 1 ELSE 0 END) AS previous_count')
+            ->innerJoin('a.utilisateur', 'u')
+            ->andWhere('u.id IN (:userIds)')
+            ->andWhere('a.dateActivite >= :previousStart')
+            ->setParameter('userIds', $userIds)
+            ->setParameter('currentStart', $currentStart)
+            ->setParameter('previousStart', $previousStart)
+            ->groupBy('u.id')
+            ->getQuery()
+            ->getArrayResult();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $userId = (int) ($row['user_id'] ?? 0);
+            if ($userId <= 0) {
+                continue;
+            }
+
+            $currentCount = (int) ($row['current_count'] ?? 0);
+            $previousCount = (int) ($row['previous_count'] ?? 0);
+            $dropCount = max(0, $previousCount - $currentCount);
+            $dropPercent = $previousCount > 0 ? round(($dropCount / $previousCount) * 100, 1) : 0.0;
+
+            $out[$userId] = [
+                'current_count' => $currentCount,
+                'previous_count' => $previousCount,
+                'drop_count' => $dropCount,
+                'drop_percent' => $dropPercent,
+            ];
+        }
+
+        return $out;
+    }
+
     //    /**
     //     * @return Activite[] Returns an array of Activite objects
     //     */

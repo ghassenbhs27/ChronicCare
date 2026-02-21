@@ -7,6 +7,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\Form\Extension\Core\Type\TelType;
@@ -92,6 +93,24 @@ class RegistrationFormType extends AbstractType
                 'placeholder' => 'Choisissez votre role',
                 'attr' => ['class' => 'form-select'],
                 'constraints' => [new NotBlank(['message' => 'Veuillez choisir un role.'])],
+            ])
+            ->add('medicalCondition', ChoiceType::class, [
+                'label' => 'Maladie chronique (patients)',
+                'required' => false,
+                'choices' => [
+                    'Diabete' => 'diabete',
+                    'Hypertension' => 'hypertension',
+                    'Asthme' => 'asthme',
+                    'Insuffisance cardiaque' => 'insuffisance_cardiaque',
+                    'Epilepsie' => 'epilepsie',
+                    'Autre' => 'autre',
+                ],
+                'placeholder' => 'Selectionnez votre maladie',
+                'attr' => ['class' => 'form-select', 'data-medical-condition' => '1'],
+            ])
+            ->add('medicalDossierPayload', HiddenType::class, [
+                'mapped' => false,
+                'required' => false,
             ])
             ->add('password', RepeatedType::class, [
                 'type' => PasswordType::class,

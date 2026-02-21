@@ -10,13 +10,15 @@
     <div class="small text-muted">
       Alertes ouvertes: <strong>{{ open_count }}</strong>
     </div>
+    <a href="{{ path('admin_security_alert_history') }}" class="btn btn-outline-secondary btn-sm">Historique global</a>
   </div>
 
   <form method="get" action="{{ path('admin_security_alert_index') }}" class="row g-2 mb-3">
     <div class="col-auto">
       <select name="status" class="form-select form-select-sm">
-        <option value="open" {{ status == 'open' ? 'selected' : '' }}>Ouvertes</option>
-        <option value="resolved" {{ status == 'resolved' ? 'selected' : '' }}>Resolues</option>
+        <option value="en_cours" {{ status == 'en_cours' ? 'selected' : '' }}>En cours</option>
+        <option value="traitee" {{ status == 'traitee' ? 'selected' : '' }}>Traitees</option>
+        <option value="ignoree" {{ status == 'ignoree' ? 'selected' : '' }}>Ignorees</option>
         <option value="all" {{ status == 'all' ? 'selected' : '' }}>Toutes</option>
       </select>
     </div>
@@ -26,6 +28,15 @@
         <option value="critical" {{ severity == 'critical' ? 'selected' : '' }}>Critical</option>
         <option value="high" {{ severity == 'high' ? 'selected' : '' }}>High</option>
         <option value="medium" {{ severity == 'medium' ? 'selected' : '' }}>Medium</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="type" class="form-select form-select-sm">
+        <option value="" {{ type == '' ? 'selected' : '' }}>Tous types</option>
+        <option value="medicale" {{ type == 'medicale' ? 'selected' : '' }}>Medicale</option>
+        <option value="comportementale" {{ type == 'comportementale' ? 'selected' : '' }}>Comportementale</option>
+        <option value="securitaire" {{ type == 'securitaire' ? 'selected' : '' }}>Securitaire</option>
+        <option value="technique" {{ type == 'technique' ? 'selected' : '' }}>Technique</option>
       </select>
     </div>
     <div class="col-auto">
@@ -41,12 +52,13 @@
             <tr>
               <th>Date</th>
               <th>Type</th>
+              <th>Categorie</th>
               <th>Severite</th>
               <th>Score</th>
               <th>Utilisateur</th>
               <th>IP</th>
               <th>Message</th>
-              <th>Etat</th>
+              <th>Statut</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -55,6 +67,9 @@
               <tr>
                 <td class="small">{{ alert.createdAt|date('d/m/Y H:i') }}</td>
                 <td><code>{{ alert.eventType }}</code></td>
+                <td>
+                  <span class="badge bg-secondary">{{ alert.alertType|upper }}</span>
+                </td>
                 <td>
                   <span class="badge {{ alert.severity == 'critical' ? 'bg-danger' : (alert.severity == 'high' ? 'bg-warning text-dark' : 'bg-info text-dark') }}">
                     {{ alert.severity }}
@@ -71,28 +86,56 @@
                       <pre class="small mb-0">{{ alert.context|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
                     </details>
                   {% endif %}
-                </td>
-                <td>
-                  {% if alert.isResolved %}
-                    <span class="badge bg-success">Resolue</span>
-                  {% else %}
-                    <span class="badge bg-danger">Ouverte</span>
+                  {% if alert.statusHistory is not empty %}
+                    <details class="mt-1">
+                      <summary>Historique statut</summary>
+                      <ul class="small mb-0">
+                        {% for item in alert.statusHistory %}
+                          <li>
+                            {{ item.changed_at|default('N/A') }} - <strong>{{ item.status|default('N/A') }}</strong>
+                            {% if item.source is defined %} ({{ item.source }}){% endif %}
+                            {% if item.note is defined %}: {{ item.note }}{% endif %}
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    </details>
                   {% endif %}
                 </td>
                 <td>
-                  {% if not alert.isResolved %}
-                    <form method="post" action="{{ path('admin_security_alert_resolve', {id: alert.id, status: status, severity: severity}) }}">
-                      <input type="hidden" name="_token" value="{{ csrf_token('resolve_security_alert_' ~ alert.id) }}">
-                      <button type="submit" class="btn btn-sm btn-outline-success">Resoudre</button>
-                    </form>
+                  {% if alert.alertStatus == 'en_cours' %}
+                    <span class="badge bg-danger">En cours</span>
+                  {% elseif alert.alertStatus == 'traitee' %}
+                    <span class="badge bg-success">Traitee</span>
                   {% else %}
-                    <span class="text-muted small">-</span>
+                    <span class="badge bg-secondary">Ignoree</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if alert.alertStatus == 'en_cours' %}
+                    <div class="d-flex gap-1">
+                      <form method="post" action="{{ path('admin_security_alert_set_status', {id: alert.id, status: status, severity: severity, type: type}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('set_security_alert_status_' ~ alert.id) }}">
+                        <input type="hidden" name="alert_status" value="traitee">
+                        <button type="submit" class="btn btn-sm btn-outline-success">Traiter</button>
+                      </form>
+                      <form method="post" action="{{ path('admin_security_alert_set_status', {id: alert.id, status: status, severity: severity, type: type}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('set_security_alert_status_' ~ alert.id) }}">
+                        <input type="hidden" name="alert_status" value="ignoree">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Ignorer</button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <form method="post" action="{{ path('admin_security_alert_set_status', {id: alert.id, status: status, severity: severity, type: type}) }}">
+                      <input type="hidden" name="_token" value="{{ csrf_token('set_security_alert_status_' ~ alert.id) }}">
+                      <input type="hidden" name="alert_status" value="en_cours">
+                      <button type="submit" class="btn btn-sm btn-outline-warning">Remettre en cours</button>
+                    </form>
                   {% endif %}
                 </td>
               </tr>
             {% else %}
               <tr>
-                <td colspan="9" class="text-center text-muted py-4">Aucune alerte</td>
+                <td colspan="10" class="text-center text-muted py-4">Aucune alerte</td>
               </tr>
             {% endfor %}
           </tbody>

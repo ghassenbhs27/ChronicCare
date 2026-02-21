@@ -9,8 +9,19 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'security_alert')]
 #[ORM\Index(columns: ['event_type', 'created_at'], name: 'idx_security_alert_type_time')]
 #[ORM\Index(columns: ['is_resolved', 'created_at'], name: 'idx_security_alert_resolved_time')]
+#[ORM\Index(columns: ['alert_type', 'created_at'], name: 'idx_security_alert_alert_type_time')]
+#[ORM\Index(columns: ['alert_status', 'created_at'], name: 'idx_security_alert_alert_status_time')]
 class SecurityAlert
 {
+    public const CATEGORY_MEDICALE = 'medicale';
+    public const CATEGORY_COMPORTEMENTALE = 'comportementale';
+    public const CATEGORY_SECURITAIRE = 'securitaire';
+    public const CATEGORY_TECHNIQUE = 'technique';
+
+    public const STATUS_EN_COURS = 'en_cours';
+    public const STATUS_TRAITEE = 'traitee';
+    public const STATUS_IGNOREE = 'ignoree';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -22,6 +33,9 @@ class SecurityAlert
 
     #[ORM\Column(length: 64)]
     private string $eventType;
+
+    #[ORM\Column(length: 30, options: ['default' => self::CATEGORY_SECURITAIRE])]
+    private string $alertType = self::CATEGORY_SECURITAIRE;
 
     #[ORM\Column(length: 20)]
     private string $severity = 'medium';
@@ -40,6 +54,12 @@ class SecurityAlert
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
+
+    #[ORM\Column(length: 20, options: ['default' => self::STATUS_EN_COURS])]
+    private string $alertStatus = self::STATUS_EN_COURS;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $statusHistory = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $resolvedAt = null;
@@ -72,6 +92,26 @@ class SecurityAlert
     public function setEventType(string $eventType): self
     {
         $this->eventType = $eventType;
+
+        return $this;
+    }
+
+    public function getAlertType(): string
+    {
+        return $this->alertType;
+    }
+
+    public function setAlertType(string $alertType): self
+    {
+        $allowed = [
+            self::CATEGORY_MEDICALE,
+            self::CATEGORY_COMPORTEMENTALE,
+            self::CATEGORY_SECURITAIRE,
+            self::CATEGORY_TECHNIQUE,
+        ];
+
+        $normalized = strtolower(trim($alertType));
+        $this->alertType = in_array($normalized, $allowed, true) ? $normalized : self::CATEGORY_SECURITAIRE;
 
         return $this;
     }
@@ -148,6 +188,69 @@ class SecurityAlert
         return $this;
     }
 
+    public function getAlertStatus(): string
+    {
+        return $this->alertStatus;
+    }
+
+    public function setAlertStatus(string $alertStatus): self
+    {
+        $allowed = [self::STATUS_EN_COURS, self::STATUS_TRAITEE, self::STATUS_IGNOREE];
+        $normalized = strtolower(trim($alertStatus));
+        $this->alertStatus = in_array($normalized, $allowed, true) ? $normalized : self::STATUS_EN_COURS;
+
+        if ($this->alertStatus === self::STATUS_EN_COURS) {
+            $this->isResolved = false;
+            $this->resolvedAt = null;
+        } else {
+            $this->isResolved = true;
+            if ($this->resolvedAt === null) {
+                $this->resolvedAt = new \DateTimeImmutable();
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getStatusHistory(): array
+    {
+        return $this->statusHistory ?? [];
+    }
+
+    public function setStatusHistory(?array $statusHistory): self
+    {
+        if ($statusHistory === null) {
+            $this->statusHistory = null;
+
+            return $this;
+        }
+
+        $this->statusHistory = array_values($statusHistory);
+
+        return $this;
+    }
+
+    public function addStatusHistoryEntry(string $status, string $source = 'system', ?string $note = null): self
+    {
+        $history = $this->getStatusHistory();
+        $entry = [
+            'status' => $status,
+            'changed_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            'source' => trim($source) !== '' ? $source : 'system',
+        ];
+        if ($note !== null && trim($note) !== '') {
+            $entry['note'] = trim($note);
+        }
+
+        $history[] = $entry;
+        $this->statusHistory = $history;
+
+        return $this;
+    }
+
     public function getResolvedAt(): ?\DateTimeImmutable
     {
         return $this->resolvedAt;
@@ -156,6 +259,14 @@ class SecurityAlert
     public function setResolvedAt(?\DateTimeImmutable $resolvedAt): self
     {
         $this->resolvedAt = $resolvedAt;
+        if ($resolvedAt !== null) {
+            $this->isResolved = true;
+            if ($this->alertStatus === self::STATUS_EN_COURS) {
+                $this->alertStatus = self::STATUS_TRAITEE;
+            }
+        } elseif ($this->alertStatus === self::STATUS_EN_COURS) {
+            $this->isResolved = false;
+        }
 
         return $this;
     }
@@ -168,6 +279,17 @@ class SecurityAlert
     public function setIsResolved(bool $isResolved): self
     {
         $this->isResolved = $isResolved;
+        if ($isResolved) {
+            if ($this->alertStatus === self::STATUS_EN_COURS) {
+                $this->alertStatus = self::STATUS_TRAITEE;
+            }
+            if ($this->resolvedAt === null) {
+                $this->resolvedAt = new \DateTimeImmutable();
+            }
+        } else {
+            $this->alertStatus = self::STATUS_EN_COURS;
+            $this->resolvedAt = null;
+        }
 
         return $this;
     }

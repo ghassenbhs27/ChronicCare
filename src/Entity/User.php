@@ -5,6 +5,7 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\Email\TwoFactorInterface as EmailTwoFactorInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -13,7 +14,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
 #[UniqueEntity(fields: ['email'], message: 'Il existe déjà un compte avec cet email')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, EmailTwoFactorInterface
 {
     public const APPROVAL_PENDING = 'pending';
     public const APPROVAL_APPROVED = 'approved';
@@ -97,8 +98,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoProfil = null;
 
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $medicalCondition = null;
+
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $securityBlockedUntil = null;
+
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $emailAuthCode = null;
 
     /**
      * @var Collection<int, Evenement>
@@ -422,6 +429,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getMedicalCondition(): ?string
+    {
+        return $this->medicalCondition;
+    }
+
+    public function setMedicalCondition(?string $medicalCondition): self
+    {
+        $this->medicalCondition = $medicalCondition;
+        return $this;
+    }
+
     public function getSecurityBlockedUntil(): ?\DateTimeImmutable
     {
         return $this->securityBlockedUntil;
@@ -528,5 +546,38 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->activityBadgeAwardedAt = $activityBadgeAwardedAt;
         return $this;
+    }
+
+    public function isEmailAuthEnabled(): bool
+    {
+        return $this->isActive() && in_array('ROLE_ADMIN', $this->getRoles(), true);
+    }
+
+    public function getEmailAuthRecipient(): string
+    {
+        if (in_array('ROLE_ADMIN', $this->getRoles(), true)) {
+            $override = (string) (
+                $_ENV['ADMIN_2FA_EMAIL_OVERRIDE']
+                ?? $_SERVER['ADMIN_2FA_EMAIL_OVERRIDE']
+                ?? getenv('ADMIN_2FA_EMAIL_OVERRIDE')
+                ?? ''
+            );
+            $override = trim($override);
+            if ($override !== '' && filter_var($override, FILTER_VALIDATE_EMAIL)) {
+                return $override;
+            }
+        }
+
+        return (string) $this->getEmail();
+    }
+
+    public function getEmailAuthCode(): ?string
+    {
+        return $this->emailAuthCode;
+    }
+
+    public function setEmailAuthCode(string $authCode): void
+    {
+        $this->emailAuthCode = trim($authCode) !== '' ? trim($authCode) : null;
     }
 }

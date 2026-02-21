@@ -233,6 +233,9 @@
         <a href="{{ path('admin_statistics_index') }}" title="Statistiques" class="{% if app.request.get('_route') starts with 'admin_statistics' %}active{% endif %}">
           <span class="back-nav-link-text">Statistiques</span>
         </a>
+        <a href="{{ path('admin_patient_segment_index') }}" title="Segmentation patients" class="{% if app.request.get('_route') starts with 'admin_patient_segment_' %}active{% endif %}">
+          <span class="back-nav-link-text">Segments patients</span>
+        </a>
         <a href="{{ path('admin_evenement_index') }}" title="Gestion des evenements" class="{% if app.request.get('_route') starts with 'admin_evenement' %}active{% endif %}">
           <span class="back-nav-link-text">Evenements</span>
         </a>

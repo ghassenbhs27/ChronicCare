@@ -59,6 +59,7 @@
           {% endif %}
           {% if is_patient %}
             <li><a href="{{ path('suivi_front_dashboard') }}" class="{{ current_route in suivi_routes or current_route starts with 'patient_rdv' ? 'active' : '' }}">Mon suivi</a></li>
+            <li><a href="{{ path('patient_medical_dossier_show') }}" class="{{ current_route starts with 'patient_medical_dossier_' ? 'active' : '' }}">Mon dossier medical</a></li>
             <li><a href="{{ path('front_evenements') }}" class="{{ current_route == 'front_evenements' or current_route == 'front_evenement_show' ? 'active' : '' }}">Événements</a></li>
             <li><a href="{{ path('front_mes_inscriptions') }}" class="{{ current_route == 'front_mes_inscriptions' ? 'active' : '' }}">Mes inscriptions</a></li>
             <li><a href="{{ path('commande_history') }}" class="{{ current_route starts with 'commande_' ? 'active' : '' }}">Mes commandes</a></li>

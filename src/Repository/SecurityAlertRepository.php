@@ -26,10 +26,11 @@ class SecurityAlertRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('a')
             ->select('COUNT(a.id)')
             ->andWhere('a.eventType = :eventType')
-            ->andWhere('a.isResolved = false')
+            ->andWhere('a.alertStatus = :statusOpen')
             ->andWhere('a.createdAt >= :since')
             ->setParameter('eventType', $eventType)
-            ->setParameter('since', $since);
+            ->setParameter('since', $since)
+            ->setParameter('statusOpen', SecurityAlert::STATUS_EN_COURS);
 
         if ($user !== null) {
             $qb->andWhere('a.user = :user')->setParameter('user', $user);
@@ -60,12 +61,13 @@ class SecurityAlertRepository extends ServiceEntityRepository
             ->addSelect('u.prenom AS prenom')
             ->addSelect('u.email AS email')
             ->addSelect('COUNT(a.id) AS total_alerts')
-            ->addSelect('SUM(CASE WHEN a.isResolved = false THEN 1 ELSE 0 END) AS unresolved_alerts')
+            ->addSelect('SUM(CASE WHEN a.alertStatus = :statusOpen THEN 1 ELSE 0 END) AS unresolved_alerts')
             ->addSelect('MAX(a.riskScore) AS max_risk')
             ->addSelect('AVG(a.riskScore) AS avg_risk')
             ->innerJoin('a.user', 'u')
             ->andWhere('a.createdAt >= :since')
             ->setParameter('since', $since)
+            ->setParameter('statusOpen', SecurityAlert::STATUS_EN_COURS)
             ->groupBy('u.id, u.nom, u.prenom, u.email')
             ->orderBy('unresolved_alerts', 'DESC')
             ->addOrderBy('max_risk', 'DESC')
@@ -92,6 +94,8 @@ class SecurityAlertRepository extends ServiceEntityRepository
      * @param int[] $userIds
      * @return array<int, array<int, array{
      *   event_type:string,
+     *   alert_type:string,
+     *   alert_status:string,
      *   severity:string,
      *   risk_score:int,
      *   message:string,
@@ -111,16 +115,19 @@ class SecurityAlertRepository extends ServiceEntityRepository
         $rows = $this->createQueryBuilder('a')
             ->select('u.id AS user_id')
             ->addSelect('a.eventType AS event_type')
+            ->addSelect('a.alertType AS alert_type')
+            ->addSelect('a.alertStatus AS alert_status')
             ->addSelect('a.severity AS severity')
             ->addSelect('a.riskScore AS risk_score')
             ->addSelect('a.message AS message')
             ->addSelect('a.createdAt AS created_at')
             ->innerJoin('a.user', 'u')
-            ->andWhere('a.isResolved = false')
+            ->andWhere('a.alertStatus = :statusOpen')
             ->andWhere('a.createdAt >= :since')
             ->andWhere('u.id IN (:userIds)')
             ->setParameter('since', $since)
             ->setParameter('userIds', $userIds)
+            ->setParameter('statusOpen', SecurityAlert::STATUS_EN_COURS)
             ->orderBy('u.id', 'ASC')
             ->addOrderBy('a.createdAt', 'DESC')
             ->getQuery()
@@ -147,6 +154,8 @@ class SecurityAlertRepository extends ServiceEntityRepository
 
             $grouped[$userId][] = [
                 'event_type' => (string) ($row['event_type'] ?? ''),
+                'alert_type' => (string) ($row['alert_type'] ?? ''),
+                'alert_status' => (string) ($row['alert_status'] ?? ''),
                 'severity' => (string) ($row['severity'] ?? ''),
                 'risk_score' => (int) ($row['risk_score'] ?? 0),
                 'message' => (string) ($row['message'] ?? ''),
@@ -155,5 +164,47 @@ class SecurityAlertRepository extends ServiceEntityRepository
         }
 
         return $grouped;
+    }
+
+    /**
+     * @param int[] $userIds
+     * @return array<int, array{open_alerts:int,max_risk:int,avg_risk:float}>
+     */
+    public function findOpenRiskStatsForUsers(array $userIds): array
+    {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds), static fn (int $id): bool => $id > 0)));
+        if ($userIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('a')
+            ->select('u.id AS user_id')
+            ->addSelect('COUNT(a.id) AS open_alerts')
+            ->addSelect('MAX(a.riskScore) AS max_risk')
+            ->addSelect('AVG(a.riskScore) AS avg_risk')
+            ->innerJoin('a.user', 'u')
+            ->andWhere('u.id IN (:userIds)')
+            ->andWhere('a.alertStatus = :statusOpen')
+            ->setParameter('userIds', $userIds)
+            ->setParameter('statusOpen', SecurityAlert::STATUS_EN_COURS)
+            ->groupBy('u.id')
+            ->getQuery()
+            ->getArrayResult();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $userId = (int) ($row['user_id'] ?? 0);
+            if ($userId <= 0) {
+                continue;
+            }
+
+            $out[$userId] = [
+                'open_alerts' => (int) ($row['open_alerts'] ?? 0),
+                'max_risk' => (int) ($row['max_risk'] ?? 0),
+                'avg_risk' => round((float) ($row['avg_risk'] ?? 0), 1),
+            ];
+        }
+
+        return $out;
     }
 }

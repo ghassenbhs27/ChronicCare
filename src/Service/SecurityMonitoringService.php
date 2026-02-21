@@ -180,13 +180,20 @@ class SecurityMonitoringService
 
         $alert = (new SecurityAlert())
             ->setEventType($eventType)
+            ->setAlertType($this->resolveAlertType($eventType, $user, $context))
+            ->setAlertStatus(SecurityAlert::STATUS_EN_COURS)
             ->setUser($user)
             ->setSeverity($severity)
             ->setRiskScore($this->calculateRiskScore($eventType, $count, $severity))
             ->setMessage($message)
             ->setIpAddress($ip)
             ->setCreatedAt(new \DateTimeImmutable())
-            ->setContext($context);
+            ->setContext($context)
+            ->addStatusHistoryEntry(
+                SecurityAlert::STATUS_EN_COURS,
+                'system',
+                'Alerte creee automatiquement par la surveillance.'
+            );
 
         $this->entityManager->persist($alert);
 
@@ -248,5 +255,58 @@ class SecurityMonitoringService
         $normalized = mb_strtolower(trim($identifier));
 
         return $normalized !== '' ? $normalized : null;
+    }
+
+    private function resolveAlertType(string $eventType, ?User $user, array $context): string
+    {
+        if (in_array($eventType, [self::EVENT_FAILED_LOGIN, self::EVENT_RESET_PASSWORD_REQUEST, self::EVENT_EMAIL_CHANGE], true)) {
+            return SecurityAlert::CATEGORY_SECURITAIRE;
+        }
+
+        $route = strtolower((string) ($context['route'] ?? ''));
+        if ($route !== '') {
+            if ($this->containsAny($route, ['etat', 'medical', 'dossier', 'consultation', 'rdv', 'suivi'])) {
+                return SecurityAlert::CATEGORY_MEDICALE;
+            }
+
+            if ($this->containsAny($route, ['publication', 'commentaire', 'forum', 'profil', 'profile'])) {
+                return SecurityAlert::CATEGORY_COMPORTEMENTALE;
+            }
+
+            if ($this->containsAny($route, ['admin', 'api', 'assistant', 'ai', 'security', 'statistique'])) {
+                return SecurityAlert::CATEGORY_TECHNIQUE;
+            }
+        }
+
+        if ($user !== null) {
+            $roles = $user->getRoles();
+            if (in_array('ROLE_PATIENT', $roles, true)) {
+                return SecurityAlert::CATEGORY_MEDICALE;
+            }
+
+            if (in_array('ROLE_COACH', $roles, true) || in_array('ROLE_NUTRITIONNISTE', $roles, true)) {
+                return SecurityAlert::CATEGORY_COMPORTEMENTALE;
+            }
+
+            if (in_array('ROLE_ADMIN', $roles, true)) {
+                return SecurityAlert::CATEGORY_TECHNIQUE;
+            }
+        }
+
+        return SecurityAlert::CATEGORY_SECURITAIRE;
+    }
+
+    /**
+     * @param string[] $needles
+     */
+    private function containsAny(string $haystack, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if ($needle !== '' && str_contains($haystack, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
