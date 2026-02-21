@@ -94,6 +94,7 @@ class UrgenceFrontController extends AbstractController
         return $this->render('front/urgence/room.html.twig', [
             'urgence' => $urgence,
             'isPatientOwner' => $isPatient,
+            'isProfessionalViewer' => $isTargetPro,
         ]);
     }
 
@@ -119,6 +120,38 @@ class UrgenceFrontController extends AbstractController
         return $this->redirectToRoute('front_etat_index');
     }
 
+    #[Route('/{id}/rate', name: 'front_urgence_rate', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function rate(Request $request, UrgenceAlerte $urgence, EntityManagerInterface $em): RedirectResponse
+    {
+        $current = $this->getAuthenticatedUser();
+        $isPatient = $urgence->getPatient()?->getId() === $current->getId();
+        if (!$isPatient) {
+            throw $this->createAccessDeniedException('Seul le patient peut noter cet appel.');
+        }
+
+        if (!$this->isCsrfTokenValid('rate_urgence_' . $urgence->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Token CSRF invalide.');
+            return $this->redirectToRoute('front_urgence_room', ['id' => $urgence->getId()]);
+        }
+
+        $rating = (int) $request->request->get('rating', 0);
+        if ($rating < 1 || $rating > 5) {
+            $this->addFlash('warning', 'La note doit etre entre 1 et 5 etoiles.');
+            return $this->redirectToRoute('front_urgence_room', ['id' => $urgence->getId()]);
+        }
+
+        $urgence->setPatientRating($rating);
+        $urgence->setRatedAt(new \DateTimeImmutable());
+        if ($urgence->getStatus() !== UrgenceAlerte::STATUS_CANCELLED) {
+            $urgence->setStatus(UrgenceAlerte::STATUS_CANCELLED);
+            $urgence->setViewedAt(new \DateTimeImmutable());
+        }
+        $em->flush();
+
+        $this->addFlash('success', 'Merci, votre note a ete enregistree.');
+        return $this->redirectToRoute('front_urgence_room', ['id' => $urgence->getId()]);
+    }
+
     #[Route('/inbox', name: 'front_urgence_inbox', methods: ['GET'])]
     public function inbox(UrgenceAlerteRepository $repo): JsonResponse
     {
@@ -135,6 +168,7 @@ class UrgenceFrontController extends AbstractController
                 'patient' => $patient ? trim($patient->getPrenom() . ' ' . $patient->getNom()) : 'Patient',
                 'role' => $urgence->getTargetRole(),
                 'createdAt' => $urgence->getCreatedAt()->format('d/m/Y H:i'),
+                'createdAtTs' => $urgence->getCreatedAt()->getTimestamp(),
                 'joinUrl' => $this->generateUrl('front_urgence_join', ['id' => $urgence->getId()]),
             ];
         }

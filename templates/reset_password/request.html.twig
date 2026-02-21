@@ -14,7 +14,7 @@
             <div class="auth-header text-center mb-4">
               <div class="auth-icon"><i class="bi bi-envelope"></i></div>
               <h2>Mot de passe oublie</h2>
-              <p>Entrez votre email pour recevoir un lien de reinitialisation.</p>
+              <p>Entrez votre email pour recevoir un code de verification a 6 chiffres.</p>
             </div>
 
             {% for message in app.flashes('reset_password_error') %}
@@ -28,7 +28,7 @@
               <div class="row gy-3">
                 <div class="col-12">{{ form_row(requestForm.email, { attr: { class: 'form-control', placeholder: 'nom@exemple.com' } }) }}</div>
                 <div class="col-12">
-                  <button type="submit" class="btn-getstarted w-100"><i class="bi bi-send me-2"></i>Envoyer le lien</button>
+                  <button type="submit" class="btn-getstarted w-100"><i class="bi bi-send me-2"></i>Envoyer le code</button>
                 </div>
                 <div class="col-12 text-center">
                   <span class="text-muted">Vous avez deja un code ?</span>

@@ -14,7 +14,7 @@
             <div class="auth-header text-center mb-4">
               <div class="auth-icon"><i class="bi bi-envelope-check"></i></div>
               <h2>Verification de votre email</h2>
-              <p>Un lien de reinitialisation a ete envoye a votre adresse. Cliquez sur le lien dans l'email pour definir un nouveau mot de passe.</p>
+              <p>Un code a 6 chiffres a ete envoye a votre adresse email. Saisissez ce code pour ouvrir le formulaire de nouveau mot de passe.</p>
             </div>
 
             {% for message in app.flashes('reset_password_error') %}
@@ -28,7 +28,7 @@
 
             <div class="d-grid gap-2">
               <a href="{{ path('app_reset_password_verify') }}" class="btn btn-outline-primary text-center">J'ai un code, le saisir</a>
-              <a href="{{ path('app_forgot_password_request') }}" class="auth-link text-center">Renvoyer un nouveau lien</a>
+              <a href="{{ path('app_forgot_password_request') }}" class="auth-link text-center">Renvoyer un nouveau code</a>
             </div>
           </div>
         </div>

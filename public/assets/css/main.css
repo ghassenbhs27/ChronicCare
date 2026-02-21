@@ -6145,3 +6145,56 @@ section,
     grid-template-columns: 1fr;
   }
 }
+
+/*--------------------------------------------------------------
+# Navbar Sizing Fix
+--------------------------------------------------------------*/
+@media (min-width: 1200px) {
+  .header {
+    padding: 14px 0;
+  }
+
+  .header .header-container {
+    width: calc(100vw - 24px);
+    max-width: 1720px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 8px 24px;
+    border-radius: 46px;
+  }
+
+  .header .logo,
+  .header .header-actions {
+    flex: 0 0 auto;
+  }
+
+  .header .navmenu {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .navmenu ul {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 2px;
+  }
+
+  .navmenu > ul > li {
+    padding: 10px 10px;
+  }
+
+  .navmenu a,
+  .navmenu a:focus {
+    font-size: 14px;
+  }
+}
+
+.header-spacer {
+  height: 96px;
+}
+
+@media (max-width: 768px) {
+  .header-spacer {
+    height: 124px;
+  }
+}

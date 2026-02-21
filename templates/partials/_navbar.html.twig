@@ -1,4 +1,22 @@
 <header id="header" class="header d-flex align-items-center fixed-top">
+  <style>
+    .cc-live-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #dc3545;
+      color: #fff;
+      font-size: 11px;
+      line-height: 18px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 0 0 2px #fff;
+    }
+  </style>
   <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between flex-wrap">
 
     <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0" title="Chronic Care">
@@ -87,12 +105,13 @@
       {% endif %}
       {% if app.user %}
         <div class="dropdown">
-          <button class="btn btn-getstarted d-flex align-items-center gap-1 dropdown-toggle" type="button" id="navbarProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Profil">
+          <button class="btn btn-getstarted d-flex align-items-center gap-1 dropdown-toggle position-relative" type="button" id="navbarProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Profil">
             {% if app.user.photoProfil %}
               <img src="{{ asset('uploads/profile/' ~ app.user.photoProfil) }}" alt="Profil" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
             {% else %}
               <i class="bi bi-person-circle fs-5"></i>
             {% endif %}
+            <span class="cc-live-badge d-none" data-unread-messages-badge>0</span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarProfileDropdown">
             <li class="px-3 py-2 border-bottom">

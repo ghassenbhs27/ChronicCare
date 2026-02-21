@@ -34,6 +34,53 @@
               referrerpolicy="no-referrer"
             ></iframe>
           </div>
+
+          {% if isPatientOwner %}
+            <hr class="my-4">
+            <h2 class="h6 mb-2">Evaluation du coach/nutritionniste</h2>
+            {% if urgence.patientRating is not null %}
+              <p class="mb-0">
+                Vous avez note cet appel:
+                <strong>
+                  {% for i in 1..5 %}
+                    {% if i <= urgence.patientRating %}★{% else %}☆{% endif %}
+                  {% endfor %}
+                </strong>
+              </p>
+            {% else %}
+              <form method="post" action="{{ path('front_urgence_rate', {id: urgence.id}) }}" class="d-flex flex-wrap gap-2 align-items-center">
+                <input type="hidden" name="_token" value="{{ csrf_token('rate_urgence_' ~ urgence.id) }}">
+                <label for="rating" class="form-label mb-0">Note:</label>
+                <select id="rating" name="rating" class="form-select" style="width: auto;" required>
+                  <option value="">Choisir</option>
+                  <option value="5">★★★★★ (5)</option>
+                  <option value="4">★★★★☆ (4)</option>
+                  <option value="3">★★★☆☆ (3)</option>
+                  <option value="2">★★☆☆☆ (2)</option>
+                  <option value="1">★☆☆☆☆ (1)</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Terminer et noter</button>
+              </form>
+            {% endif %}
+          {% endif %}
+
+          {% if isProfessionalViewer %}
+            <hr class="my-4">
+            <h2 class="h6 mb-2">Evaluation du patient</h2>
+            {% if urgence.patientRating is not null %}
+              {% set patientName = urgence.patient ? (urgence.patient.prenom ~ ' ' ~ urgence.patient.nom)|trim : 'Patient' %}
+              <p class="mb-0">
+                Note recue de {{ patientName }}:
+                <strong>
+                  {% for i in 1..5 %}
+                    {% if i <= urgence.patientRating %}★{% else %}☆{% endif %}
+                  {% endfor %}
+                </strong>
+              </p>
+            {% else %}
+              <p class="text-muted mb-0">Le patient n a pas encore note cet appel.</p>
+            {% endif %}
+          {% endif %}
         </div>
       </div>
     </div>

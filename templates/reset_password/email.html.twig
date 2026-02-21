@@ -19,7 +19,14 @@
 
     <p>Vous avez demande la reinitialisation de votre mot de passe sur Chronic Care.</p>
 
-    <p><strong>Cliquez sur le bouton ci-dessous pour definir un nouveau mot de passe :</strong></p>
+    {% if sixDigitCode is defined and sixDigitCode is not empty %}
+        <p><strong>Utilisez ce code a 6 chiffres dans le formulaire "J'ai un code" :</strong></p>
+        <p class="code">{{ sixDigitCode }}</p>
+        <p><small>Ce code expire dans {{ codeTtlMinutes|default(15) }} minutes.</small></p>
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:18px 0;">
+    {% endif %}
+
+    <p><strong>Ou cliquez sur le bouton ci-dessous pour definir un nouveau mot de passe :</strong></p>
 
     <p>
         <a href="{{ resetUrl|default(url('app_reset_password', {token: resetToken.token})) }}" class="btn">
@@ -32,7 +39,6 @@
         {{ resetUrl|default(url('app_reset_password', {token: resetToken.token})) }}
     </p>
 
-    <p class="code">Code alternatif : {{ resetToken.token }}</p>
     <p><small>Ce lien expirera dans {{ resetToken.expirationMessageKey|trans(resetToken.expirationMessageData, 'ResetPasswordBundle') }}.</small></p>
 
     <p>Si vous n'avez pas demande cette reinitialisation, vous pouvez ignorer cet email.</p>

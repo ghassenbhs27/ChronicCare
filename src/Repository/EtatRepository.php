@@ -68,6 +68,23 @@ class EtatRepository extends ServiceEntityRepository
         return $qb->orderBy('e.' . $sort, $dir)->getQuery()->getResult();
     }
 
+    /**
+     * @return Etat[]
+     */
+    public function findLastDaysForUser(User $user, int $days = 7): array
+    {
+        $since = (new \DateTimeImmutable('today'))->modify('-' . max(1, $days - 1) . ' days');
+
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.utilisateur = :user')
+            ->andWhere('e.dateReleve >= :since')
+            ->setParameter('user', $user)
+            ->setParameter('since', $since)
+            ->orderBy('e.dateReleve', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
     /** @return array<array{date: string, total: int}> Relevés des patients uniquement. */
     public function getCountByDayLastDays(int $days = 7): array
     {

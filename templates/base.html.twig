@@ -297,7 +297,8 @@
 </div>
 
 {% if app.user and (is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE')) %}
-  <div id="ccUrgentGlobal" class="alert alert-danger cc-urgent-toast d-none mb-0" role="alert">
+  <div id="ccUrgentGlobal" class="alert alert-danger cc-urgent-toast d-none mb-0 position-relative" role="alert">
+    <button type="button" id="ccUrgentGlobalClose" class="btn-close btn-close-white position-absolute top-0 end-0 m-2" aria-label="Fermer"></button>
     <div class="fw-bold"><i class="bi bi-bell-fill me-1"></i> Notification urgente</div>
     <div class="small mb-2">Un patient demande un appel immédiat.</div>
     <ul class="mb-0" id="ccUrgentGlobalList"></ul>
@@ -305,6 +306,42 @@
 {% endif %}
 
 <script src="{{ asset('assets/js/profile-modal.js') }}"></script>
+
+{% if app.user %}
+<script>
+  (function () {
+    const unreadUrl = '{{ path('front_discussion_unread_count') }}';
+    const getBadges = () => Array.from(document.querySelectorAll('[data-unread-messages-badge]'));
+
+    const renderUnread = (count) => {
+      const value = Number.isFinite(count) ? Math.max(0, count) : 0;
+      const badges = getBadges();
+      if (!badges.length) return;
+
+      badges.forEach((badge) => {
+        badge.textContent = String(value);
+        badge.classList.toggle('d-none', value <= 0);
+      });
+    };
+
+    const fetchUnread = async () => {
+      try {
+        const response = await fetch(unreadUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!data || data.ok !== true) return;
+        renderUnread(Number(data.count || 0));
+      } catch (e) {
+      }
+    };
+
+    if (getBadges().length) {
+      fetchUnread();
+      setInterval(fetchUnread, 5000);
+    }
+  })();
+</script>
+{% endif %}
 
 {% if app.user and (is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE')) %}
 <script>
@@ -315,7 +352,9 @@
     const csrf = '{{ csrf_token('presence_ping') }}';
     const urgentBox = document.getElementById('ccUrgentGlobal');
     const urgentList = document.getElementById('ccUrgentGlobalList');
+    const urgentClose = document.getElementById('ccUrgentGlobalClose');
     let previousCount = 0;
+    let manuallyHidden = false;
     let audioContext = null;
 
     const ping = async () => {
@@ -382,22 +421,34 @@
 
     const renderUrgences = (items) => {
       if (!urgentBox || !urgentList) return;
-      if (!Array.isArray(items) || items.length === 0) {
+      const nowTs = Math.floor(Date.now() / 1000);
+      const validItems = Array.isArray(items)
+        ? items.filter((item) => Number(item.createdAtTs || 0) >= (nowTs - 600))
+        : [];
+
+      if (validItems.length === 0) {
         urgentBox.classList.add('d-none');
         urgentList.innerHTML = '';
         previousCount = 0;
+        manuallyHidden = false;
         return;
       }
 
-      urgentBox.classList.remove('d-none');
-      urgentList.innerHTML = items.map((item) =>
-        `<li><a href="${item.joinUrl}" class="alert-link">${item.patient}</a> (${item.role}) - ${item.createdAt}</li>`
+      urgentList.innerHTML = validItems.map((item) =>
+        `<li class="d-flex justify-content-between align-items-center gap-2">
+          <a href="${item.joinUrl}" class="alert-link">${item.patient}</a>
+          <small>(${item.role}) - ${item.createdAt}</small>
+        </li>`
       ).join('');
 
-      if (items.length > previousCount) {
+      if (validItems.length > previousCount) {
         playUrgentSound();
+        manuallyHidden = false;
       }
-      previousCount = items.length;
+      previousCount = validItems.length;
+      if (!manuallyHidden) {
+        urgentBox.classList.remove('d-none');
+      }
     };
 
     const fetchUrgences = async () => {
@@ -419,6 +470,13 @@
 
     fetchUrgences();
     setInterval(fetchUrgences, 7000);
+
+    if (urgentClose && urgentBox) {
+      urgentClose.addEventListener('click', function () {
+        manuallyHidden = true;
+        urgentBox.classList.add('d-none');
+      });
+    }
   })();
 </script>
 {% endif %}

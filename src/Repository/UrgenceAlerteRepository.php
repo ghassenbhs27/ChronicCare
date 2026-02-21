@@ -20,18 +20,21 @@ class UrgenceAlerteRepository extends ServiceEntityRepository
     /**
      * @return UrgenceAlerte[]
      */
-    public function findUnreadForProfessional(User $professional, int $limit = 10): array
+    public function findUnreadForProfessional(User $professional, int $limit = 10, int $maxAgeMinutes = 10): array
     {
+        $since = (new \DateTimeImmutable())->modify('-' . max(1, $maxAgeMinutes) . ' minutes');
+
         return $this->createQueryBuilder('u')
             ->leftJoin('u.patient', 'p')->addSelect('p')
             ->andWhere('u.professionnel = :professional')
             ->andWhere('u.status = :status')
+            ->andWhere('u.createdAt >= :since')
             ->setParameter('professional', $professional)
             ->setParameter('status', UrgenceAlerte::STATUS_PENDING)
+            ->setParameter('since', $since)
             ->orderBy('u.createdAt', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
     }
 }
-

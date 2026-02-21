@@ -41,6 +41,12 @@ class UrgenceAlerte
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $viewedAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $patientRating = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $ratedAt = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -119,6 +125,28 @@ class UrgenceAlerte
     public function setViewedAt(?\DateTimeImmutable $viewedAt): self
     {
         $this->viewedAt = $viewedAt;
+        return $this;
+    }
+
+    public function getPatientRating(): ?int
+    {
+        return $this->patientRating;
+    }
+
+    public function setPatientRating(?int $patientRating): self
+    {
+        $this->patientRating = $patientRating;
+        return $this;
+    }
+
+    public function getRatedAt(): ?\DateTimeImmutable
+    {
+        return $this->ratedAt;
+    }
+
+    public function setRatedAt(?\DateTimeImmutable $ratedAt): self
+    {
+        $this->ratedAt = $ratedAt;
         return $this;
     }
 }

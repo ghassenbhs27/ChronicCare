@@ -3,10 +3,13 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\ResetPasswordCode;
 use App\Entity\User;
 use App\Form\ChangePasswordFormType;
 use App\Form\ResetPasswordCodeFormType;
 use App\Form\ResetPasswordRequestFormType;
+use App\Repository\ResetPasswordCodeRepository;
+use Doctrine\DBAL\Exception\TableNotFoundException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,9 +32,12 @@ class ResetPasswordController extends AbstractController
 {
     use ResetPasswordControllerTrait;
 
+    private const CODE_TTL_MINUTES = 15;
+
     public function __construct(
         private ResetPasswordHelperInterface $resetPasswordHelper,
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private ResetPasswordCodeRepository $resetPasswordCodeRepository
     ) {
     }
 
@@ -70,10 +76,21 @@ class ResetPasswordController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $email = mb_strtolower(trim((string) $form->get('email')->getData()));
             $code = (string) $form->get('code')->getData();
+            try {
+                $entry = $this->resetPasswordCodeRepository->findLatestActiveByEmail($email);
+            } catch (TableNotFoundException) {
+                $this->addFlash('reset_password_error', 'Le mode code 6 chiffres n est pas encore active. Utilisez le lien recu par email.');
+                return $this->redirectToRoute('app_forgot_password_request');
+            }
+            if (!$entry instanceof ResetPasswordCode || !$this->isCodeValid($code, $entry->getCodeHash())) {
+                $this->addFlash('reset_password_error', 'Code invalide ou expire.');
+                return $this->redirectToRoute('app_reset_password_verify');
+            }
 
             try {
-                $this->resetPasswordHelper->validateTokenAndFetchUser($code);
+                $this->resetPasswordHelper->validateTokenAndFetchUser($entry->getResetToken());
             } catch (ResetPasswordExceptionInterface $e) {
                 $this->addFlash('reset_password_error', sprintf(
                     'The code is invalid or expired. %s',
@@ -83,7 +100,10 @@ class ResetPasswordController extends AbstractController
                 return $this->redirectToRoute('app_reset_password_verify');
             }
 
-            $this->storeTokenInSession($code);
+            $entry->setUsedAt(new \DateTimeImmutable());
+            $this->entityManager->flush();
+
+            $this->storeTokenInSession($entry->getResetToken());
             return $this->redirectToRoute('app_reset_password');
         }
 
@@ -159,7 +179,24 @@ class ResetPasswordController extends AbstractController
         try {
             $resetToken = $this->resetPasswordHelper->generateResetToken($user);
         } catch (ResetPasswordExceptionInterface $e) {
+            $this->addFlash('reset_password_error', sprintf(
+                'Impossible de renvoyer le code maintenant. %s',
+                $translator->trans($e->getReason(), [], 'ResetPasswordBundle')
+            ));
             return $this->redirectToRoute('app_check_email');
+        }
+        $plainCode = $this->generateSixDigitCode();
+        $codeEntry = (new ResetPasswordCode())
+            ->setEmail(mb_strtolower((string) $user->getEmail()))
+            ->setCodeHash($this->hashCode($plainCode))
+            ->setResetToken($resetToken->getToken())
+            ->setExpiresAt(new \DateTimeImmutable('+' . self::CODE_TTL_MINUTES . ' minutes'));
+        try {
+            $this->resetPasswordCodeRepository->deleteForEmail(mb_strtolower((string) $user->getEmail()));
+            $this->entityManager->persist($codeEntry);
+            $this->entityManager->flush();
+        } catch (TableNotFoundException) {
+            $plainCode = '';
         }
 
         $baseUrl = rtrim((string) ($this->getParameter('app_url') ?? ''), '/');
@@ -177,6 +214,8 @@ class ResetPasswordController extends AbstractController
                 'resetToken' => $resetToken,
                 'user' => $user,
                 'resetUrl' => $resetUrl,
+                'sixDigitCode' => $plainCode,
+                'codeTtlMinutes' => self::CODE_TTL_MINUTES,
             ]);
 
         try {
@@ -187,5 +226,20 @@ class ResetPasswordController extends AbstractController
 
         $this->setTokenObjectInSession($resetToken);
         return $this->redirectToRoute('app_check_email');
+    }
+
+    private function generateSixDigitCode(): string
+    {
+        return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+
+    private function hashCode(string $plainCode): string
+    {
+        return hash_hmac('sha256', $plainCode, (string) $this->getParameter('kernel.secret'));
+    }
+
+    private function isCodeValid(string $plainCode, string $storedHash): bool
+    {
+        return hash_equals($storedHash, $this->hashCode($plainCode));
     }
 }

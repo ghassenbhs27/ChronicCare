@@ -6,6 +6,7 @@ use App\Entity\Activite;
 use App\Entity\User;
 use App\Form\ActiviteType;
 use App\Repository\ActiviteRepository;
+use App\Repository\DiscussionMessageRepository;
 use App\Repository\EtatRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,7 +22,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class ActiviteFrontController extends AbstractController
 {
     #[Route('/', name: 'front_activite_index', methods: ['GET'])]
-    public function index(Request $request, ActiviteRepository $repo, UserRepository $userRepository): Response
+    public function index(
+        Request $request,
+        ActiviteRepository $repo,
+        UserRepository $userRepository,
+        DiscussionMessageRepository $discussionMessageRepository
+    ): Response
     {
         $currentUser = $this->getAuthenticatedUser();
         $isPro = $this->isProUser($currentUser);
@@ -53,6 +59,7 @@ class ActiviteFrontController extends AbstractController
         $goalCalories = 2000;
         $minutesProgress = $goalMinutes > 0 ? min(100, (int) round(($stats['totalDuree'] / $goalMinutes) * 100)) : 0;
         $caloriesProgress = $goalCalories > 0 ? min(100, (int) round(($stats['totalCalories'] / $goalCalories) * 100)) : 0;
+        $unreadMessagesCount = $discussionMessageRepository->countUnreadForRecipient($currentUser);
 
         return $this->render('front/activite/index.html.twig', [
             'activites' => $activites,
@@ -67,6 +74,7 @@ class ActiviteFrontController extends AbstractController
             'isPro' => $isPro,
             'patients' => $patients,
             'selectedPatient' => $selectedPatient,
+            'unreadMessagesCount' => $unreadMessagesCount,
         ]);
     }
 

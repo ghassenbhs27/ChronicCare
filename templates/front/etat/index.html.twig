@@ -33,6 +33,21 @@
       70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
       100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
     }
+    .cc-badge-red {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #dc3545;
+      color: #fff;
+      font-size: 11px;
+      line-height: 1;
+      margin-left: 6px;
+      font-weight: 700;
+    }
   </style>
 {% endblock %}
 
@@ -59,6 +74,13 @@
         <div class="d-flex gap-2 flex-wrap">
           {% if not isPro %}
             <a class="btn btn-primary" href="{{ path('front_etat_new') }}"><i class="bi bi-plus-lg me-1"></i> Cree mon etat</a>
+            <a class="btn btn-outline-danger" href="{{ path('front_discussion_index') }}">
+              <i class="bi bi-chat-square-text me-1"></i> Messages
+              <span
+                class="cc-badge-red {{ unreadMessagesCount|default(0) > 0 ? '' : 'd-none' }}"
+                data-unread-messages-badge
+              >{{ unreadMessagesCount|default(0) }}</span>
+            </a>
           {% endif %}
           <a class="btn btn-outline-secondary" href="{{ path('suivi_front_dashboard') }}"><i class="bi bi-grid me-1"></i> Tableau de bord</a>
           <a class="btn btn-outline-success btn-sm" href="{{ path('front_etat_export_excel', {q: q ?? '', sort: sort ?? 'dateReleve', dir: dir ?? 'DESC', patient: selectedPatient ? selectedPatient.id : null}) }}"><i class="bi bi-file-earmark-excel me-1"></i> Export CSV</a>
@@ -133,6 +155,110 @@
         </div>
       </div>
 
+      {% if isPro and selectedPatient %}
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Analyses IA sur 7 jours</h6>
+            <form method="post" action="{{ path('front_etat_analysis_generate') }}">
+              <input type="hidden" name="patient" value="{{ selectedPatient.id }}">
+              <input type="hidden" name="_token" value="{{ csrf_token('analysis_generate_' ~ selectedPatient.id) }}">
+              <button class="btn btn-sm btn-outline-primary" type="submit">Generer analyse IA 7 jours</button>
+            </form>
+          </div>
+          <div class="card-body">
+            {% if analyses is empty %}
+              <p class="text-muted mb-0">Aucune analyse pour ce patient.</p>
+            {% else %}
+              {% set focusId = app.request.query.get('focus')|default(0) + 0 %}
+              {% set openFlag = app.request.query.get('open') %}
+              {% set closedId = app.request.query.get('closed')|default(0) + 0 %}
+              <div class="d-flex flex-column gap-3">
+                {% for a in analyses %}
+                  {% set isFocused = focusId and (focusId == a.id) %}
+                  {% set isClosedAfterSave = closedId and (closedId == a.id) %}
+                  {% set isOpen = (isFocused and openFlag and not isClosedAfterSave) %}
+                  <div class="border rounded p-3" id="analysis-{{ a.id }}">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+                      <div class="small text-muted">
+                        Periode: {{ a.periodStart|date('d/m/Y') }} - {{ a.periodEnd|date('d/m/Y') }}
+                        | Cree le {{ a.createdAt|date('d/m/Y H:i') }}
+                        {% if a.status == 'sent' and a.sentAt %}
+                          | Envoye le {{ a.sentAt|date('d/m/Y H:i') }}
+                        {% endif %}
+                      </div>
+                      <div class="d-flex align-items-center gap-2">
+                        <button
+                          class="btn btn-sm {{ isOpen ? 'btn-outline-danger' : 'btn-outline-secondary' }} js-analysis-toggle"
+                          type="button"
+                          data-bs-toggle="collapse"
+                          data-bs-target="#analysis-body-{{ a.id }}"
+                          aria-expanded="{{ isOpen ? 'true' : 'false' }}"
+                          aria-controls="analysis-body-{{ a.id }}"
+                        >
+                          {{ isOpen ? 'Fermer' : 'Ouvrir' }}
+                        </button>
+                        <span class="badge {{ a.status == 'sent' ? 'bg-success' : 'bg-secondary' }}">{{ a.status == 'sent' ? 'Envoye' : 'Brouillon' }}</span>
+                      </div>
+                    </div>
+
+                    <div id="analysis-body-{{ a.id }}" class="collapse {{ isOpen ? 'show' : '' }}">
+                      <form method="post" action="{{ path('front_etat_analysis_update', {id: a.id}) }}" class="mb-2">
+                        <input type="hidden" name="_token" value="{{ csrf_token('analysis_update_' ~ a.id) }}">
+                        <textarea name="content" rows="8" class="form-control mb-2" required>{{ a.content }}</textarea>
+                        <div class="d-flex flex-wrap gap-2">
+                          <button class="btn btn-sm btn-primary" type="submit">Enregistrer modification</button>
+                        </div>
+                      </form>
+
+                      <div class="mt-3 p-2 bg-light rounded">
+                        <div class="fw-semibold small mb-2">Etats pris en compte (7 jours)</div>
+                        {% if a.etatSnapshot is empty %}
+                          <div class="text-muted small">Aucun etat enregistre dans ce snapshot.</div>
+                        {% else %}
+                          <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                              <thead>
+                                <tr>
+                                  <th>Date</th>
+                                  <th>Temp.</th>
+                                  <th>Hydrat.</th>
+                                  <th>Traitement</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for s in a.etatSnapshot %}
+                                  <tr>
+                                    <td>{{ s.dateReleve ?? '-' }}</td>
+                                    <td>{{ s.temperatureCorporelle ?? '-' }}</td>
+                                    <td>{{ s.niveauHydratation ?? '-' }}</td>
+                                    <td>{{ s.traitementEnCours ?? '-' }}</td>
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                      <form method="post" action="{{ path('front_etat_analysis_send', {id: a.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('analysis_send_' ~ a.id) }}">
+                        <button class="btn btn-sm btn-outline-success" type="submit">Envoyer au patient par email</button>
+                      </form>
+                      <form method="post" action="{{ path('front_etat_analysis_delete', {id: a.id}) }}" onsubmit="return confirm('Supprimer cette analyse ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('analysis_delete_' ~ a.id) }}">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>
+                      </form>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
       <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-0 py-3">
           <h6 class="mb-0">Liste des etats</h6>
@@ -173,6 +299,29 @@
       </div>
     </div>
   </main>
+
+  <script>
+    document.querySelectorAll('.js-analysis-toggle').forEach(function (btn) {
+      var targetSelector = btn.getAttribute('data-bs-target');
+      if (!targetSelector) {
+        return;
+      }
+      var target = document.querySelector(targetSelector);
+      if (!target) {
+        return;
+      }
+
+      function syncButton(opened) {
+        btn.textContent = opened ? 'Fermer' : 'Ouvrir';
+        btn.classList.toggle('btn-outline-danger', opened);
+        btn.classList.toggle('btn-outline-secondary', !opened);
+      }
+
+      syncButton(target.classList.contains('show'));
+      target.addEventListener('shown.bs.collapse', function () { syncButton(true); });
+      target.addEventListener('hidden.bs.collapse', function () { syncButton(false); });
+    });
+  </script>
 {% endblock %}
 
 
