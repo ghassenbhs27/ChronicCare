@@ -5,6 +5,7 @@
 {% block stylesheets %}
   {{ parent() }}
   <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
+  <link href="{{ asset('assets/css/comment-editor.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block body %}
@@ -82,16 +83,66 @@
             <p class="text-warning mb-0"><i class="bi bi-pencil-square me-2"></i>Cette publication est en brouillon. Les commentaires sont désactivés jusqu’à sa publication.</p>
           </div>
         {% elseif can_comment and app.user %}
-          <div class="forum-comment-form-wrap">
-            <h6 class="mb-2"><i class="bi bi-chat-dots me-1"></i> Ajouter un commentaire</h6>
+          <div class="forum-comment-form-wrap comment-editor-wrapper">
+            <h6 class="mb-3"><i class="bi bi-chat-dots me-1"></i> Ajouter un commentaire</h6>
             <p class="text-muted small mb-3">Partagez votre avis ou posez une question. En tant que patient, vous pouvez commenter les publications des coachs.</p>
-            <form method="post" action="{{ path('commentaire_add', {publicationId: publication.id}) }}">
+            <form method="post" action="{{ path('commentaire_add', {publicationId: publication.id}) }}" id="commentaire_form">
               <input type="hidden" name="_token" value="{{ csrf_token('commentaire_add') }}">
+              
+              <!-- Main comment textarea -->
               <textarea name="contenu" class="form-control mb-3" rows="4" placeholder="Écrivez votre commentaire..." required minlength="3"></textarea>
+              
+              <!-- Rich Formatting Toolbar -->
+              <div class="comment-toolbar">
+                <div class="toolbar-group">
+                  <label for="fontStyle">Style de texte</label>
+                  <select name="fontStyle" id="fontStyle" class="form-select">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Gras</option>
+                    <option value="italic">Italique</option>
+                    <option value="underline">Souligné</option>
+                    <option value="strikethrough">Barré</option>
+                  </select>
+                </div>
+                
+                <div class="toolbar-group">
+                  <label for="fontSize">Taille de police</label>
+                  <select name="fontSize" id="fontSize" class="form-select">
+                    <option value="medium" selected>Moyen</option>
+                    <option value="small">Petit</option>
+                    <option value="large">Grand</option>
+                  </select>
+                </div>
+                
+                <div class="toolbar-group">
+                  <label for="textColor">Couleur du texte</label>
+                  <input type="color" name="textColor" id="textColor" class="form-control" style="height: 38px;">
+                </div>
+                
+                <div class="toolbar-group">
+                  <button type="button" class="emoji-picker-button" data-emoji-toggle>
+                    <i class="bi bi-emoji-smile me-1"></i> Emojis
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Emoji Picker Container -->
+              <div class="emoji-picker-container" id="emoji-picker-container">
+                <div class="emoji-grid" id="emoji-grid"></div>
+              </div>
+              
+              <!-- Comment Preview -->
+              <div class="comment-preview-wrapper">
+                <label class="comment-preview-label">Aperçu :</label>
+                <div id="commentaire-preview" class="comment-preview"></div>
+              </div>
+              
+              <!-- Form Controls -->
               <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" name="is_anonymous" id="is_anonymous" value="1">
                 <label class="form-check-label" for="is_anonymous">Publier en anonyme</label>
               </div>
+              
               <button type="submit" class="btn btn-primary">Publier le commentaire</button>
             </form>
           </div>
@@ -111,8 +162,43 @@
                 <div class="forum-comment-head">
                   <span class="forum-comment-author">{{ commentaire.nomAuteur }}</span>
                   <span class="forum-comment-date">{{ commentaire.createdAt|date('d/m/Y à H:i') }}</span>
+                  {% if commentaire.updatedAt and commentaire.updatedAt != commentaire.createdAt %}
+                    <span class="forum-comment-edited text-muted small">(modifié)</span>
+                  {% endif %}
                 </div>
-                <div class="forum-comment-text">{{ commentaire.contenu|nl2br }}</div>
+                
+                {# Calculate inline styles for rich content #}
+                {% set commentStyle = '' %}
+                {% if commentaire.fontStyle %}
+                  {% if commentaire.fontStyle == 'bold' %}
+                    {% set commentStyle = commentStyle ~ 'font-weight: bold;' %}
+                  {% elseif commentaire.fontStyle == 'italic' %}
+                    {% set commentStyle = commentStyle ~ 'font-style: italic;' %}
+                  {% elseif commentaire.fontStyle == 'underline' %}
+                    {% set commentStyle = commentStyle ~ 'text-decoration: underline;' %}
+                  {% elseif commentaire.fontStyle == 'strikethrough' %}
+                    {% set commentStyle = commentStyle ~ 'text-decoration: line-through;' %}
+                  {% endif %}
+                {% endif %}
+                
+                {% if commentaire.fontSize %}
+                  {% if commentaire.fontSize == 'small' %}
+                    {% set commentStyle = commentStyle ~ 'font-size: 0.85rem;' %}
+                  {% elseif commentaire.fontSize == 'large' %}
+                    {% set commentStyle = commentStyle ~ 'font-size: 1.15rem;' %}
+                  {% else %}
+                    {% set commentStyle = commentStyle ~ 'font-size: 0.95rem;' %}
+                  {% endif %}
+                {% endif %}
+                
+                {% if commentaire.textColor %}
+                  {% set commentStyle = commentStyle ~ 'color: ' ~ commentaire.textColor ~ ';' %}
+                {% endif %}
+                
+                <div class="forum-comment-text" {% if commentStyle %}style="{{ commentStyle }}"{% endif %}>
+                  {{ commentaire.contenu|nl2br }}
+                </div>
+                
                 <div class="forum-comment-actions">
                   <button class="comment-like-btn" data-comment-id="{{ commentaire.id }}" title="J'aime ce commentaire">
                     <i class="bi bi-heart"></i> <span class="like-count">{{ commentaire.likeCount }}</span>
@@ -272,4 +358,6 @@
       });
     });
   </script>
+
+  <script src="{{ asset('assets/js/comment-editor.js') }}"></script>
 {% endblock %}

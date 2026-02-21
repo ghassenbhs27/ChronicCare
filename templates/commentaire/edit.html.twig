@@ -5,6 +5,7 @@
 {% block stylesheets %}
   {{ parent() }}
   <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
+  <link href="{{ asset('assets/css/comment-editor.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block body %}
@@ -27,19 +28,75 @@
           <p class="text-muted small mb-0">Publication : {{ publication.titre }}</p>
         </header>
         <div class="forum-form-body">
-          <form method="post">
+          <form method="post" id="commentaire_form" class="comment-editor-wrapper commentaire-edit-form">
             <input type="hidden" name="_token" value="{{ csrf_token('commentaire_edit_' ~ commentaire.id) }}">
-            <div class="mb-4">
-              <label for="contenu" class="form-label">Commentaire <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="contenu" name="contenu" rows="5" required minlength="3">{{ commentaire.contenu }}</textarea>
+            
+            <!-- Comment Content -->
+            <div class="mb-3">
+              <label for="contenu" class="form-label">Votre commentaire <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="contenu" name="contenu" rows="5" required minlength="3" maxlength="3000" placeholder="Partagez votre avis...">{{ commentaire.contenu }}</textarea>
+              <small class="text-muted">Minimum 3 caractères, maximum 3000 caractères</small>
             </div>
-            <div class="forum-form-actions">
-              <a href="{{ path('publication_show', {id: publication.id}) }}#comments" class="btn btn-outline-secondary"><i class="bi bi-x-lg me-1"></i> Annuler</a>
-              <button type="submit" class="btn btn-primary">Enregistrer</button>
+
+            <!-- Toolbar for Formatting -->
+            <div class="comment-toolbar">
+              <div class="toolbar-group">
+                <label for="fontStyle">Style de texte</label>
+                <select id="fontStyle" name="fontStyle" class="form-select">
+                  <option value="normal" {% if commentaire.fontStyle == 'normal' %}selected{% endif %}>Normal</option>
+                  <option value="bold" {% if commentaire.fontStyle == 'bold' %}selected{% endif %}>Gras</option>
+                  <option value="italic" {% if commentaire.fontStyle == 'italic' %}selected{% endif %}>Italique</option>
+                  <option value="underline" {% if commentaire.fontStyle == 'underline' %}selected{% endif %}>Souligné</option>
+                  <option value="strikethrough" {% if commentaire.fontStyle == 'strikethrough' %}selected{% endif %}>Barré</option>
+                </select>
+              </div>
+
+              <div class="toolbar-group">
+                <label for="fontSize">Taille de police</label>
+                <select id="fontSize" name="fontSize" class="form-select">
+                  <option value="small" {% if commentaire.fontSize == 'small' %}selected{% endif %}>Petit</option>
+                  <option value="medium" {% if commentaire.fontSize == 'medium' %}selected{% endif %}>Moyen</option>
+                  <option value="large" {% if commentaire.fontSize == 'large' %}selected{% endif %}>Grand</option>
+                </select>
+              </div>
+
+              <div class="toolbar-group">
+                <label for="textColor">Couleur du texte</label>
+                <input type="color" id="textColor" name="textColor" value="{{ commentaire.textColor ?? '#000000' }}" class="form-control">
+              </div>
+            </div>
+
+            <!-- Emoji Picker -->
+            <div class="toolbar-group mb-3">
+              <button type="button" class="emoji-picker-button" data-emoji-toggle>
+                <i class="bi bi-emoji-smile me-2"></i> Emojis
+              </button>
+            </div>
+            <div class="emoji-picker-container" id="emoji-picker-container">
+              <div class="emoji-grid" id="emoji-grid"></div>
+            </div>
+
+            <!-- Aperçu -->
+            <div class="comment-preview-wrapper">
+              <label class="comment-preview-label">Aperçu :</label>
+              <div id="commentaire-preview" class="comment-preview"></div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="forum-form-actions mt-4">
+              <a href="{{ path('publication_show', {id: publication.id}) }}#comments" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i> Annuler
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i> Enregistrer les modifications
+              </button>
             </div>
           </form>
         </div>
       </div>
     </div>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@latest"></script>
+  <script src="{{ asset('assets/js/comment-editor.js') }}"></script>
 {% endblock %}

@@ -4,8 +4,10 @@ namespace App\Controller;
 
 use App\Entity\Commentaire;
 use App\Entity\Publication;
+use App\Form\CommentaireFormType;
 use App\Repository\CommentaireRepository;
 use App\Repository\PublicationRepository;
+use App\Service\CommentTextFormatterService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,7 +25,8 @@ class CommentaireController extends AbstractController
         Request $request,
         PublicationRepository $publicationRepository,
         EntityManagerInterface $em,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        CommentTextFormatterService $formatterService
     ): Response {
         $publication = $publicationRepository->find($publicationId);
 
@@ -45,6 +48,22 @@ class CommentaireController extends AbstractController
         $commentaire->setContenu(trim((string) $request->request->get('contenu', '')));
         $commentaire->setPublication($publication);
         $commentaire->setIsAnonymous($request->request->getBoolean('is_anonymous'));
+
+        // Set rich text formatting
+        $fontStyle = $request->request->get('fontStyle');
+        if ($fontStyle && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
+            $commentaire->setFontStyle($fontStyle);
+        }
+
+        $fontSize = $request->request->get('fontSize');
+        if ($fontSize && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
+            $commentaire->setFontSize($fontSize);
+        }
+
+        $textColor = $request->request->get('textColor');
+        if ($textColor) {
+            $commentaire->setTextColor($textColor);
+        }
 
         if ($this->getUser()) {
             $commentaire->setAuteur($this->getUser());
@@ -97,6 +116,25 @@ class CommentaireController extends AbstractController
             }
 
             $commentaire->setContenu(trim((string) $request->request->get('contenu', '')));
+            
+            // Update rich text formatting
+            $fontStyle = $request->request->get('fontStyle');
+            if ($fontStyle && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
+                $commentaire->setFontStyle($fontStyle);
+            }
+
+            $fontSize = $request->request->get('fontSize');
+            if ($fontSize && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
+                $commentaire->setFontSize($fontSize);
+            }
+
+            $textColor = $request->request->get('textColor');
+            if ($textColor) {
+                $commentaire->setTextColor($textColor);
+            }
+
+            // Update edit timestamp
+            $commentaire->setUpdatedAt(new \DateTimeImmutable());
 
             $violations = $validator->validate($commentaire);
             if (count($violations) > 0) {

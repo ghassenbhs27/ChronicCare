@@ -1,0 +1,336 @@
+/* Rich Comment Editor Styles */
+
+.comment-editor-wrapper {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.comment-editor-wrapper textarea {
+  margin-bottom: 1rem;
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Toolbar */
+.comment-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  border: 1px solid #dee2e6;
+}
+
+.toolbar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toolbar-group label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.toolbar-group select,
+.toolbar-group input[type="color"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.toolbar-group select:focus,
+.toolbar-group input[type="color"]:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Emoji Picker Button */
+.emoji-picker-button {
+  padding: 0.5rem 1rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  width: 100%;
+  font-weight: 500;
+  min-height: 38px;
+  line-height: 1.5;
+}
+
+.emoji-picker-button:hover {
+  background-color: #ffe69c;
+  border-color: #ffd966;
+}
+
+.emoji-picker-button.active {
+  background-color: #ffc107;
+  border-color: #ffb300;
+}
+
+/* Emoji Picker Container */
+.emoji-picker-container {
+  margin-bottom: 1.5rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, visibility 0.4s ease;
+  visibility: hidden;
+}
+
+.emoji-picker-container.show {
+  max-height: 500px;
+  visibility: visible;
+}
+
+.emoji-picker-container emoji-picker {
+  width: 100%;
+  border: 1px solid #dee2e6;
+  border-radius: 0.35rem;
+}
+
+/* Added Emojis Display */
+.emoji-tags-container {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  min-height: 32px;
+  align-items: center;
+}
+
+.emoji-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background-color: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  animation: slideIn 0.2s ease;
+}
+
+.emoji-tag .emoji-value {
+  font-size: 1rem;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.emoji-tag .emoji-remove {
+  background: none;
+  border: none;
+  color: #0d6efd;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.emoji-tag .emoji-remove:hover {
+  color: #d32f2f;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Preview Pane */
+.comment-preview-wrapper {
+  margin-top: 1.5rem;
+}
+
+.comment-preview-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #495057;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+#commentaire-preview {
+  background-color: #f0f0f0;
+  border: 1px solid #dee2e6;
+  border-radius: 0.35rem;
+  padding: 1rem;
+  min-height: 80px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.emoji-display {
+  margin-top: 0.5rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.25rem;
+}
+
+/* Form Submit Button */
+.comment-editor-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.comment-editor-actions button {
+  padding: 0.625rem 1.5rem;
+  font-weight: 600;
+  border-radius: 0.35rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.comment-editor-actions .btn-primary {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.comment-editor-actions .btn-primary:hover {
+  background-color: #0b5ed7;
+}
+
+.comment-editor-actions .btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.comment-editor-actions .btn-secondary:hover {
+  background-color: #5c636a;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .comment-editor-wrapper {
+    padding: 1rem;
+  }
+
+  .comment-toolbar {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .emoji-tags-container {
+    gap: 0.375rem;
+  }
+
+  .emoji-tag {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  #commentaire-preview {
+    font-size: 0.9rem;
+  }
+}
+
+/* Edit Form Styles */
+.commentaire-edit-form {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.commentaire-edit-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.commentaire-edit-form .form-group label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.commentaire-edit-form .form-group textarea,
+.commentaire-edit-form .form-group select,
+.commentaire-edit-form .form-group input[type="color"] {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.35rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.commentaire-edit-form .form-group textarea:focus,
+.commentaire-edit-form .form-group select:focus,
+.commentaire-edit-form .form-group input[type="color"]:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Emoji Grid */
+#emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.35rem;
+  max-height: 380px;
+  overflow-y: auto;
+  min-height: 50px;
+}
+
+.emoji-btn {
+  background: none;
+  border: 1px solid transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  line-height: 1;
+}
+
+.emoji-btn:hover {
+  background-color: #e7f3ff;
+  border-color: #b3d9ff;
+  transform: scale(1.1);
+}
+
+.emoji-btn:active {
+  transform: scale(0.95);
+}
+
+.emoji-btn:focus {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+/* Accessibility */
+.comment-editor-wrapper *:focus {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+button:active {
+  transform: scale(0.98);
+}
