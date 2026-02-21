@@ -10,6 +10,19 @@ parameters:
     holiday_country_default: 'TN'
     holiday_country: '%env(default:holiday_country_default:HOLIDAY_COUNTRY)%'
     holiday_api_base: 'https://date.nager.at/api/v3'
+    ai_provider_default: 'openai'
+    ai_provider: '%env(default:ai_provider_default:AI_PROVIDER)%'
+    ai_openai_model_default: 'gpt-4o-mini'
+    ai_openai_model: '%env(default:ai_openai_model_default:AI_OPENAI_MODEL)%'
+    ai_openai_api_key: '%env(default::AI_OPENAI_API_KEY)%'
+    ai_openrouter_model_default: 'openrouter/auto'
+    ai_openrouter_model: '%env(default:ai_openrouter_model_default:AI_OPENROUTER_MODEL)%'
+    ai_openrouter_api_key: '%env(default::AI_OPENROUTER_API_KEY)%'
+    ai_openrouter_site_url: '%env(default::AI_OPENROUTER_SITE_URL)%'
+    ai_openrouter_app_name: '%env(default::AI_OPENROUTER_APP_NAME)%'
+    ai_gemini_model_default: 'gemini-2.0-flash'
+    ai_gemini_model: '%env(default:ai_gemini_model_default:AI_GEMINI_MODEL)%'
+    ai_gemini_api_key: '%env(default::AI_GEMINI_API_KEY)%'
 
 services:
     # default configuration for services in *this* file

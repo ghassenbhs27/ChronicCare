@@ -40,8 +40,7 @@ class OAuthAuthenticator extends OAuth2Authenticator
     public function authenticate(Request $request): SelfValidatingPassport
     {
         $client = $this->clientRegistry->getClient('google_main');
-        $appUrl = rtrim((string) ($_ENV['APP_URL'] ?? $_SERVER['APP_URL'] ?? ''), '/');
-        $redirectUri = ($appUrl !== '' ? $appUrl : $request->getSchemeAndHttpHost()) . '/connect/google/check';
+        $redirectUri = $request->getSchemeAndHttpHost() . '/connect/google/check';
         $accessToken = $this->fetchAccessToken($client, ['redirect_uri' => $redirectUri]);
         $requestedRole = $this->extractRequestedRole();
 

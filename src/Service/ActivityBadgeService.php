@@ -12,6 +12,7 @@ class ActivityBadgeService
 {
     private const BADGE_TITLE = 'Utilisateur le plus actif';
     private const BADGE_REWARD = 'Bon d achat de 50 DT sur la boutique Chronic Care';
+    private const PROFESSIONAL_SALARY_MESSAGE = 'Vous avez recu une augmentation salariale ce mois.';
 
     public function __construct(
         private readonly Connection $connection,
@@ -49,7 +50,7 @@ class ActivityBadgeService
         if ($winner instanceof User && $winnerScore > 0) {
             $winner->setIsMostActive(true);
             $winner->setActivityBadge(self::BADGE_TITLE);
-            $winner->setActivityReward(self::BADGE_REWARD);
+            $winner->setActivityReward($this->resolveRewardForUser($winner));
             $winner->setActivityBadgeAwardedAt(new \DateTimeImmutable());
         }
 
@@ -73,7 +74,7 @@ class ActivityBadgeService
 
         $winner->setIsMostActive(true);
         $winner->setActivityBadge(self::BADGE_TITLE);
-        $winner->setActivityReward($reward ?: self::BADGE_REWARD);
+        $winner->setActivityReward($this->resolveRewardForUser($winner, $reward));
         $winner->setActivityBadgeAwardedAt(new \DateTimeImmutable());
         $winner->setUpdatedAt(new \DateTimeImmutable());
 
@@ -141,5 +142,25 @@ class ActivityBadgeService
             }
             $scores[$userId] = ($scores[$userId] ?? 0) + ($total * $weight);
         }
+    }
+
+    private function resolveRewardForUser(User $user, ?string $reward = null): string
+    {
+        if (is_string($reward) && trim($reward) !== '') {
+            return trim($reward);
+        }
+
+        if ($this->isProfessional($user)) {
+            return self::PROFESSIONAL_SALARY_MESSAGE;
+        }
+
+        return self::BADGE_REWARD;
+    }
+
+    private function isProfessional(User $user): bool
+    {
+        $roles = $user->getRoles();
+
+        return in_array('ROLE_COACH', $roles, true) || in_array('ROLE_NUTRITIONNISTE', $roles, true);
     }
 }

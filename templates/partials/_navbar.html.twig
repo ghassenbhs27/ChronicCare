@@ -82,6 +82,11 @@
         <span>Panier</span>
       </a>
       {% endif %}
+      {% if app.user and is_granted('ROLE_ADMIN') and not (current_route starts with 'admin_') %}
+        <a href="{{ path('admin_dashboard') }}" class="btn btn-getstarted btn-getstarted-outline" title="Retour au back-office">
+          Back Office
+        </a>
+      {% endif %}
       {% if app.user %}
         <div class="dropdown">
           <button class="btn btn-getstarted d-flex align-items-center gap-1 dropdown-toggle" type="button" id="navbarProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Profil">

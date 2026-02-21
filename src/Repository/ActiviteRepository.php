@@ -222,6 +222,66 @@ class ActiviteRepository extends ServiceEntityRepository
             ->getArrayResult();
     }
 
+    /**
+     * @return array<int, array{
+     *   user_id:int,
+     *   nom:string,
+     *   prenom:string,
+     *   email:string,
+     *   current_count:int,
+     *   previous_count:int,
+     *   drop_count:int,
+     *   drop_percent:float
+     * }>
+     */
+    public function findUsersWithLargestActivityDrop(int $windowDays = 7, int $limit = 10): array
+    {
+        $now = new \DateTimeImmutable();
+        $currentStart = $now->modify(sprintf('-%d days', $windowDays));
+        $previousStart = $now->modify(sprintf('-%d days', $windowDays * 2));
+
+        $rows = $this->createQueryBuilder('a')
+            ->select('u.id AS user_id')
+            ->addSelect('u.nom AS nom')
+            ->addSelect('u.prenom AS prenom')
+            ->addSelect('u.email AS email')
+            ->addSelect('SUM(CASE WHEN a.dateActivite >= :currentStart THEN 1 ELSE 0 END) AS current_count')
+            ->addSelect('SUM(CASE WHEN a.dateActivite >= :previousStart AND a.dateActivite < :currentStart THEN 1 ELSE 0 END) AS previous_count')
+            ->innerJoin('a.utilisateur', 'u')
+            ->andWhere('a.dateActivite >= :previousStart')
+            ->setParameter('currentStart', $currentStart)
+            ->setParameter('previousStart', $previousStart)
+            ->groupBy('u.id, u.nom, u.prenom, u.email')
+            ->getQuery()
+            ->getArrayResult();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $currentCount = (int) ($row['current_count'] ?? 0);
+            $previousCount = (int) ($row['previous_count'] ?? 0);
+            $dropCount = $previousCount - $currentCount;
+
+            if ($previousCount <= 0 || $dropCount <= 0) {
+                continue;
+            }
+
+            $out[] = [
+                'user_id' => (int) ($row['user_id'] ?? 0),
+                'nom' => (string) ($row['nom'] ?? ''),
+                'prenom' => (string) ($row['prenom'] ?? ''),
+                'email' => (string) ($row['email'] ?? ''),
+                'current_count' => $currentCount,
+                'previous_count' => $previousCount,
+                'drop_count' => $dropCount,
+                'drop_percent' => round(($dropCount / $previousCount) * 100, 1),
+            ];
+        }
+
+        usort($out, static fn (array $a, array $b): int => $b['drop_count'] <=> $a['drop_count']);
+
+        return array_slice($out, 0, max(1, $limit));
+    }
+
     //    /**
     //     * @return Activite[] Returns an array of Activite objects
     //     */

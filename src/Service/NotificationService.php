@@ -180,4 +180,5 @@ class NotificationService
             // Ne pas bloquer le flux en cas d'echec mail.
         }
     }
+
 }

@@ -43,7 +43,7 @@ class UserController extends AbstractController
         $this->addFlash(
             'success',
             sprintf(
-                'Badge attribue a %s (%s) avec score %d. Cadeau: %s',
+                'Badge attribue a %s (%s) avec score %d. Recompense: %s',
                 $winner->getFullName(),
                 (string) $winner->getEmail(),
                 $score,
@@ -63,8 +63,12 @@ class UserController extends AbstractController
         }
 
         $roles = $user->getRoles();
-        if (!in_array('ROLE_PATIENT', $roles, true)) {
-            $this->addFlash('warning', 'Le badge manuel est reserve aux patients.');
+        $isAllowedRole = in_array('ROLE_PATIENT', $roles, true)
+            || in_array('ROLE_COACH', $roles, true)
+            || in_array('ROLE_NUTRITIONNISTE', $roles, true);
+
+        if (!$isAllowedRole) {
+            $this->addFlash('warning', 'Le badge manuel est reserve aux patients, coachs et nutritionnistes.');
             return $this->redirectToRoute('app_user_index');
         }
 
@@ -73,7 +77,7 @@ class UserController extends AbstractController
         $this->addFlash(
             'success',
             sprintf(
-                'Badge attribue manuellement a %s (%s). Cadeau: %s',
+                'Badge attribue manuellement a %s (%s). Recompense: %s',
                 $user->getFullName(),
                 (string) $user->getEmail(),
                 (string) $user->getActivityReward()

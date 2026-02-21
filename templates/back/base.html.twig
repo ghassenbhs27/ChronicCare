@@ -139,6 +139,16 @@
       color: #6b7280;
     }
     .back-sidebar .back-nav a.back-nav-external:hover { color: #374151; }
+    .back-sidebar .back-nav a.back-nav-ai .back-nav-link-text {
+      color: #16a34a;
+      font-weight: 700;
+    }
+    .back-sidebar .back-nav a.back-nav-ai:hover .back-nav-link-text {
+      color: #15803d;
+    }
+    .back-sidebar .back-nav a.back-nav-ai.active .back-nav-link-text {
+      color: #16a34a;
+    }
     .back-sidebar .back-nav a.back-nav-alert .back-nav-link-text {
       color: #b91c1c;
       font-weight: 700;
@@ -225,6 +235,9 @@
         </a>
         <a href="{{ path('admin_evenement_index') }}" title="Gestion des evenements" class="{% if app.request.get('_route') starts with 'admin_evenement' %}active{% endif %}">
           <span class="back-nav-link-text">Evenements</span>
+        </a>
+        <a href="{{ path('admin_ai_assistant_index') }}" title="Assistant IA interne" class="back-nav-ai {% if app.request.get('_route') starts with 'admin_ai_assistant_' %}active{% endif %}">
+          <span class="back-nav-link-text">Assistant IA</span>
         </a>
         <a href="{{ path('admin_security_alert_index') }}" title="Alertes de securite" class="back-nav-alert {% if app.request.get('_route') starts with 'admin_security_alert_' %}active{% endif %}">
           <span class="back-nav-link-text">Alertes securite</span>

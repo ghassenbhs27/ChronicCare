@@ -72,7 +72,8 @@ class SecurityMonitoringService
                 severity: 'high',
                 message: sprintf('Trop de demandes de reset password (%d en 15 minutes).', $count),
                 context: ['identifier' => $identifier],
-                blockUser: $user !== null
+                // Reset password abuse should be alerted, but should not lock the account itself.
+                blockUser: false
             );
         }
     }

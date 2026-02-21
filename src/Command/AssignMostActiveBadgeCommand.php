@@ -12,7 +12,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:badge:assign-most-active',
-    description: 'Calcule l utilisateur le plus actif et attribue le badge avec cadeau.',
+    description: 'Calcule l utilisateur le plus actif et attribue le badge avec recompense.',
 )]
 class AssignMostActiveBadgeCommand extends Command
 {
@@ -50,7 +50,7 @@ class AssignMostActiveBadgeCommand extends Command
             (string) $winner->getEmail(),
             $score
         ));
-        $io->writeln(sprintf('Cadeau: %s', (string) $winner->getActivityReward()));
+        $io->writeln(sprintf('Recompense: %s', (string) $winner->getActivityReward()));
 
         return Command::SUCCESS;
     }

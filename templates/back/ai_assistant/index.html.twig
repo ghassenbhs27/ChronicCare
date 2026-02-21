@@ -1,0 +1,170 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Assistant IA interne - Chronic Care{% endblock %}
+{% block page_title %}Assistant IA interne{% endblock %}
+{% block page_subtitle %}Analyse admin: risque et baisse d activite{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+      <form method="post" action="{{ path('admin_ai_assistant_index') }}" class="row g-2">
+        <div class="col-lg-8">
+          <input
+            type="text"
+            name="question"
+            class="form-control"
+            value="{{ question }}"
+            placeholder="Posez votre question (ex: Quels sont les utilisateurs a risque cette semaine ?)"
+            required
+          >
+        </div>
+        <div class="col-lg-4 d-flex gap-2 flex-wrap">
+          <button type="submit" name="mode" value="local" class="btn btn-primary">Analyser</button>
+          <button type="submit" name="mode" value="llm" class="btn btn-danger">Analyser par IA</button>
+          <a href="{{ path('admin_ai_assistant_index', { q: 'Quels sont les utilisateurs a risque cette semaine ?', mode: 'llm' }) }}" class="btn btn-outline-danger btn-sm">Risk Copilot</a>
+          <a href="{{ path('admin_ai_assistant_index', { q: 'Qui a la plus forte baisse d activite ?', mode: 'local' }) }}" class="btn btn-outline-warning btn-sm">Baisse activite</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if result %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-1">{{ result.title }}</h5>
+        <div class="small text-muted mb-2">Periode: {{ result.period }}</div>
+        <div class="alert alert-light border mb-0">{{ result.summary }}</div>
+        {% if result.intent == 'risk_users_llm' %}
+          <div class="mt-3 border rounded p-3 bg-light-subtle">
+            <div class="small text-muted mb-2">
+              Mode: {{ result.provider|default('fallback')|upper }}
+            </div>
+            <div class="mb-2">
+              <strong>Utilisateur le plus a risque:</strong>
+              {{ result.top_user_email|default('-') }}
+            </div>
+            {% if result.top_user_reason|default('') != '' %}
+              <div class="mb-2">
+                <strong>Pourquoi:</strong> {{ result.top_user_reason }}
+              </div>
+            {% endif %}
+            {% if result.global_actions is defined and result.global_actions is iterable and result.global_actions|length > 0 %}
+              <div>
+                <strong>Actions recommandees:</strong>
+                <ul class="mb-0 mt-1">
+                  {% for action in result.global_actions %}
+                    <li>{{ action }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              {% if result.intent == 'activity_drop' %}
+                <tr>
+                  <th>Utilisateur</th>
+                  <th>Email</th>
+                  <th>Activites (S-1)</th>
+                  <th>Activites (S)</th>
+                  <th>Baisse</th>
+                  <th>Baisse %</th>
+                </tr>
+              {% elseif result.intent == 'risk_users_llm' %}
+                <tr>
+                  <th>Utilisateur</th>
+                  <th>Email</th>
+                  <th>Alertes ouvertes</th>
+                  <th>Risque max</th>
+                  <th>Pourquoi</th>
+                  <th>Actions recommandees</th>
+                </tr>
+              {% else %}
+                <tr>
+                  <th>Utilisateur</th>
+                  <th>Email</th>
+                  <th>Alertes</th>
+                  <th>Alertes ouvertes</th>
+                  <th>Risque max</th>
+                  <th>Risque moyen</th>
+                </tr>
+              {% endif %}
+            </thead>
+            <tbody>
+              {% for row in result.items %}
+                {% if result.intent == 'activity_drop' %}
+                  <tr>
+                    <td>{{ row.prenom }} {{ row.nom }}</td>
+                    <td>{{ row.email }}</td>
+                    <td>{{ row.previous_count }}</td>
+                    <td>{{ row.current_count }}</td>
+                    <td><strong class="text-danger">-{{ row.drop_count }}</strong></td>
+                    <td>{{ row.drop_percent }}%</td>
+                  </tr>
+                {% elseif result.intent == 'risk_users_llm' %}
+                  {% set why = row.why is defined and row.why is iterable ? row.why : [] %}
+                  {% set actions = row.actions is defined and row.actions is iterable ? row.actions : [] %}
+                  <tr>
+                    <td>{{ row.prenom }} {{ row.nom }}</td>
+                    <td>{{ row.email }}</td>
+                    <td>{{ row.unresolved_alerts|default(0) }}</td>
+                    <td>
+                      <strong>{{ row.max_risk|default(0) }}</strong>
+                      {% if row.risk_level is defined %}
+                        <span class="badge bg-dark ms-1">{{ row.risk_level|upper }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if why|length > 0 %}
+                        <ul class="mb-0 ps-3">
+                          {% for reason in why|slice(0, 3) %}
+                            <li>{{ reason }}</li>
+                          {% endfor %}
+                        </ul>
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if actions|length > 0 %}
+                        <ul class="mb-0 ps-3">
+                          {% for action in actions|slice(0, 3) %}
+                            <li>{{ action }}</li>
+                          {% endfor %}
+                        </ul>
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td>{{ row.prenom }} {{ row.nom }}</td>
+                    <td>{{ row.email }}</td>
+                    <td>{{ row.total_alerts }}</td>
+                    <td>{{ row.unresolved_alerts }}</td>
+                    <td><strong>{{ row.max_risk }}</strong></td>
+                    <td>{{ row.avg_risk }}</td>
+                  </tr>
+                {% endif %}
+              {% else %}
+                <tr>
+                  <td colspan="6" class="text-center text-muted py-4">Aucune donnee</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

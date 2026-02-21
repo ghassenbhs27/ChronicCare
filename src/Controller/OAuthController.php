@@ -12,12 +12,6 @@ class OAuthController extends AbstractController
 {
     private const ALLOWED_ROLES = ['ROLE_PATIENT', 'ROLE_COACH', 'ROLE_NUTRITIONNISTE'];
 
-    private function appUrl(): string
-    {
-        $raw = (string) ($_ENV['APP_URL'] ?? $_SERVER['APP_URL'] ?? '');
-        return rtrim($raw, '/');
-    }
-
     private function normalizeRequestedRole(?string $role): string
     {
         $role = (string) ($role ?? '');
@@ -34,21 +28,10 @@ class OAuthController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $appUrl = $this->appUrl();
-        if ($appUrl !== '') {
-            $target = parse_url($appUrl);
-            $targetHost = (string) ($target['host'] ?? '');
-            if ($targetHost !== '' && $request->getHost() !== $targetHost) {
-                $role = (string) $request->query->get('role', '');
-                $query = $role !== '' ? ('?role=' . rawurlencode($role)) : '';
-                return $this->redirect($appUrl . '/connect/google' . $query);
-            }
-        }
-
         $requestedRole = $this->normalizeRequestedRole($request->query->get('role'));
         $request->getSession()->set('oauth_requested_role', $requestedRole);
 
-        $redirectUri = ($appUrl !== '' ? $appUrl : $request->getSchemeAndHttpHost()) . '/connect/google/check';
+        $redirectUri = $request->getSchemeAndHttpHost() . '/connect/google/check';
 
         return $clientRegistry
             ->getClient('google_main')
