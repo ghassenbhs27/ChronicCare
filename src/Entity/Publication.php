@@ -154,6 +154,14 @@ class Publication
         $this->nbLikes++;
     }
 
+    public function decrementLikes(): self
+    {
+        if ($this->nbLikes > 0) {
+            $this->nbLikes--;
+        }
+        return $this;
+    }
+
     public function setNbVues(int $nbVues): self
     {
         $this->nbVues = $nbVues;

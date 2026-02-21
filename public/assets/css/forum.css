@@ -415,6 +415,13 @@
   background: var(--forum-bg-subtle);
   font-size: 0.9rem;
   color: var(--forum-meta-color);
+  user-select: none;
+  cursor: default;
+}
+
+.forum-article .forum-article-stats span {
+  user-select: none;
+  cursor: default;
 }
 
 .forum-article .forum-article-actions {
@@ -460,6 +467,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--accent-color);
+  user-select: none;
 }
 
 /* Formulaire ajout commentaire */
@@ -579,6 +587,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  user-select: none;
 }
 
 .forum-comment-actions .btn-sm {

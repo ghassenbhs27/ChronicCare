@@ -94,8 +94,12 @@ class PublicationController extends AbstractController
             throw $this->createNotFoundException('Publication non trouvee');
         }
 
-        $publication->setNbVues($publication->getNbVues() + 1);
-        $em->flush();
+        // Increment view count only if the current user is not the author
+        $currentUser = $this->getUser();
+        if ($currentUser !== $publication->getAuteur()) {
+            $publication->setNbVues($publication->getNbVues() + 1);
+            $em->flush();
+        }
 
         $page = max(1, $request->query->getInt('page', 1));
         $limit = 7;
@@ -252,12 +256,9 @@ class PublicationController extends AbstractController
         }
 
         if ($action === 'like') {
-            $publication->setNbLikes($publication->getNbLikes() + 1);
+            $publication->incrementLikes();
         } else {
-            $currentLikes = $publication->getNbLikes();
-            if ($currentLikes > 0) {
-                $publication->setNbLikes($currentLikes - 1);
-            }
+            $publication->decrementLikes();
         }
 
         $em->flush();

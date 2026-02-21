@@ -52,7 +52,9 @@
         </div>
         <div class="forum-article-stats">
           <span><i class="bi bi-eye me-1"></i> {{ publication.nbVues }} vues</span>
-          <span><i class="bi bi-heart me-1"></i> {{ publication.nbLikes }} likes</span>
+          <button class="publication-like-btn" data-publication-id="{{ publication.id }}" title="J'aime cette publication">
+            <i class="bi bi-heart"></i> <span class="like-count">{{ publication.nbLikes }}</span>
+          </button>
           <span><i class="bi bi-chat-dots me-1"></i> {{ totalCommentaires }} commentaire(s)</span>
         </div>
         <div class="forum-article-actions">
@@ -112,7 +114,9 @@
                 </div>
                 <div class="forum-comment-text">{{ commentaire.contenu|nl2br }}</div>
                 <div class="forum-comment-actions">
-                  <span class="small text-muted"><i class="bi bi-heart"></i> {{ commentaire.likeCount }}</span>
+                  <button class="comment-like-btn" data-comment-id="{{ commentaire.id }}" title="J'aime ce commentaire">
+                    <i class="bi bi-heart"></i> <span class="like-count">{{ commentaire.likeCount }}</span>
+                  </button>
                   {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
                     <a href="{{ path('commentaire_edit', {id: commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
                     <form method="post" action="{{ path('commentaire_delete', {id: commentaire.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce commentaire ?');">
@@ -152,4 +156,120 @@
       </section>
     </div>
   </main>
+
+  <style>
+    .publication-like-btn,
+    .comment-like-btn {
+      background: none;
+      border: none;
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--forum-meta-color);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      user-select: none;
+    }
+
+    .publication-like-btn:hover,
+    .comment-like-btn:hover {
+      color: #dc3545;
+      transform: scale(1.1);
+    }
+
+    .publication-like-btn.liked,
+    .comment-like-btn.liked {
+      color: #dc3545;
+    }
+
+    .publication-like-btn i,
+    .comment-like-btn i {
+      transition: all 0.2s ease;
+      display: inline-block;
+    }
+
+    .publication-like-btn.liked i,
+    .comment-like-btn.liked i {
+      transform: scale(1.2);
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Track liked items in localStorage
+      const likedPublications = JSON.parse(localStorage.getItem('likedPublications') || '{}');
+      const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
+
+      // Update UI based on localStorage
+      Object.keys(likedPublications).forEach(pubId => {
+        const btn = document.querySelector(`[data-publication-id="${pubId}"]`);
+        if (btn && likedPublications[pubId]) {
+          btn.classList.add('liked');
+        }
+      });
+
+      Object.keys(likedComments).forEach(comId => {
+        const btn = document.querySelector(`[data-comment-id="${comId}"]`);
+        if (btn && likedComments[comId]) {
+          btn.classList.add('liked');
+        }
+      });
+
+      // Publication like button
+      document.querySelectorAll('.publication-like-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const publicationId = this.dataset.publicationId;
+          const isLiked = likedPublications[publicationId] || false;
+          const action = isLiked ? 'unlike' : 'like';
+          const likeCountSpan = this.querySelector('.like-count');
+
+          fetch('{{ path('publication_like', {id: 0}) }}'.replace('/0', '/' + publicationId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              likedPublications[publicationId] = !isLiked;
+              localStorage.setItem('likedPublications', JSON.stringify(likedPublications));
+              
+              likeCountSpan.textContent = data.likes;
+              this.classList.toggle('liked', !isLiked);
+            }
+          })
+          .catch(error => console.error('Error:', error));
+        });
+      });
+
+      // Comment like button
+      document.querySelectorAll('.comment-like-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const commentId = this.dataset.commentId;
+          const isLiked = likedComments[commentId] || false;
+          const action = isLiked ? 'unlike' : 'like';
+          const likeCountSpan = this.querySelector('.like-count');
+
+          fetch('{{ path('commentaire_like', {id: 0}) }}'.replace('/0', '/' + commentId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              likedComments[commentId] = !isLiked;
+              localStorage.setItem('likedComments', JSON.stringify(likedComments));
+              
+              likeCountSpan.textContent = data.likes;
+              this.classList.toggle('liked', !isLiked);
+            }
+          })
+          .catch(error => console.error('Error:', error));
+        });
+      });
+    });
+  </script>
 {% endblock %}

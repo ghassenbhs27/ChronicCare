@@ -79,7 +79,7 @@ class CommentaireController extends AbstractController
             throw $this->createNotFoundException('Commentaire non trouve');
         }
 
-        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur()->getId() === $this->getUser()->getId();
+        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur() === $this->getUser();
         if (!$isAuthor && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Vous ne pouvez modifier que vos propres commentaires.');
         }
@@ -132,7 +132,7 @@ class CommentaireController extends AbstractController
             throw $this->createNotFoundException('Commentaire non trouve');
         }
 
-        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur()->getId() === $this->getUser()->getId();
+        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur() === $this->getUser();
         if (!$isAuthor && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Vous ne pouvez supprimer que vos propres commentaires.');
         }
