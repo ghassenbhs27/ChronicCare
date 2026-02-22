@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ticket evenement - {{ evenement.titre }}{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main py-5">
+    <div class="container py-3">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+              <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                  <h1 class="h3 mb-2">Inscription confirmee</h1>
+                  <p class="text-muted mb-0">Votre ticket est pret pour l'evenement.</p>
+                </div>
+                <span class="badge rounded-pill bg-success px-3 py-2">Ticket valide</span>
+              </div>
+
+              <div class="row g-4 align-items-center">
+                <div class="col-md-7">
+                  <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><strong>Evenement:</strong> {{ evenement.titre }}</li>
+                    <li class="mb-2"><strong>Participant:</strong> {{ inscription.prenom }} {{ inscription.nom }}</li>
+                    <li class="mb-2"><strong>Date debut:</strong> {{ evenement.dateDebut|date('d/m/Y H:i') }}</li>
+                    <li class="mb-2"><strong>Date fin:</strong> {{ evenement.dateFin|date('d/m/Y H:i') }}</li>
+                    <li><strong>Lieu:</strong> {{ evenement.lieu }}</li>
+                  </ul>
+                </div>
+                <div class="col-md-5 text-center">
+                  <img
+                    src="{{ qr_code_data_uri(ticket_url, 'default', { size: 280, margin: 8 }) }}"
+                    alt="QR code ticket evenement"
+                    class="img-fluid rounded border"
+                  >
+                  <p class="small text-muted mt-2 mb-0">Presentez ce QR code lors du controle.</p>
+                </div>
+              </div>
+
+              <div class="d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
+                <a href="{{ ticket_url }}" class="btn btn-primary" style="background-color: var(--accent-color); border-color: var(--accent-color);">Ouvrir le ticket</a>
+                <a href="{{ path('front_mes_inscriptions') }}" class="btn btn-outline-secondary">Mes inscriptions</a>
+                <a href="{{ path('front_evenements') }}" class="btn btn-outline-secondary">Retour evenements</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

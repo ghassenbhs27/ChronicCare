@@ -37,6 +37,8 @@ class Evenement
     #[ORM\Column(length: 200)]
     #[Assert\NotBlank(message: 'Le titre est obligatoire.')]
     #[Assert\Length(
+        min: 3,
+        minMessage: 'Le titre doit contenir au moins {{ limit }} caracteres.',
         max: 200,
         maxMessage: 'Le titre ne peut pas depasser {{ limit }} caracteres.'
     )]
@@ -45,6 +47,8 @@ class Evenement
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'La description est obligatoire.')]
     #[Assert\Length(
+        min: 10,
+        minMessage: 'La description doit contenir au moins {{ limit }} caracteres.',
         max: 5000,
         maxMessage: 'La description ne peut pas depasser {{ limit }} caracteres.'
     )]
@@ -65,6 +69,8 @@ class Evenement
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Le lieu est obligatoire.')]
     #[Assert\Length(
+        min: 2,
+        minMessage: 'Le lieu doit contenir au moins {{ limit }} caracteres.',
         max: 255,
         maxMessage: 'Le lieu ne peut pas depasser {{ limit }} caracteres.'
     )]

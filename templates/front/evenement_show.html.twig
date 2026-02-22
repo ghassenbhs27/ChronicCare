@@ -1,13 +1,12 @@
-﻿{% extends 'base.html.twig' %}
+{% extends 'base.html.twig' %}
 
-{% block title %}{{ evenement.titre }} - Ã‰vÃ©nements{% endblock %}
+{% block title %}{{ evenement.titre }} - Evenements{% endblock %}
 
 {% block body %}
   {% include 'partials/_navbar.html.twig' %}
 
   <main class="main py-5 evenement-show-page">
     <div class="container py-3">
-      {# Messages rÃ©sultat (succÃ¨s, avertissement, erreur) #}
       {% for label, messages in app.flashes %}
         {% for message in messages %}
           <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show shadow-sm mb-4" role="alert">
@@ -19,7 +18,6 @@
       {% endfor %}
 
       <div class="row g-4 g-lg-5 align-items-stretch">
-        {# Bloc Ã©vÃ©nement #}
         <div class="col-lg-7">
           <div class="card border-0 shadow-sm h-100 overflow-hidden evenement-detail-card">
             <div class="card-body p-4 p-md-5">
@@ -48,7 +46,7 @@
                   </div>
                   <div>
                     <span class="small text-muted text-uppercase fw-semibold">Date et horaire</span>
-                    <p class="mb-0 fw-semibold">{{ evenement.dateDebut|date('d/m/Y') }} Â· {{ evenement.dateDebut|date('H:i') }} â€“ {{ evenement.dateFin|date('H:i') }}</p>
+                    <p class="mb-0 fw-semibold">{{ evenement.dateDebut|date('d/m/Y') }} · {{ evenement.dateDebut|date('H:i') }} – {{ evenement.dateFin|date('H:i') }}</p>
                   </div>
                 </div>
                 <div class="d-flex align-items-center gap-3 p-3 rounded-3 bg-light">
@@ -57,7 +55,38 @@
                   </div>
                   <div>
                     <span class="small text-muted text-uppercase fw-semibold">Lieu</span>
-                    <p class="mb-0 fw-semibold">{{ evenement.lieu }}</p>
+                    <p class="mb-0 fw-semibold">
+                      {{ evenement.lieu }}
+                      {% if weather and weather.location %}
+                        <span class="text-muted fw-normal">({{ weather.location }})</span>
+                      {% endif %}
+                    </p>
+                    {% if map_location %}
+                      <a
+                        href="{{ map_location.map_url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-sm mt-2"
+                        style="border:1px solid var(--accent-color); color: var(--accent-color); background: transparent;"
+                      >
+                        <i class="bi bi-map me-1"></i>Voir sur la carte
+                      </a>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-3 p-3 rounded-3 bg-light">
+                  <div class="rounded-3 bg-info bg-opacity-10 text-info p-2">
+                    <i class="bi bi-cloud-sun fs-5"></i>
+                  </div>
+                  <div>
+                    <span class="small text-muted text-uppercase fw-semibold">Meteo prevue</span>
+                    <p class="mb-0 fw-semibold">
+                      {% if weather %}
+                        {{ weather.weather_label }}{% if weather.temperature_min is not null and weather.temperature_max is not null %} · {{ weather.temperature_min|round(0, 'floor') }} a {{ weather.temperature_max|round(0, 'ceil') }} degC{% endif %}{% if weather.precipitation_mm is not null %} · Pluie: {{ weather.precipitation_mm|number_format(1, '.', ' ') }} mm{% endif %}
+                      {% else %}
+                        Indisponible
+                      {% endif %}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -70,26 +99,43 @@
           </div>
         </div>
 
-        {# Bloc inscription #}
         <div class="col-lg-5">
           <div class="card border-0 shadow evenement-inscription-card h-100">
             <div class="card-header border-0 py-4 px-4 text-white rounded-top-3 evenement-inscription-header">
               <h5 class="card-title mb-0 d-flex align-items-center gap-2">
                 <i class="bi bi-person-plus-fill fs-4"></i>
-                S'inscrire Ã  cet Ã©vÃ©nement
+                S'inscrire a cet evenement
               </h5>
             </div>
             <div class="card-body p-4">
-              {% if already_inscrit|default(false) %}
+              {% if ticket_url %}
+                <div class="alert alert-success d-flex align-items-center gap-3 mb-3">
+                  <i class="bi bi-check-circle-fill fs-2"></i>
+                  <div>
+                    <strong>Inscription confirmee.</strong> Voici votre ticket QR code.
+                  </div>
+                </div>
+                <div class="text-center border rounded-3 p-3 mb-3">
+                  <img
+                    src="{{ qr_code_data_uri(ticket_url, 'default', { size: 260, margin: 8 }) }}"
+                    alt="QR code ticket evenement"
+                    class="img-fluid"
+                  >
+                  <div class="small text-muted mt-2">Conservez ce QR code pour l'entree.</div>
+                </div>
+                <div class="d-grid gap-2">
+                  <a href="{{ ticket_url }}" class="btn btn-primary" style="background-color: var(--accent-color); border-color: var(--accent-color);">Ouvrir mon ticket</a>
+                </div>
+              {% elseif already_inscrit|default(false) %}
                 <div class="alert alert-success mb-0 d-flex align-items-center gap-3">
                   <i class="bi bi-check-circle-fill fs-2"></i>
                   <div>
-                    <strong>Vous Ãªtes dÃ©jÃ  inscrit</strong> Ã  cet Ã©vÃ©nement. Nous vous attendons !
+                    <strong>Vous etes deja inscrit</strong> a cet evenement. Nous vous attendons !
                   </div>
                 </div>
               {% else %}
                 <p class="text-muted small mb-4">
-                  Renseignez vos coordonnÃ©es pour confirmer votre participation. Si vous Ãªtes connectÃ©, certains champs sont prÃ©-remplis.
+                  Renseignez vos coordonnees pour confirmer votre participation. Si vous etes connecte, certains champs sont pre-remplis.
                 </p>
                 {{ form_start(form, { attr: { class: 'evenement-inscription-form', novalidate: 'novalidate' } }) }}
                   {% for child in form %}
@@ -130,7 +176,7 @@
         if (btn && !btn.disabled) {
           btn.disabled = true;
           var textEl = btn.querySelector('.btn-text');
-          if (textEl) textEl.textContent = 'Envoi en coursâ€¦';
+          if (textEl) textEl.textContent = 'Envoi en cours...';
           var icon = btn.querySelector('i.bi');
           if (icon) { icon.classList.remove('bi-send-fill'); icon.classList.add('bi-hourglass-split'); }
         }

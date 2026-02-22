@@ -22,6 +22,30 @@
     {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
       {{ form_row(form.titre, { label: 'Titre', attr: { class: 'form-control' } }) }}
       {{ form_row(form.description, { label: 'Description', attr: { class: 'form-control', rows: 4 } }) }}
+      <div class="d-flex justify-content-end flex-wrap gap-2 mt-2 mb-2">
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm js-ai-evenement-desc"
+          data-url="{{ path('evenement_ai_description') }}"
+          data-titre-id="{{ form.titre.vars.id }}"
+          data-description-id="{{ form.description.vars.id }}"
+          data-lieu-id="{{ form.lieu.vars.id }}"
+          data-date-debut-id="{{ form.dateDebut.vars.id }}"
+          data-date-fin-id="{{ form.dateFin.vars.id }}"
+        >
+          <i class="bi bi-stars me-1"></i>Suggérer avec IA
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm js-ai-evenement-improve"
+          data-url="{{ path('evenement_ai_improve_description') }}"
+          data-titre-id="{{ form.titre.vars.id }}"
+          data-description-id="{{ form.description.vars.id }}"
+        >
+          <i class="bi bi-magic me-1"></i>Améliorer description
+        </button>
+      </div>
+      <div class="small text-muted mb-2 js-ai-evenement-status" hidden></div>
       <div class="row">
         <div class="col-md-6">{{ form_row(form.dateDebut, { label: 'Date et heure de début' }) }}</div>
         <div class="col-md-6">{{ form_row(form.dateFin, { label: 'Date et heure de fin' }) }}</div>
@@ -34,4 +58,108 @@
     {{ form_end(form) }}
   </div>
 </div>
+
+<script>
+  (function () {
+    const suggestBtn = document.querySelector('.js-ai-evenement-desc');
+    const improveBtn = document.querySelector('.js-ai-evenement-improve');
+    if (!suggestBtn && !improveBtn) return;
+
+    const status = document.querySelector('.js-ai-evenement-status');
+    const sourceBtn = suggestBtn || improveBtn;
+    const titreInput = document.getElementById(sourceBtn.dataset.titreId);
+    const descriptionInput = document.getElementById(sourceBtn.dataset.descriptionId);
+    const lieuInput = suggestBtn ? document.getElementById(suggestBtn.dataset.lieuId) : null;
+    const dateDebutInput = suggestBtn ? document.getElementById(suggestBtn.dataset.dateDebutId) : null;
+    const dateFinInput = suggestBtn ? document.getElementById(suggestBtn.dataset.dateFinId) : null;
+
+    const setStatus = function (message, isError) {
+      if (!status) return;
+      status.hidden = !message;
+      status.textContent = message || '';
+      status.classList.toggle('text-danger', !!isError);
+      status.classList.toggle('text-muted', !isError);
+    };
+
+    const applyPayload = function (payload) {
+      if (descriptionInput) {
+        descriptionInput.value = payload.description;
+        descriptionInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      setStatus(payload.source === 'ai' ? 'Suggestion IA appliquée.' : 'Suggestion appliquée (mode secours).', false);
+    };
+
+    if (suggestBtn) {
+      suggestBtn.addEventListener('click', async function () {
+        const titre = (titreInput?.value || '').trim();
+        if (titre.length < 3) {
+          setStatus('Saisissez d abord un titre.', true);
+          return;
+        }
+
+        suggestBtn.disabled = true;
+        setStatus('Génération en cours...', false);
+
+        try {
+          const response = await fetch(suggestBtn.dataset.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              titre: titre,
+              lieu: lieuInput?.value || '',
+              dateDebut: dateDebutInput?.value || '',
+              dateFin: dateFinInput?.value || ''
+            })
+          });
+
+          const payload = await response.json();
+          if (!response.ok || !payload.description) {
+            throw new Error(payload.error || 'Suggestion indisponible.');
+          }
+
+          applyPayload(payload);
+        } catch (error) {
+          setStatus(error.message || 'Erreur IA.', true);
+        } finally {
+          suggestBtn.disabled = false;
+        }
+      });
+    }
+
+    if (improveBtn) {
+      improveBtn.addEventListener('click', async function () {
+        const description = (descriptionInput?.value || '').trim();
+        if (description.length < 10) {
+          setStatus('Saisissez d abord une description plus détaillée.', true);
+          return;
+        }
+
+        improveBtn.disabled = true;
+        setStatus('Amélioration en cours...', false);
+
+        try {
+          const response = await fetch(improveBtn.dataset.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              titre: titreInput?.value || '',
+              description: description
+            })
+          });
+
+          const payload = await response.json();
+          if (!response.ok || !payload.description) {
+            throw new Error(payload.error || 'Amélioration indisponible.');
+          }
+
+          applyPayload(payload);
+        } catch (error) {
+          setStatus(error.message || 'Erreur IA.', true);
+        } finally {
+          improveBtn.disabled = false;
+        }
+      });
+    }
+  })();
+</script>
 {% endblock %}

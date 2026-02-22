@@ -16,11 +16,14 @@ class Exercice
 
     #[ORM\ManyToOne(inversedBy: 'exercices')]
     #[ORM\JoinColumn(nullable: true)]
+    #[Assert\NotNull(message: 'L evenement est obligatoire.')]
     private ?Evenement $evenement = null;
 
     #[ORM\Column(length: 200)]
     #[Assert\NotBlank(message: 'Le nom est obligatoire.')]
     #[Assert\Length(
+        min: 2,
+        minMessage: 'Le nom doit contenir au moins {{ limit }} caracteres.',
         max: 200,
         maxMessage: 'Le nom ne peut pas depasser {{ limit }} caracteres.'
     )]
@@ -29,6 +32,8 @@ class Exercice
     #[ORM\Column(type: 'text')]
     #[Assert\NotBlank(message: 'La description est obligatoire.')]
     #[Assert\Length(
+        min: 10,
+        minMessage: 'La description doit contenir au moins {{ limit }} caracteres.',
         max: 5000,
         maxMessage: 'La description ne peut pas depasser {{ limit }} caracteres.'
     )]
@@ -36,11 +41,19 @@ class Exercice
 
     #[ORM\Column]
     #[Assert\NotNull(message: 'La duree est obligatoire.')]
-    #[Assert\Positive(message: 'La duree doit etre superieure a 0.')]
+    #[Assert\Range(
+        min: 1,
+        max: 300,
+        notInRangeMessage: 'La duree doit etre comprise entre {{ min }} et {{ max }} minutes.'
+    )]
     private int $duree;
 
     #[ORM\Column(nullable: true)]
-    #[Assert\PositiveOrZero(message: 'Le nombre de repetitions doit etre superieur ou egal a 0.')]
+    #[Assert\Range(
+        min: 0,
+        max: 1000,
+        notInRangeMessage: 'Le nombre de repetitions doit etre compris entre {{ min }} et {{ max }}.'
+    )]
     private ?int $repetitions = null;
 
     public function getId(): ?int

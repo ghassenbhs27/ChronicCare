@@ -14,7 +14,7 @@
 
 <header class="coach-page-header mb-4">
   <h1 class="coach-page-title"><i class="bi bi-pencil-square me-2"></i>Modifier l'exercice</h1>
-  <p class="coach-page-sub">Modifiez les informations et paramètres de « {{ exercice.nom }} ».</p>
+  <p class="coach-page-sub">Modifiez les informations et parametres de "{{ exercice.nom }}".</p>
 </header>
 
 <div class="coach-card coach-form-card">
@@ -23,38 +23,62 @@
 
       <div class="exercice-form-section mb-4">
         <h3 class="h6 text-uppercase fw-bold text-muted mb-3 d-flex align-items-center">
-          <i class="bi bi-info-circle me-2"></i>Informations générales
+          <i class="bi bi-info-circle me-2"></i>Informations generales
         </h3>
         {{ form_row(form.nom, {
           label: 'Nom de l\'exercice',
-          attr: { class: 'form-control form-control-lg', placeholder: 'Ex. : Étirements dos, Cardio 15 min' }
+          attr: { class: 'form-control form-control-lg', placeholder: 'Ex. : Etirements dos, Cardio 15 min' }
         }) }}
         {{ form_row(form.description, {
           label: 'Description',
-          attr: { class: 'form-control', rows: 4, placeholder: 'Décrivez le déroulé et les consignes.' }
+          attr: { class: 'form-control', rows: 4, placeholder: 'Decrivez le deroule et les consignes.' }
         }) }}
+        <div class="d-flex justify-content-end flex-wrap gap-2 mt-2">
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm js-ai-exercice-desc"
+            data-url="{{ path('exercice_ai_description') }}"
+            data-nom-id="{{ form.nom.vars.id }}"
+            data-description-id="{{ form.description.vars.id }}"
+            data-duree-id="{{ form.duree.vars.id }}"
+            data-repetitions-id="{{ form.repetitions.vars.id }}"
+            data-evenement-id="{{ form.evenement.vars.id }}"
+          >
+            <i class="bi bi-stars me-1"></i>Suggerer avec IA
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm js-ai-exercice-improve"
+            data-url="{{ path('exercice_ai_improve_description') }}"
+            data-nom-id="{{ form.nom.vars.id }}"
+            data-description-id="{{ form.description.vars.id }}"
+          >
+            <i class="bi bi-magic me-1"></i>Ameliorer description
+          </button>
+        </div>
+        <div class="small text-muted mt-1 js-ai-status" hidden></div>
       </div>
 
       <div class="exercice-form-section mb-4">
         <h3 class="h6 text-uppercase fw-bold text-muted mb-3 d-flex align-items-center">
-          <i class="bi bi-sliders me-2"></i>Paramètres
+          <i class="bi bi-sliders me-2"></i>Parametres
         </h3>
         <div class="row g-3">
           <div class="col-md-4">
             {{ form_row(form.duree, {
-              label: 'Durée (minutes)',
-              attr: { class: 'form-control', placeholder: 'Ex. : 15', min: 1 }
+              label: 'Duree (minutes)',
+              attr: { class: 'form-control', placeholder: 'Ex. : 15' }
             }) }}
           </div>
           <div class="col-md-4">
             {{ form_row(form.repetitions, {
-              label: 'Répétitions',
-              attr: { class: 'form-control', placeholder: 'Optionnel', min: 0 }
+              label: 'Repetitions',
+              attr: { class: 'form-control', placeholder: 'Optionnel' }
             }) }}
           </div>
           <div class="col-md-4">
             {{ form_row(form.evenement, {
-              label: 'Événement',
+              label: 'Evenement',
               attr: { class: 'form-select' }
             }) }}
           </div>
@@ -72,4 +96,112 @@
     {{ form_end(form) }}
   </div>
 </div>
+
+<script>
+  (function () {
+    const suggestBtn = document.querySelector('.js-ai-exercice-desc');
+    const improveBtn = document.querySelector('.js-ai-exercice-improve');
+    if (!suggestBtn && !improveBtn) return;
+
+    const status = document.querySelector('.js-ai-status');
+    const sourceBtn = suggestBtn || improveBtn;
+    const nomInput = document.getElementById(sourceBtn.dataset.nomId);
+    const descriptionInput = document.getElementById(sourceBtn.dataset.descriptionId);
+    const dureeInput = suggestBtn ? document.getElementById(suggestBtn.dataset.dureeId) : null;
+    const repetitionsInput = suggestBtn ? document.getElementById(suggestBtn.dataset.repetitionsId) : null;
+    const evenementSelect = suggestBtn ? document.getElementById(suggestBtn.dataset.evenementId) : null;
+
+    const setStatus = function (message, isError) {
+      if (!status) return;
+      status.hidden = !message;
+      status.textContent = message || '';
+      status.classList.toggle('text-danger', !!isError);
+      status.classList.toggle('text-muted', !isError);
+    };
+
+    const applyPayload = function (payload) {
+      if (descriptionInput) {
+        descriptionInput.value = payload.description;
+        descriptionInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      setStatus(payload.source === 'ai' ? 'Suggestion IA appliquee.' : 'Suggestion appliquee (mode secours).', false);
+    };
+
+    if (suggestBtn) {
+      suggestBtn.addEventListener('click', async function () {
+        const nom = (nomInput?.value || '').trim();
+        if (nom.length < 2) {
+          setStatus('Saisissez d abord le nom de l exercice.', true);
+          return;
+        }
+
+        const selectedEvent = evenementSelect && evenementSelect.options[evenementSelect.selectedIndex]
+          ? evenementSelect.options[evenementSelect.selectedIndex].text
+          : '';
+
+        suggestBtn.disabled = true;
+        setStatus('Generation en cours...', false);
+
+        try {
+          const response = await fetch(suggestBtn.dataset.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nom: nom,
+              duree: dureeInput?.value || null,
+              repetitions: repetitionsInput?.value || null,
+              evenement: selectedEvent === 'Selectionner un evenement' ? '' : selectedEvent
+            })
+          });
+
+          const payload = await response.json();
+          if (!response.ok || !payload.description) {
+            throw new Error(payload.error || 'Suggestion indisponible.');
+          }
+
+          applyPayload(payload);
+        } catch (error) {
+          setStatus(error.message || 'Erreur IA.', true);
+        } finally {
+          suggestBtn.disabled = false;
+        }
+      });
+    }
+
+    if (improveBtn) {
+      improveBtn.addEventListener('click', async function () {
+        const description = (descriptionInput?.value || '').trim();
+        if (description.length < 10) {
+          setStatus('Saisissez d abord une description plus detaillee.', true);
+          return;
+        }
+
+        improveBtn.disabled = true;
+        setStatus('Amelioration en cours...', false);
+
+        try {
+          const response = await fetch(improveBtn.dataset.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nom: nomInput?.value || '',
+              description: description
+            })
+          });
+
+          const payload = await response.json();
+          if (!response.ok || !payload.description) {
+            throw new Error(payload.error || 'Amelioration indisponible.');
+          }
+
+          applyPayload(payload);
+        } catch (error) {
+          setStatus(error.message || 'Erreur IA.', true);
+        } finally {
+          improveBtn.disabled = false;
+        }
+      });
+    }
+  })();
+</script>
 {% endblock %}

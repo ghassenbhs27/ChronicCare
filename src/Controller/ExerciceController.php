@@ -6,8 +6,10 @@ use App\Entity\Exercice;
 use App\Form\ExerciceFormType;
 use App\Repository\EvenementRepository;
 use App\Repository\ExerciceRepository;
+use App\Service\ExerciceAiService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -16,6 +18,57 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_COACH')]
 class ExerciceController extends AbstractController
 {
+    #[Route('/coach/exercices/ai-description', name: 'exercice_ai_description', methods: ['POST'])]
+    public function aiDescription(Request $request, ExerciceAiService $aiService): JsonResponse
+    {
+        $payload = json_decode((string) $request->getContent(), true);
+        if (!is_array($payload)) {
+            return new JsonResponse(['error' => 'Requete invalide.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $nom = trim((string) ($payload['nom'] ?? ''));
+        if (strlen($nom) < 2) {
+            return new JsonResponse(['error' => 'Le nom de l exercice est requis.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $dureeRaw = $payload['duree'] ?? null;
+        $duree = (is_numeric($dureeRaw) && (int) $dureeRaw > 0) ? (int) $dureeRaw : null;
+
+        $repetitionsRaw = $payload['repetitions'] ?? null;
+        $repetitions = (is_numeric($repetitionsRaw) && (int) $repetitionsRaw >= 0) ? (int) $repetitionsRaw : null;
+
+        $evenement = trim((string) ($payload['evenement'] ?? ''));
+        if ($evenement === '') {
+            $evenement = null;
+        }
+
+        return new JsonResponse(
+            $aiService->suggestDescription($nom, $duree, $repetitions, $evenement),
+            Response::HTTP_OK
+        );
+    }
+
+    #[Route('/coach/exercices/ai-improve-description', name: 'exercice_ai_improve_description', methods: ['POST'])]
+    public function aiImproveDescription(Request $request, ExerciceAiService $aiService): JsonResponse
+    {
+        $payload = json_decode((string) $request->getContent(), true);
+        if (!is_array($payload)) {
+            return new JsonResponse(['error' => 'Requete invalide.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $description = trim((string) ($payload['description'] ?? ''));
+        if (mb_strlen($description) < 10) {
+            return new JsonResponse(['error' => 'La description est trop courte pour etre amelioree.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $nom = trim((string) ($payload['nom'] ?? ''));
+
+        return new JsonResponse(
+            $aiService->improveDescription($description, $nom !== '' ? $nom : null),
+            Response::HTTP_OK
+        );
+    }
+
     #[Route('/coach/exercices', name: 'exercice_index')]
     public function index(
         Request $request,

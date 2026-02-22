@@ -10,6 +10,17 @@ parameters:
     holiday_country_default: 'TN'
     holiday_country: '%env(default:holiday_country_default:HOLIDAY_COUNTRY)%'
     holiday_api_base: 'https://date.nager.at/api/v3'
+    weather_default_country: 'TN'
+    weather_geocoding_api_base: 'https://geocoding-api.open-meteo.com/v1'
+    weather_forecast_api_base: 'https://api.open-meteo.com/v1/forecast'
+    weather_archive_api_base: 'https://archive-api.open-meteo.com/v1/archive'
+    map_geocode_api_base: 'https://nominatim.openstreetmap.org'
+    ai_api_base_default: 'https://api.openai.com/v1'
+    ai_api_base: '%env(default:ai_api_base_default:AI_API_BASE)%'
+    ai_model_default: 'gpt-4o-mini'
+    ai_model: '%env(default:ai_model_default:AI_MODEL)%'
+    ai_api_key_default: ''
+    ai_api_key: '%env(default:ai_api_key_default:AI_API_KEY)%'
 
 services:
     # default configuration for services in *this* file

@@ -99,6 +99,7 @@ class InscriptionEvenementRepository extends ServiceEntityRepository
             'dateFin' => 'evenement.dateFin',
             'titre' => 'evenement.titre',
             'inscription' => 'inscription.createdAt',
+            'createdAt' => 'inscription.createdAt',
         ];
 
         $sortField = $allowedSorts[$sort ?? ''] ?? 'evenement.dateDebut';
