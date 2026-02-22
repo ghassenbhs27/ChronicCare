@@ -6,6 +6,37 @@
   {{ parent() }}
   <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
   <link href="{{ asset('assets/css/comment-editor.css') }}" rel="stylesheet">
+  <style>
+    /* Translation button styles */
+    .translate-btn {
+      font-size: 0.8rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    
+    .translate-btn.translated {
+      background: #10b981;
+      border-color: #10b981;
+      color: white;
+    }
+    
+    .translate-btn.translating {
+      opacity: 0.7;
+      cursor: wait;
+    }
+    
+    .translate-lang-badge {
+      background: rgba(255,255,255,0.25);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+  </style>
 {% endblock %}
 
 {% block body %}
@@ -36,11 +67,20 @@
 
       <article class="forum-article">
         <header class="forum-article-header">
-          <h1 class="forum-article-title">{{ publication.titre }}</h1>
-          <div class="forum-article-meta">
-            <span><i class="bi bi-person me-1"></i> {{ publication.auteur ? publication.auteur.nom : 'Anonyme' }}</span>
-            <span><i class="bi bi-calendar3 me-1"></i> {{ publication.createdAt|date('d/m/Y à H:i') }}</span>
-            <span class="forum-meta-badge badge bg-{{ publication.statut == 'publie' ? 'success' : 'warning' }} text-dark">{{ publication.statut == 'publie' ? 'Publié' : 'Brouillon' }}</span>
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div class="flex-grow-1">
+              <h1 class="forum-article-title" data-publication-title="{{ publication.id }}">{{ publication.titre }}</h1>
+              <div class="forum-article-meta">
+                <span><i class="bi bi-person me-1"></i> {{ publication.auteur ? publication.auteur.nom : 'Anonyme' }}</span>
+                <span><i class="bi bi-calendar3 me-1"></i> {{ publication.createdAt|date('d/m/Y à H:i') }}</span>
+                <span class="forum-meta-badge badge bg-{{ publication.statut == 'publie' ? 'success' : 'warning' }} text-dark">{{ publication.statut == 'publie' ? 'Publié' : 'Brouillon' }}</span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-outline-primary translate-btn" 
+                    data-translate-publication="{{ publication.id }}"
+                    title="Traduire ce contenu">
+              <i class="bi bi-translate"></i> <span class="d-none d-sm-inline">Traduire</span>
+            </button>
           </div>
         </header>
         {% if publication.imageUrl %}
@@ -48,7 +88,7 @@
             <img src="{{ asset('uploads/forum/' ~ publication.imageUrl) }}" alt="{{ publication.titre }}" class="img-fluid rounded" style="max-width: 100%; height: auto;">
           </div>
         {% endif %}
-        <div class="forum-article-body">
+        <div class="forum-article-body" data-publication-content="{{ publication.id }}">
           {{ publication.contenu|nl2br }}
         </div>
         <div class="forum-article-stats">
@@ -196,13 +236,19 @@
                   {% set commentStyle = commentStyle ~ 'color: ' ~ commentaire.textColor ~ ';' %}
                 {% endif %}
                 
-                <div class="forum-comment-text" {% if commentStyle %}style="{{ commentStyle }}"{% endif %}>
+                <div class="forum-comment-text" {% if commentStyle %}style="{{ commentStyle }}"{% endif %} data-comment-content="{{ commentaire.id }}">
                   {{ commentaire.contenu|nl2br }}
                 </div>
                 
                 <div class="forum-comment-actions">
                   <button class="comment-like-btn" data-comment-id="{{ commentaire.id }}" title="J'aime ce commentaire">
                     <i class="bi bi-heart"></i> <span class="like-count">{{ commentaire.likeCount }}</span>
+                  </button>
+                  
+                  <button class="btn btn-sm btn-outline-secondary translate-btn" 
+                          data-translate-comment="{{ commentaire.id }}"
+                          title="Traduire ce commentaire">
+                    <i class="bi bi-translate"></i> <span class="d-none d-sm-inline">Traduire</span>
                   </button>
                   
                   {# Reply button #}
@@ -289,13 +335,19 @@
                             {% set replyStyle = replyStyle ~ 'color: ' ~ reply.textColor ~ ';' %}
                           {% endif %}
                           
-                          <div class="forum-comment-text" {% if replyStyle %}style="{{ replyStyle }}"{% endif %}>
+                          <div class="forum-comment-text" {% if replyStyle %}style="{{ replyStyle }}"{% endif %} data-comment-content="{{ reply.id }}">
                             {{ reply.contenu|nl2br }}
                           </div>
                           
                           <div class="forum-comment-actions">
                             <button class="comment-like-btn" data-comment-id="{{ reply.id }}">
                               <i class="bi bi-heart"></i> <span class="like-count">{{ reply.likeCount }}</span>
+                            </button>
+                            
+                            <button class="btn btn-sm btn-outline-secondary translate-btn" 
+                                    data-translate-comment="{{ reply.id }}"
+                                    title="Traduire cette réponse">
+                              <i class="bi bi-translate"></i> <span class="d-none d-sm-inline">Traduire</span>
                             </button>
                             
                             {% if app.user and (reply.auteur and reply.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
@@ -490,4 +542,5 @@
   </script>
 
   <script src="{{ asset('assets/js/comment-editor.js') }}"></script>
+  <script src="{{ asset('assets/js/translation.js') }}"></script>
 {% endblock %}

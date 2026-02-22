@@ -90,7 +90,9 @@ class CommentaireController extends AbstractController
         $this->forumNotificationService->notifyNewCommentaire($commentaire);
 
         $this->addFlash('success', 'Commentaire ajoute avec succes !');
-        return $this->redirectToRoute('publication_show', ['id' => $publicationId]) . '#comments';
+        return $this->redirect(
+            $this->generateUrl('publication_show', ['id' => $publicationId]) . '#comments'
+        );
     }
 
     #[Route('/edit/{id}', name: 'commentaire_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
@@ -176,7 +178,16 @@ class CommentaireController extends AbstractController
         $commentaire = $repository->find($id);
 
         if (!$commentaire) {
-            throw $this->createNotFoundException('Commentaire non trouve');
+            $this->addFlash('error', 'Ce commentaire n\'existe plus ou a déjà été supprimé.');
+            
+            // Try to get publication ID from referer
+            $referer = $request->headers->get('referer');
+            if ($referer && preg_match('/\/publication\/show\/(\d+)/', $referer, $matches)) {
+                return $this->redirectToRoute('publication_show', ['id' => (int)$matches[1]]);
+            }
+            
+            // Fallback to publication list
+            return $this->redirectToRoute('publication_index');
         }
 
         $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur() === $this->getUser();
@@ -184,18 +195,20 @@ class CommentaireController extends AbstractController
             throw new AccessDeniedException('Vous ne pouvez supprimer que vos propres commentaires.');
         }
 
+        $publicationId = $commentaire->getPublication()->getId();
+
         if (!$this->isCsrfTokenValid('delete_commentaire_' . $commentaire->getId(), (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Jeton de securite invalide.');
-            return $this->redirectToRoute('publication_show', ['id' => $commentaire->getPublication()->getId()]);
+            return $this->redirectToRoute('publication_show', ['id' => $publicationId]);
         }
-
-        $publicationId = $commentaire->getPublication()->getId();
 
         $em->remove($commentaire);
         $em->flush();
 
         $this->addFlash('success', 'Commentaire supprime avec succes !');
-        return $this->redirectToRoute('publication_show', ['id' => $publicationId]) . '#comments';
+        return $this->redirect(
+            $this->generateUrl('publication_show', ['id' => $publicationId]) . '#comments'
+        );
     }
 
     #[Route('/like/{id}', name: 'commentaire_like', requirements: ['id' => '\\d+'], methods: ['POST'])]
