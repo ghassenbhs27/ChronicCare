@@ -110,9 +110,16 @@ class PublicationController extends AbstractController
         $page = max(1, $request->query->getInt('page', 1));
         $limit = 7;
 
-        $commentaires = $commentaireRepository->findByPublicationPaginated($id, $page, $limit);
-        $totalCommentaires = $commentaireRepository->countByPublication($id);
-        $totalPages = max(1, (int) ceil($totalCommentaires / $limit));
+        // Get paginated top-level comments with their replies
+        $commentaires = $commentaireRepository->findByPublicationWithReplies($id, $page, $limit);
+        
+        // Count only top-level comments for pagination
+        $totalTopLevelComments = $commentaireRepository->countByPublication($id);
+        
+        // Count all comments (including replies) for display
+        $totalCommentaires = $commentaireRepository->countAllByPublication($id);
+        
+        $totalPages = max(1, (int) ceil($totalTopLevelComments / $limit));
         $canComment = $publication->getStatut() === Publication::STATUT_PUBLIE;
 
         return $this->render('publication/show.html.twig', [

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\CommentaireRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -91,9 +93,26 @@ class Commentaire
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    // ========== NESTED REPLIES SUPPORT ==========
+    
+    /**
+     * Parent comment (null if this is a top-level comment)
+     */
+    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'replies')]
+    #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    private ?self $parent = null;
+
+    /**
+     * Child replies to this comment
+     * @var Collection<int, Commentaire>
+     */
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent', cascade: ['remove'])]
+    private Collection $replies;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->replies = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -270,5 +289,96 @@ class Commentaire
             || $this->textColor !== null
             || $this->backgroundColor !== null
             || $this->emojis !== null;
+    }
+
+    // ========== NESTED REPLIES METHODS ==========
+
+    /**
+     * Get parent comment
+     */
+    public function getParent(): ?self
+    {
+        return $this->parent;
+    }
+
+    /**
+     * Set parent comment
+     */
+    public function setParent(?self $parent): self
+    {
+        $this->parent = $parent;
+        return $this;
+    }
+
+    /**
+     * Get all replies to this comment
+     * @return Collection<int, Commentaire>
+     */
+    public function getReplies(): Collection
+    {
+        return $this->replies;
+    }
+
+    /**
+     * Add a reply to this comment
+     */
+    public function addReply(Commentaire $reply): self
+    {
+        if (!$this->replies->contains($reply)) {
+            $this->replies->add($reply);
+            $reply->setParent($this);
+        }
+        return $this;
+    }
+
+    /**
+     * Remove a reply from this comment
+     */
+    public function removeReply(Commentaire $reply): self
+    {
+        if ($this->replies->removeElement($reply)) {
+            if ($reply->getParent() === $this) {
+                $reply->setParent(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Check if this is a top-level comment (no parent)
+     */
+    public function isTopLevel(): bool
+    {
+        return $this->parent === null;
+    }
+
+    /**
+     * Check if this comment has replies
+     */
+    public function hasReplies(): bool
+    {
+        return $this->replies->count() > 0;
+    }
+
+    /**
+     * Get total number of replies
+     */
+    public function getReplyCount(): int
+    {
+        return $this->replies->count();
+    }
+
+    /**
+     * Get nesting level (0 for top-level, 1 for first reply, etc.)
+     */
+    public function getNestingLevel(): int
+    {
+        $level = 0;
+        $current = $this;
+        while ($current->getParent() !== null) {
+            $level++;
+            $current = $current->getParent();
+        }
+        return $level;
     }
 }

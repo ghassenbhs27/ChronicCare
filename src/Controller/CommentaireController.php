@@ -90,7 +90,7 @@ class CommentaireController extends AbstractController
         $this->forumNotificationService->notifyNewCommentaire($commentaire);
 
         $this->addFlash('success', 'Commentaire ajoute avec succes !');
-        return $this->redirectToRoute('publication_show', ['id' => $publicationId]);
+        return $this->redirectToRoute('publication_show', ['id' => $publicationId]) . '#comments';
     }
 
     #[Route('/edit/{id}', name: 'commentaire_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
@@ -156,7 +156,7 @@ class CommentaireController extends AbstractController
             $em->flush();
             $this->addFlash('success', 'Commentaire modifie avec succes !');
             return $this->redirect(
-                $this->generateUrl('publication_show', ['id' => $publication->getId()]) . '#comments'
+                $this->generateUrl('publication_show', ['id' => $publication->getId()]) . '#comment-' . $commentaire->getId()
             );
         }
 
@@ -195,7 +195,7 @@ class CommentaireController extends AbstractController
         $em->flush();
 
         $this->addFlash('success', 'Commentaire supprime avec succes !');
-        return $this->redirectToRoute('publication_show', ['id' => $publicationId]);
+        return $this->redirectToRoute('publication_show', ['id' => $publicationId]) . '#comments';
     }
 
     #[Route('/like/{id}', name: 'commentaire_like', requirements: ['id' => '\\d+'], methods: ['POST'])]
@@ -239,5 +239,86 @@ class CommentaireController extends AbstractController
             'likes' => $commentaire->getLikeCount(),
             'action' => $action,
         ]);
+    }
+
+    /**
+     * Add a reply to an existing comment
+     */
+    #[Route('/reply/{parentId}', name: 'commentaire_reply', requirements: ['parentId' => '\\d+'], methods: ['POST'])]
+    public function reply(
+        int $parentId,
+        Request $request,
+        CommentaireRepository $commentaireRepo,
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
+    ): Response {
+        $parent = $commentaireRepo->find($parentId);
+        
+        if (!$parent) {
+            throw $this->createNotFoundException('Commentaire parent non trouvé');
+        }
+
+        // Verify CSRF token
+        if (!$this->isCsrfTokenValid('commentaire_reply', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide');
+            return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
+        }
+
+        // Check if publication is published
+        if ($parent->getPublication()->getStatut() !== Publication::STATUT_PUBLIE) {
+            $this->addFlash('error', 'Les réponses sont désactivées pour les publications en brouillon.');
+            return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
+        }
+
+        $contenu = trim((string) $request->request->get('contenu', ''));
+        
+        if (strlen($contenu) < 3) {
+            $this->addFlash('error', 'Le commentaire doit contenir au moins 3 caractères');
+            return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
+        }
+
+        $reply = new Commentaire();
+        $reply->setPublication($parent->getPublication());
+        $reply->setParent($parent);
+        $reply->setContenu($contenu);
+        $reply->setAuteur($this->getUser());
+        $reply->setIsAnonymous($request->request->getBoolean('is_anonymous'));
+
+        // Handle rich text formatting if present
+        $fontStyle = $request->request->get('fontStyle');
+        if ($fontStyle && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
+            $reply->setFontStyle($fontStyle);
+        }
+
+        $fontSize = $request->request->get('fontSize');
+        if ($fontSize && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
+            $reply->setFontSize($fontSize);
+        }
+
+        $textColor = $request->request->get('textColor');
+        if ($textColor) {
+            $reply->setTextColor($textColor);
+        }
+
+        // Validate the reply
+        $violations = $validator->validate($reply);
+        if (count($violations) > 0) {
+            foreach ($violations as $violation) {
+                $this->addFlash('error', $violation->getMessage());
+            }
+            return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
+        }
+
+        $em->persist($reply);
+        $em->flush();
+
+        // Notify parent comment author
+        $this->forumNotificationService->notifyNewCommentaire($reply);
+
+        $this->addFlash('success', 'Réponse ajoutée avec succès');
+        return $this->redirect(
+            $this->generateUrl('publication_show', ['id' => $parent->getPublication()->getId()]) 
+            . '#comment-' . $parent->getId()
+        );
     }
 }

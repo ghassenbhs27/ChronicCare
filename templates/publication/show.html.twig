@@ -80,7 +80,7 @@
 
         {% if not can_comment and publication.statut == 'brouillon' %}
           <div class="forum-comment-form-wrap forum-brouillon-notice">
-            <p class="text-warning mb-0"><i class="bi bi-pencil-square me-2"></i>Cette publication est en brouillon. Les commentaires sont désactivés jusqu’à sa publication.</p>
+            <p class="text-warning mb-0"><i class="bi bi-pencil-square me-2"></i>Cette publication est en brouillon. Les commentaires sont désactivés jusqu'à sa publication.</p>
           </div>
         {% elseif can_comment and app.user %}
           <div class="forum-comment-form-wrap comment-editor-wrapper">
@@ -154,7 +154,8 @@
 
         <div class="forum-comments-list">
           {% for commentaire in commentaires %}
-            <div class="forum-comment-item">
+            {# Top-level comment #}
+            <div class="forum-comment-item" id="comment-{{ commentaire.id }}">
               <div class="forum-comment-avatar" title="{{ commentaire.nomAuteur }}">
                 {{ commentaire.nomAuteur|slice(0, 1)|upper }}
               </div>
@@ -203,6 +204,21 @@
                   <button class="comment-like-btn" data-comment-id="{{ commentaire.id }}" title="J'aime ce commentaire">
                     <i class="bi bi-heart"></i> <span class="like-count">{{ commentaire.likeCount }}</span>
                   </button>
+                  
+                  {# Reply button #}
+                  {% if app.user and can_comment %}
+                    <button class="btn btn-sm btn-link reply-btn" data-comment-id="{{ commentaire.id }}">
+                      <i class="bi bi-reply"></i> Répondre
+                    </button>
+                  {% endif %}
+                  
+                  {# Show reply count if any #}
+                  {% if commentaire.hasReplies %}
+                    <span class="text-muted small">
+                      <i class="bi bi-chat-dots"></i> {{ commentaire.replyCount }} réponse(s)
+                    </span>
+                  {% endif %}
+                  
                   {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
                     <a href="{{ path('commentaire_edit', {id: commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
                     <form method="post" action="{{ path('commentaire_delete', {id: commentaire.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce commentaire ?');">
@@ -211,6 +227,90 @@
                     </form>
                   {% endif %}
                 </div>
+
+                {# Reply form (hidden by default) #}
+                {% if app.user and can_comment %}
+                  <div class="reply-form-wrapper" id="reply-form-{{ commentaire.id }}" style="display: none;">
+                    <form method="post" action="{{ path('commentaire_reply', {parentId: commentaire.id}) }}" class="reply-form">
+                      <input type="hidden" name="_token" value="{{ csrf_token('commentaire_reply') }}">
+                      <textarea name="contenu" class="form-control mb-2" rows="3" placeholder="Écrivez votre réponse..." required minlength="3"></textarea>
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="is_anonymous" id="reply_anonymous_{{ commentaire.id }}" value="1">
+                        <label class="form-check-label" for="reply_anonymous_{{ commentaire.id }}">Publier en anonyme</label>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary">Envoyer</button>
+                        <button type="button" class="btn btn-sm btn-secondary cancel-reply">Annuler</button>
+                      </div>
+                    </form>
+                  </div>
+                {% endif %}
+
+                {# Nested replies #}
+                {% if commentaire.hasReplies %}
+                  <div class="comment-replies">
+                    {% for reply in commentaire.replies %}
+                      <div class="forum-comment-item reply-item reply-level-{{ reply.nestingLevel }}">
+                        <div class="forum-comment-avatar" title="{{ reply.nomAuteur }}">
+                          {{ reply.nomAuteur|slice(0, 1)|upper }}
+                        </div>
+                        <div class="forum-comment-body">
+                          <div class="forum-comment-head">
+                            <span class="forum-comment-author">{{ reply.nomAuteur }}</span>
+                            <span class="forum-comment-date">{{ reply.createdAt|date('d/m/Y à H:i') }}</span>
+                            <span class="text-muted small">
+                              <i class="bi bi-reply"></i> Réponse à {{ reply.parent.nomAuteur }}
+                            </span>
+                          </div>
+                          
+                          {# Calculate inline styles for reply #}
+                          {% set replyStyle = '' %}
+                          {% if reply.fontStyle %}
+                            {% if reply.fontStyle == 'bold' %}
+                              {% set replyStyle = replyStyle ~ 'font-weight: bold;' %}
+                            {% elseif reply.fontStyle == 'italic' %}
+                              {% set replyStyle = replyStyle ~ 'font-style: italic;' %}
+                            {% elseif reply.fontStyle == 'underline' %}
+                              {% set replyStyle = replyStyle ~ 'text-decoration: underline;' %}
+                            {% elseif reply.fontStyle == 'strikethrough' %}
+                              {% set replyStyle = replyStyle ~ 'text-decoration: line-through;' %}
+                            {% endif %}
+                          {% endif %}
+                          
+                          {% if reply.fontSize %}
+                            {% if reply.fontSize == 'small' %}
+                              {% set replyStyle = replyStyle ~ 'font-size: 0.85rem;' %}
+                            {% elseif reply.fontSize == 'large' %}
+                              {% set replyStyle = replyStyle ~ 'font-size: 1.15rem;' %}
+                            {% endif %}
+                          {% endif %}
+                          
+                          {% if reply.textColor %}
+                            {% set replyStyle = replyStyle ~ 'color: ' ~ reply.textColor ~ ';' %}
+                          {% endif %}
+                          
+                          <div class="forum-comment-text" {% if replyStyle %}style="{{ replyStyle }}"{% endif %}>
+                            {{ reply.contenu|nl2br }}
+                          </div>
+                          
+                          <div class="forum-comment-actions">
+                            <button class="comment-like-btn" data-comment-id="{{ reply.id }}">
+                              <i class="bi bi-heart"></i> <span class="like-count">{{ reply.likeCount }}</span>
+                            </button>
+                            
+                            {% if app.user and (reply.auteur and reply.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
+                              <a href="{{ path('commentaire_edit', {id: reply.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                              <form method="post" action="{{ path('commentaire_delete', {id: reply.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette réponse ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ reply.id) }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                              </form>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               </div>
             </div>
           {% else %}
@@ -354,6 +454,36 @@
             }
           })
           .catch(error => console.error('Error:', error));
+        });
+      });
+
+      // Reply button handlers
+      document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const commentId = this.dataset.commentId;
+          const replyForm = document.getElementById('reply-form-' + commentId);
+          
+          // Hide all other reply forms
+          document.querySelectorAll('.reply-form-wrapper').forEach(form => {
+            if (form.id !== 'reply-form-' + commentId) {
+              form.style.display = 'none';
+            }
+          });
+          
+          // Toggle this reply form
+          replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+          
+          // Focus on textarea
+          if (replyForm.style.display === 'block') {
+            replyForm.querySelector('textarea').focus();
+          }
+        });
+      });
+
+      // Cancel reply button handlers
+      document.querySelectorAll('.cancel-reply').forEach(btn => {
+        btn.addEventListener('click', function() {
+          this.closest('.reply-form-wrapper').style.display = 'none';
         });
       });
     });
