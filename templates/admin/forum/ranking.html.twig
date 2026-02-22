@@ -1,0 +1,358 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Classement des publications - Forum{% endblock %}
+{% block page_title %}Classement des publications{% endblock %}
+{% block page_subtitle %}Publications les plus populaires{% endblock %}
+
+{% block body %}
+<div class="ranking-management">
+  {# Header #}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="h4 mb-1">📊 Classement des publications</h2>
+      <p class="text-muted small mb-0">Découvrez les publications les plus populaires</p>
+    </div>
+    <a href="{{ path('admin_forum_dashboard') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Retour au dashboard
+    </a>
+  </div>
+
+  {# Global Stats Cards #}
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Total publications</p>
+              <h4 class="mb-0 fw-bold">{{ stats.totalPublications }}</h4>
+            </div>
+            <div class="bg-primary bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-file-text text-primary fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Total vues</p>
+              <h4 class="mb-0 fw-bold">{{ stats.totalViews|number_format(0, '', ' ') }}</h4>
+              <small class="text-muted">Moy: {{ stats.avgViews }}</small>
+            </div>
+            <div class="bg-info bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-eye text-info fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Total likes</p>
+              <h4 class="mb-0 fw-bold">{{ stats.totalLikes|number_format(0, '', ' ') }}</h4>
+              <small class="text-muted">Moy: {{ stats.avgLikes }}</small>
+            </div>
+            <div class="bg-danger bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-heart text-danger fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Engagement</p>
+              <h4 class="mb-0 fw-bold">{{ ((stats.totalViews + stats.totalLikes * 3) / stats.totalPublications)|number_format(0, '', ' ') }}</h4>
+              <small class="text-muted">Score moyen</small>
+            </div>
+            <div class="bg-success bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-graph-up text-success fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Filters #}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" action="{{ path('admin_forum_ranking') }}" class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label for="type" class="form-label small fw-semibold">Type de classement</label>
+          <select name="type" id="type" class="form-select">
+            <option value="views" {{ type == 'views' ? 'selected' : '' }}>👁️ Plus de vues</option>
+            <option value="likes" {{ type == 'likes' ? 'selected' : '' }}>❤️ Plus de likes</option>
+            <option value="comments" {{ type == 'comments' ? 'selected' : '' }}>💬 Plus de commentaires</option>
+            <option value="trending" {{ type == 'trending' ? 'selected' : '' }}>🔥 Tendances (score global)</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="period" class="form-label small fw-semibold">Période</label>
+          <select name="period" id="period" class="form-select">
+            <option value="all" {{ period == 'all' ? 'selected' : '' }}>Tout le temps</option>
+            <option value="day" {{ period == 'day' ? 'selected' : '' }}>Aujourd'hui</option>
+            <option value="week" {{ period == 'week' ? 'selected' : '' }}>Cette semaine</option>
+            <option value="month" {{ period == 'month' ? 'selected' : '' }}>Ce mois</option>
+            <option value="year" {{ period == 'year' ? 'selected' : '' }}>Cette année</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="limit" class="form-label small fw-semibold">Nombre</label>
+          <select name="limit" id="limit" class="form-select">
+            <option value="10" {{ limit == 10 ? 'selected' : '' }}>Top 10</option>
+            <option value="20" {{ limit == 20 ? 'selected' : '' }}>Top 20</option>
+            <option value="50" {{ limit == 50 ? 'selected' : '' }}>Top 50</option>
+            <option value="100" {{ limit == 100 ? 'selected' : '' }}>Top 100</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-funnel me-1"></i> Appliquer les filtres
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    {# Main Ranking #}
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">
+              {% if type == 'views' %}
+                👁️ Publications les plus vues
+              {% elseif type == 'likes' %}
+                ❤️ Publications les plus aimées
+              {% elseif type == 'comments' %}
+                💬 Publications les plus commentées
+              {% else %}
+                🔥 Publications en tendance
+              {% endif %}
+            </h5>
+            <span class="badge bg-primary">{{ rankings|length }} résultats</span>
+          </div>
+
+          {% if rankings is empty %}
+            <div class="text-center py-5">
+              <i class="bi bi-inbox display-4 text-muted d-block mb-2"></i>
+              <p class="text-muted">Aucune publication pour cette période</p>
+            </div>
+          {% else %}
+            <div class="ranking-list">
+              {% for publication in rankings %}
+                <div class="ranking-item border-bottom py-3">
+                  <div class="d-flex gap-3">
+                    {# Rank Badge #}
+                    <div class="flex-shrink-0">
+                      {% if loop.index <= 3 %}
+                        <div class="rank-badge rank-{{ loop.index }} d-flex align-items-center justify-content-center">
+                          {% if loop.index == 1 %}🥇{% elseif loop.index == 2 %}🥈{% else %}🥉{% endif %}
+                        </div>
+                      {% else %}
+                        <div class="rank-badge d-flex align-items-center justify-content-center">
+                          {{ loop.index }}
+                        </div>
+                      {% endif %}
+                    </div>
+
+                    {# Publication Info #}
+                    <div class="flex-grow-1 min-w-0">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1 min-w-0">
+                          <h6 class="mb-1">
+                            <a href="{{ path('admin_forum_publication_show', {id: publication.id}) }}" 
+                               class="text-decoration-none text-dark fw-semibold">
+                              {{ publication.titre }}
+                            </a>
+                          </h6>
+                          <div class="d-flex align-items-center gap-2 text-muted small">
+                            {% if publication.auteur %}
+                              <span><i class="bi bi-person"></i> {{ publication.auteur.fullName }}</span>
+                            {% else %}
+                              <span><i class="bi bi-person"></i> Anonyme</span>
+                            {% endif %}
+                            <span>•</span>
+                            <span><i class="bi bi-calendar3"></i> {{ publication.createdAt|date('d/m/Y') }}</span>
+                            {% if publication.categorie %}
+                              <span class="badge bg-secondary">{{ publication.categorie|replace({'_': ' '})|capitalize }}</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+
+                      {# Stats #}
+                      <div class="d-flex gap-3 small">
+                        <span class="text-info">
+                          <i class="bi bi-eye me-1"></i>{{ publication.nbVues }} vues
+                        </span>
+                        <span class="text-danger">
+                          <i class="bi bi-heart me-1"></i>{{ publication.nbLikes }} likes
+                        </span>
+                        <span class="text-success">
+                          <i class="bi bi-chat me-1"></i>{{ publication.commentaires|length }} commentaires
+                        </span>
+                        {% if type == 'trending' %}
+                          <span class="text-warning fw-bold">
+                            <i class="bi bi-fire me-1"></i>Score: {{ publication.nbVues + (publication.nbLikes * 3) + (publication.commentaires|length * 5) }}
+                          </span>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    {# Quick Actions #}
+                    <div class="flex-shrink-0">
+                      <a href="{{ path('admin_forum_publication_show', {id: publication.id}) }}" 
+                         class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# Sidebar #}
+    <div class="col-lg-4">
+      {# Top Authors #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title mb-3">🏆 Top auteurs</h5>
+          {% if topAuthors is empty %}
+            <p class="text-muted small mb-0">Aucun auteur</p>
+          {% else %}
+            <div class="list-group list-group-flush">
+              {% for author in topAuthors %}
+                <div class="list-group-item border-0 px-0 py-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rank-small">{{ loop.index }}</div>
+                    <div class="flex-grow-1">
+                      <div class="fw-semibold small">{{ author.prenom }} {{ author.nom }}</div>
+                      <div class="text-muted" style="font-size: 0.75rem;">
+                        {{ author.publicationCount }} publications
+                        • {{ author.totalViews }} vues
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Top by Category #}
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">📁 Top par catégorie</h5>
+          <div class="accordion" id="categoryAccordion">
+            {% for category in categories %}
+              {% set catPublications = topByCategory[category] %}
+              {% if catPublications is not empty %}
+                <div class="accordion-item border-0 mb-2">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-light" type="button" 
+                            data-bs-toggle="collapse" data-bs-target="#cat{{ loop.index }}">
+                      <span class="badge bg-secondary me-2">{{ catPublications|length }}</span>
+                      {{ category|replace({'_': ' '})|capitalize }}
+                    </button>
+                  </h2>
+                  <div id="cat{{ loop.index }}" class="accordion-collapse collapse" 
+                       data-bs-parent="#categoryAccordion">
+                    <div class="accordion-body p-2">
+                      {% for pub in catPublications %}
+                        <div class="d-flex align-items-start gap-2 mb-2 pb-2 border-bottom">
+                          <div class="rank-small">{{ loop.index }}</div>
+                          <div class="flex-grow-1 min-w-0">
+                            <a href="{{ path('admin_forum_publication_show', {id: pub.id}) }}" 
+                               class="text-decoration-none d-block small">
+                              {{ pub.titre|length > 40 ? pub.titre|slice(0, 40) ~ '...' : pub.titre }}
+                            </a>
+                            <div class="text-muted" style="font-size: 0.7rem;">
+                              <i class="bi bi-eye"></i> {{ pub.nbVues }}
+                              <i class="bi bi-heart ms-1"></i> {{ pub.nbLikes }}
+                            </div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .rank-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .rank-badge.rank-1 {
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+      font-size: 1.5rem;
+    }
+    .rank-badge.rank-2 {
+      background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+      box-shadow: 0 4px 12px rgba(192, 192, 192, 0.4);
+      font-size: 1.5rem;
+    }
+    .rank-badge.rank-3 {
+      background: linear-gradient(135deg, #cd7f32 0%, #e6a567 100%);
+      box-shadow: 0 4px 12px rgba(205, 127, 50, 0.4);
+      font-size: 1.5rem;
+    }
+    .rank-small {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7280;
+    }
+    .ranking-item:last-child {
+      border-bottom: none !important;
+    }
+    .accordion-button {
+      font-size: 0.875rem;
+      padding: 0.5rem 0.75rem;
+    }
+    .accordion-button:not(.collapsed) {
+      background-color: #eff6ff !important;
+      color: #1e40af;
+    }
+  </style>
+{% endblock %}

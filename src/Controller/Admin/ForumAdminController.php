@@ -309,6 +309,65 @@ class ForumAdminController extends AbstractController
         return $this->redirectToRoute('admin_forum_comments');
     }
 
+    #[Route('/ranking', name: 'admin_forum_ranking')]
+    public function ranking(
+        Request $request,
+        PublicationRepository $repo
+    ): Response {
+        $period = $request->query->get('period', 'all');
+        $type = $request->query->get('type', 'views');
+        $limit = (int) $request->query->get('limit', 20);
+        
+        // Determine date filter
+        $since = null;
+        switch ($period) {
+            case 'day':
+                $since = new \DateTimeImmutable('-1 day');
+                break;
+            case 'week':
+                $since = new \DateTimeImmutable('-7 days');
+                break;
+            case 'month':
+                $since = new \DateTimeImmutable('-30 days');
+                break;
+            case 'year':
+                $since = new \DateTimeImmutable('-1 year');
+                break;
+        }
+        
+        // Get rankings based on type
+        $rankings = match($type) {
+            'views' => $repo->findMostViewed($limit, $since),
+            'likes' => $repo->findMostLiked($limit, $since),
+            'comments' => $repo->findMostCommented($limit, $since),
+            'trending' => $repo->findTrending($limit, $period === 'week' ? 7 : 30),
+            default => $repo->findMostViewed($limit, $since),
+        };
+        
+        // Get statistics
+        $stats = $repo->getRankingStats();
+        
+        // Get top authors
+        $topAuthors = $repo->getTopAuthors(5);
+        
+        // Get top by category
+        $topByCategory = [];
+        foreach (Publication::CATEGORIES as $category) {
+            $topByCategory[$category] = $repo->findTopByCategory($category, 3);
+        }
+        
+        return $this->render('admin/forum/ranking.html.twig', [
+            'rankings' => $rankings,
+            'period' => $period,
+            'type' => $type,
+            'limit' => $limit,
+            'stats' => $stats,
+            'topAuthors' => $topAuthors,
+            'topByCategory' => $topByCategory,
+            'categories' => Publication::CATEGORIES,
+        ]);
+    }
+
     #[Route('/api/stats', name: 'admin_forum_api_stats', methods: ['GET'])]
     public function apiStats(
         PublicationRepository $pubRepo,
