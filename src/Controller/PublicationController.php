@@ -7,6 +7,7 @@ use App\Form\PublicationFormType;
 use App\Repository\CommentaireRepository;
 use App\Repository\PublicationRepository;
 use App\Service\FileUploadService;
+use App\Service\ForumNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,6 +19,11 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 #[Route('/publication')]
 class PublicationController extends AbstractController
 {
+    public function __construct(
+        private ForumNotificationService $forumNotificationService
+    ) {
+    }
+
     #[Route('', name: 'publication_index', methods: ['GET'])]
     public function index(
         Request $request,
@@ -237,8 +243,12 @@ class PublicationController extends AbstractController
     }
 
     #[Route('/like/{id}', name: 'publication_like', requirements: ['id' => '\\d+'], methods: ['POST'])]
-    public function like(int $id, Request $request, PublicationRepository $repository, EntityManagerInterface $em): Response
-    {
+    public function like(
+        int $id,
+        Request $request,
+        PublicationRepository $repository,
+        EntityManagerInterface $em
+    ): Response {
         $publication = $repository->find($id);
 
         if (!$publication) {
@@ -257,6 +267,11 @@ class PublicationController extends AbstractController
 
         if ($action === 'like') {
             $publication->incrementLikes();
+            
+            // 🔔 Créer une notification pour l'auteur de la publication
+            if ($this->getUser()) {
+                $this->forumNotificationService->notifyPublicationLike($publication, $this->getUser());
+            }
         } else {
             $publication->decrementLikes();
         }

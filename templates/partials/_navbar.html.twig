@@ -85,6 +85,9 @@
         <span class="d-none d-md-inline ms-1">Panier</span>
       </a>
       {% endif %}
+    
+        {% include 'partials/_notifications.html.twig' %}
+
       {% if app.user %}
         <div class="dropdown">
           <button class="btn btn-getstarted d-flex align-items-center gap-1 dropdown-toggle" type="button" id="navbarProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Profil">

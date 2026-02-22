@@ -8,6 +8,7 @@ use App\Form\CommentaireFormType;
 use App\Repository\CommentaireRepository;
 use App\Repository\PublicationRepository;
 use App\Service\CommentTextFormatterService;
+use App\Service\ForumNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,6 +20,11 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[Route('/commentaire')]
 class CommentaireController extends AbstractController
 {
+    public function __construct(
+        private ForumNotificationService $forumNotificationService
+    ) {
+    }
+
     #[Route('/add/{publicationId}', name: 'commentaire_add', requirements: ['publicationId' => '\\d+'], methods: ['POST'])]
     public function add(
         int $publicationId,
@@ -79,6 +85,9 @@ class CommentaireController extends AbstractController
 
         $em->persist($commentaire);
         $em->flush();
+
+        // 🔔 Créer une notification pour l'auteur de la publication
+        $this->forumNotificationService->notifyNewCommentaire($commentaire);
 
         $this->addFlash('success', 'Commentaire ajoute avec succes !');
         return $this->redirectToRoute('publication_show', ['id' => $publicationId]);
@@ -214,6 +223,11 @@ class CommentaireController extends AbstractController
 
         if ($action === 'like') {
             $commentaire->incrementLikes();
+            
+            // 🔔 Créer une notification pour l'auteur du commentaire
+            if ($this->getUser()) {
+                $this->forumNotificationService->notifyCommentaireLike($commentaire, $this->getUser());
+            }
         } else {
             $commentaire->decrementLikes();
         }

@@ -1,0 +1,251 @@
+{% if app.user %}
+  <div class="dropdown notification-dropdown">
+    <button class="btn btn-link position-relative notification-bell" 
+            type="button" 
+            id="notificationDropdown" 
+            data-bs-toggle="dropdown" 
+            aria-expanded="false"
+            onclick="loadNotifications()">
+      <i class="bi bi-bell fs-5"></i>
+      <span class="notification-badge" id="notificationCount" style="display: none;"></span>
+    </button>
+    
+    <div class="dropdown-menu dropdown-menu-end notification-dropdown-menu" aria-labelledby="notificationDropdown">
+      <div class="notification-dropdown-header">
+        <h6 class="mb-0">Notifications</h6>
+        <button class="btn btn-sm btn-link text-primary" onclick="markAllAsRead()">
+          Tout marquer comme lu
+        </button>
+      </div>
+      
+      <div class="notification-dropdown-body" id="notificationList">
+        <div class="text-center p-3">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="notification-dropdown-footer">
+        <a href="{{ path('notification_index') }}" class="btn btn-sm btn-primary w-100">
+          Voir toutes les notifications
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .notification-bell {
+      color: #6c757d;
+      padding: 0.5rem;
+      border: none;
+      background: transparent;
+      position: relative;
+    }
+    .notification-bell:hover {
+      color: #0d6efd;
+    }
+    .notification-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #dc3545;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .notification-dropdown-menu {
+      width: 380px;
+      max-height: 500px;
+      padding: 0;
+      border: 1px solid #dee2e6;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .notification-dropdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid #dee2e6;
+      background: #f8f9fa;
+    }
+    .notification-dropdown-header h6 {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    .notification-dropdown-body {
+      max-height: 350px;
+      overflow-y: auto;
+    }
+    .notification-dropdown-footer {
+      padding: 0.75rem;
+      border-top: 1px solid #dee2e6;
+      background: #f8f9fa;
+    }
+    .dropdown-notification-item {
+      padding: 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      text-decoration: none;
+      display: block;
+      color: inherit;
+    }
+    .dropdown-notification-item:last-child {
+      border-bottom: none;
+    }
+    .dropdown-notification-item:hover {
+      background-color: #f8f9fa;
+    }
+    .dropdown-notification-item.unread {
+      background-color: #f0f7ff;
+    }
+    .dropdown-notification-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .dropdown-notification-icon {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #f8f9fa;
+      font-size: 1rem;
+    }
+    .dropdown-notification-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .dropdown-notification-message {
+      font-size: 0.875rem;
+      color: #2c3e50;
+      margin-bottom: 0.25rem;
+      line-height: 1.4;
+    }
+    .dropdown-notification-time {
+      font-size: 0.75rem;
+      color: #6c757d;
+    }
+    .empty-notifications {
+      padding: 2rem;
+      text-align: center;
+      color: #6c757d;
+    }
+    .empty-notifications i {
+      font-size: 2rem;
+      color: #dee2e6;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+
+  <script>
+    let notificationsLoaded = false;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      updateNotificationCount();
+      setInterval(updateNotificationCount, 30000);
+    });
+
+    function updateNotificationCount() {
+      fetch('/notifications/count', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(response => response.json())
+        .then(data => {
+          const badge = document.getElementById('notificationCount');
+          if (data.count > 0) {
+            badge.textContent = data.count > 99 ? '99+' : data.count;
+            badge.style.display = 'block';
+          } else {
+            badge.style.display = 'none';
+          }
+        })
+        .catch(error => console.error('Erreur:', error));
+    }
+
+    function loadNotifications() {
+      if (notificationsLoaded) return;
+
+      fetch('/notifications/unread', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(response => response.json())
+        .then(data => {
+          const list = document.getElementById('notificationList');
+          
+          if (data.notifications.length === 0) {
+            list.innerHTML = `
+              <div class="empty-notifications">
+                <i class="bi bi-bell-slash"></i>
+                <p class="mb-0">Aucune nouvelle notification</p>
+              </div>
+            `;
+          } else {
+            list.innerHTML = data.notifications.map(notif => `
+              <a href="${notif.lien || '#'}" 
+                 class="dropdown-notification-item ${notif.isRead ? '' : 'unread'}"
+                 onclick="markNotificationAsRead(${notif.id})">
+                <div class="dropdown-notification-content">
+                  <div class="dropdown-notification-icon ${notif.colorClass}">
+                    <i class="bi ${notif.icon}"></i>
+                  </div>
+                  <div class="dropdown-notification-body">
+                    <div class="dropdown-notification-message">${notif.message}</div>
+                    <div class="dropdown-notification-time">
+                      <i class="bi bi-clock"></i> ${notif.timeAgo}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            `).join('');
+          }
+          notificationsLoaded = true;
+        })
+        .catch(error => {
+          console.error('Erreur:', error);
+          document.getElementById('notificationList').innerHTML = `
+            <div class="empty-notifications">
+              <p class="text-danger mb-0">Erreur de chargement</p>
+            </div>
+          `;
+        });
+    }
+
+    function markNotificationAsRead(notificationId) {
+      fetch(`/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      }).then(() => {
+        updateNotificationCount();
+        notificationsLoaded = false;
+      });
+    }
+
+    function markAllAsRead() {
+      fetch('/notifications/read-all', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            updateNotificationCount();
+            notificationsLoaded = false;
+            loadNotifications();
+          }
+        });
+    }
+
+    document.getElementById('notificationDropdown').addEventListener('hidden.bs.dropdown', function() {
+      notificationsLoaded = false;
+    });
+  </script>
+{% endif %}

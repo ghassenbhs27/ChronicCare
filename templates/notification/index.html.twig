@@ -1,0 +1,300 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Notifications - Chronic Care{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .notification-page {
+      padding: 2rem 0;
+      min-height: calc(100vh - 200px);
+    }
+
+    .notification-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .notification-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .notification-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .notification-item {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .notification-item:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .notification-item.unread {
+      background: #f0f7ff;
+      border-left: 4px solid #0d6efd;
+    }
+
+    .notification-item.read {
+      opacity: 0.8;
+    }
+
+    .notification-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .notification-icon {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #f8f9fa;
+      font-size: 1.5rem;
+    }
+
+    .notification-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notification-message {
+      color: #2c3e50;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .notification-time {
+      color: #6c757d;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .notification-delete {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .notification-item:hover .notification-delete {
+      opacity: 1;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #6c757d;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      color: #dee2e6;
+      margin-bottom: 1.5rem;
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 0.5rem;
+    }
+
+    .badge-new {
+      background: #dc3545;
+      color: white;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main notification-page">
+    <div class="container">
+      {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+          <i class="bi bi-check-circle me-2"></i>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+        </div>
+      {% endfor %}
+
+      <div class="notification-header">
+        <h1>
+          <i class="bi bi-bell me-2"></i>Notifications
+          {% set unreadCount = notifications|filter(n => not n.isRead)|length %}
+          {% if unreadCount > 0 %}
+            <span class="badge-new">{{ unreadCount }}</span>
+          {% endif %}
+        </h1>
+        
+        <div class="notification-actions">
+          {% if unreadCount > 0 %}
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="markAllAsRead()">
+              <i class="bi bi-check-all me-1"></i>Tout marquer comme lu
+            </button>
+          {% endif %}
+          
+          {% if notifications|filter(n => n.isRead)|length > 0 %}
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteAllRead()">
+              <i class="bi bi-trash me-1"></i>Supprimer les lues
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if notifications is empty %}
+        <div class="empty-state">
+          <i class="bi bi-bell-slash"></i>
+          <h3>Aucune notification</h3>
+          <p>Vous n'avez pas encore reçu de notifications.</p>
+        </div>
+      {% else %}
+        <div class="notifications-list">
+          {% for notification in notifications %}
+            <div class="notification-item {{ notification.isRead ? 'read' : 'unread' }}" 
+                 data-id="{{ notification.id }}"
+                 onclick="handleNotificationClick({{ notification.id }}, '{{ notification.lien }}')">
+              
+              <div class="notification-content">
+                <div class="notification-icon {{ notification.colorClass }}">
+                  <i class="bi {{ notification.icon }}"></i>
+                </div>
+                
+                <div class="notification-body">
+                  <div class="notification-message">
+                    {{ notification.message }}
+                  </div>
+                  <div class="notification-time">
+                    <i class="bi bi-clock"></i>
+                    <span>{{ notification.timeAgo }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" 
+                      class="btn btn-sm btn-outline-danger notification-delete" 
+                      onclick="event.stopPropagation(); deleteNotification({{ notification.id }})"
+                      title="Supprimer">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <script>
+    function handleNotificationClick(notificationId, lien) {
+      // Marquer comme lue
+      fetch(`/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      }).then(() => {
+        // Rediriger vers le lien
+        if (lien) {
+          window.location.href = lien;
+        }
+      });
+    }
+
+    function markAllAsRead() {
+      if (!confirm('Marquer toutes les notifications comme lues ?')) {
+        return;
+      }
+
+      fetch('/notifications/read-all', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      }).then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          }
+        });
+    }
+
+    function deleteNotification(notificationId) {
+      if (!confirm('Supprimer cette notification ?')) {
+        return;
+      }
+
+      fetch(`/notifications/${notificationId}/delete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          _token: '{{ csrf_token("delete_notification_" ~ notificationId) }}'
+        })
+      }).then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            document.querySelector(`[data-id="${notificationId}"]`).remove();
+            
+            // Si plus de notifications, recharger la page
+            if (document.querySelectorAll('.notification-item').length === 0) {
+              location.reload();
+            }
+          }
+        });
+    }
+
+    function deleteAllRead() {
+      if (!confirm('Supprimer toutes les notifications lues ?')) {
+        return;
+      }
+
+      fetch('/notifications/delete-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          _token: '{{ csrf_token("delete_all_read") }}'
+        })
+      }).then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          }
+        });
+    }
+  </script>
+{% endblock %}
