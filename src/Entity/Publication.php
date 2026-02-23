@@ -72,6 +72,9 @@ class Publication
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $imageUrl = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $resume = null;
+
     /**
      * @var Collection<int, Commentaire>
      */
@@ -223,6 +226,17 @@ class Publication
     public function setImageUrl(?string $imageUrl): self
     {
         $this->imageUrl = $imageUrl;
+        return $this;
+    }
+
+    public function getResume(): ?string
+    {
+        return $this->resume;
+    }
+
+    public function setResume(?string $resume): self
+    {
+        $this->resume = $resume;
         return $this;
     }
 }

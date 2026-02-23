@@ -6,6 +6,7 @@ use App\Entity\Publication;
 use App\Form\PublicationFormType;
 use App\Repository\CommentaireRepository;
 use App\Repository\PublicationRepository;
+use App\Service\AiSummaryService;
 use App\Service\FileUploadService;
 use App\Service\ForumNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -15,12 +16,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Psr\Log\LoggerInterface;
 
 #[Route('/publication')]
 class PublicationController extends AbstractController
 {
     public function __construct(
-        private ForumNotificationService $forumNotificationService
+        private ForumNotificationService $forumNotificationService,
+        private LoggerInterface $logger
     ) {
     }
 
@@ -177,14 +180,18 @@ class PublicationController extends AbstractController
         EntityManagerInterface $em,
         FileUploadService $fileUploadService
     ): Response {
-        if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
-            throw new AccessDeniedException('Seuls les coachs et administrateurs peuvent modifier une publication.');
-        }
-
         $publication = $repository->find($id);
 
         if (!$publication) {
             throw $this->createNotFoundException('Publication non trouvee');
+        }
+
+        // ✅ FIX: Check if user is the author OR has admin/coach role
+        $isAuthor = $this->getUser() && $publication->getAuteur() && $publication->getAuteur() === $this->getUser();
+        $hasAdminRole = $this->isGranted('ROLE_COACH') || $this->isGranted('ROLE_NUTRITIONNISTE') || $this->isGranted('ROLE_ADMIN');
+        
+        if (!$isAuthor && !$hasAdminRole) {
+            throw new AccessDeniedException('Vous ne pouvez modifier que vos propres publications.');
         }
 
         $form = $this->createForm(PublicationFormType::class, $publication);
@@ -222,14 +229,18 @@ class PublicationController extends AbstractController
         EntityManagerInterface $em,
         FileUploadService $fileUploadService
     ): Response {
-        if (!$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
-            throw new AccessDeniedException('Seuls les coachs et administrateurs peuvent supprimer une publication.');
-        }
-
         $publication = $repository->find($id);
 
         if (!$publication) {
             throw $this->createNotFoundException('Publication non trouvee');
+        }
+
+        // ✅ FIX: Check if user is the author OR has admin/coach role
+        $isAuthor = $this->getUser() && $publication->getAuteur() && $publication->getAuteur() === $this->getUser();
+        $hasAdminRole = $this->isGranted('ROLE_COACH') || $this->isGranted('ROLE_NUTRITIONNISTE') || $this->isGranted('ROLE_ADMIN');
+        
+        if (!$isAuthor && !$hasAdminRole) {
+            throw new AccessDeniedException('Vous ne pouvez supprimer que vos propres publications.');
         }
 
         if (!$this->isCsrfTokenValid('delete_' . $publication->getId(), (string) $request->request->get('_token'))) {
@@ -289,6 +300,121 @@ class PublicationController extends AbstractController
             'success' => true,
             'likes' => $publication->getNbLikes(),
             'action' => $action,
+        ]);
+    }
+
+    /**
+     * 🤖 Génère un résumé IA avec support multilingue (FR/EN)
+     * ✅ ACCÈS: Tous les utilisateurs connectés (ROLE_PATIENT inclus)
+     * ✅ FIX: Meilleure gestion des erreurs et détection de la langue
+     */
+    #[Route('/generate-summary/{id}', name: 'publication_generate_summary', methods: ['POST'])]
+    public function generateSummary(
+        int $id,
+        Request $request,
+        PublicationRepository $repository,
+        AiSummaryService $aiSummaryService,
+        EntityManagerInterface $em
+    ): Response {
+        // ✅ FIX: Tous les utilisateurs connectés peuvent générer des résumés
+        if (!$this->getUser()) {
+            $this->logger->warning('❌ Tentative de génération de résumé sans authentification', [
+                'publication_id' => $id,
+                'ip' => $request->getClientIp(),
+            ]);
+            return $this->json(['success' => false, 'error' => 'Vous devez être connecté'], 403);
+        }
+
+        $publication = $repository->find($id);
+        if (!$publication) {
+            $this->logger->error('❌ Publication non trouvée', ['id' => $id]);
+            return $this->json(['success' => false, 'error' => 'Publication non trouvée'], 404);
+        }
+
+        // ✅ FIX: Lecture correcte du paramètre de langue depuis l'URL
+        $language = strtolower(trim($request->query->get('lang', 'fr')));
+        if (!in_array($language, ['fr', 'en'], true)) {
+            $this->logger->warning('⚠️  Langue invalide, utilisation du français par défaut', [
+                'requested' => $language,
+                'using' => 'fr',
+            ]);
+            $language = 'fr';
+        }
+
+        $this->logger->info('🤖 Demande de génération de résumé', [
+            'publication_id' => $id,
+            'language' => $language,
+            'user' => $this->getUser()->getUserIdentifier(),
+            'content_length' => mb_strlen($publication->getContenu()),
+        ]);
+
+        // Vérifier que le contenu est assez long
+        if (!$aiSummaryService->canGenerateSummary($publication->getContenu())) {
+            $this->logger->warning('❌ Contenu trop court pour générer un résumé', [
+                'length' => mb_strlen($publication->getContenu()),
+                'minimum' => 100,
+            ]);
+            return $this->json([
+                'success' => false,
+                'error' => 'Le contenu est trop court (minimum 100 caractères)',
+            ], 400);
+        }
+
+        // Tenter de générer le résumé avec l'API
+        $this->logger->info("📡 Appel à l'API Groq pour générer un résumé en $language");
+        $summary = $aiSummaryService->generateSummary($publication->getContenu(), $language);
+
+        $usedFallback = false;
+        
+        // Si l'API a échoué, utiliser le fallback
+        if ($summary === null) {
+            $this->logger->warning('⚠️  L\'API Groq a échoué, utilisation du mode de secours', [
+                'language' => $language,
+            ]);
+            $summary = $aiSummaryService->generateFallbackSummary($publication->getContenu(), $language);
+            $usedFallback = true;
+        }
+
+        // Sauvegarder le résumé
+        try {
+            $publication->setResume($summary);
+            $em->flush();
+            
+            $this->logger->info('✅ Résumé généré et sauvegardé avec succès', [
+                'publication_id' => $id,
+                'language' => $language,
+                'fallback' => $usedFallback,
+                'summary_length' => mb_strlen($summary),
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('❌ Erreur lors de la sauvegarde du résumé', [
+                'error' => $e->getMessage(),
+                'publication_id' => $id,
+            ]);
+            return $this->json([
+                'success' => false,
+                'error' => 'Erreur lors de la sauvegarde du résumé',
+            ], 500);
+        }
+
+        // Messages adaptés à la langue
+        $successMessage = $language === 'fr' 
+            ? '✅ Résumé français généré avec succès!' 
+            : '✅ English summary generated successfully!';
+        
+        if ($usedFallback) {
+            $this->logger->warning('⚠️  ATTENTION: Le mode fallback ne traduit PAS. Le résumé est dans la langue du texte original.');
+            $successMessage = $language === 'fr'
+                ? '⚠️ Résumé généré en mode secours (l\'API Groq n\'a pas répondu). ATTENTION: Le résumé est dans la langue du texte original, pas traduit.'
+                : '⚠️ Summary generated in fallback mode (Groq API did not respond). WARNING: Summary is in the original text language, not translated.';
+        }
+
+        return $this->json([
+            'success' => true,
+            'summary' => $summary,
+            'fallback' => $usedFallback,
+            'language' => $language,
+            'message' => $successMessage,
         ]);
     }
 }

@@ -7,7 +7,193 @@
   <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
   <link href="{{ asset('assets/css/comment-editor.css') }}" rel="stylesheet">
   <style>
-    /* Translation button styles */
+    /* 🎨 AI SUMMARY - Design intégré au site */
+    .ai-summary-section {
+      margin: 2rem 0;
+    }
+    
+    .ai-summary-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      color: white;
+      display: none;
+    }
+    
+    .ai-summary-card.show {
+      display: block;
+      animation: slideIn 0.4s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .ai-summary-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    
+    .ai-summary-icon {
+      font-size: 1.5rem;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+    
+    .ai-summary-content {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid rgba(255, 255, 255, 0.4);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+    
+    .ai-language-badge {
+      background: rgba(255, 255, 255, 0.25);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-left: 0.5rem;
+    }
+    
+    .ai-fallback-notice {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: rgba(255, 193, 7, 0.2);
+      border-left: 3px solid #ffc107;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    
+    .ai-fallback-notice strong {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    
+    /* Boutons AI - Style intégré */
+    .ai-buttons-container {
+      background: #f8f9fa;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+    
+    .ai-buttons-title {
+      font-size: 0.95rem;
+      color: #6c757d;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    .ai-generate-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      margin: 0 0.5rem;
+    }
+    
+    .ai-generate-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      color: white;
+    }
+    
+    .ai-generate-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .ai-generate-btn .spinner-border {
+      width: 1rem;
+      height: 1rem;
+      border-width: 2px;
+    }
+    
+    /* Bouton "Voir le résumé" */
+    .reveal-summary-btn {
+      background: white;
+      border: 2px solid #667eea;
+      color: #667eea;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      margin: 1rem 0;
+    }
+    
+    .reveal-summary-btn:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .reveal-summary-btn .icon {
+      font-size: 1.2rem;
+    }
+    
+    /* Boutons de régénération */
+    .regenerate-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      margin: 0.25rem;
+    }
+    
+    .regenerate-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+    }
+    
+    /* Translation buttons */
     .translate-btn {
       font-size: 0.8rem;
       padding: 0.25rem 0.6rem;
@@ -24,378 +210,7 @@
       color: white;
     }
     
-    .translate-btn.translating {
-      opacity: 0.7;
-      cursor: wait;
-    }
-    
-    .translate-lang-badge {
-      background: rgba(255,255,255,0.25);
-      padding: 0.1rem 0.35rem;
-      border-radius: 3px;
-      font-size: 0.7rem;
-      font-weight: 700;
-    }
-  </style>
-{% endblock %}
-
-{% block body %}
-  {% include 'partials/_navbar.html.twig' %}
-
-  <main class="main forum-page">
-    <div class="container">
-      {% for message in app.flashes('success') %}
-        <div class="alert alert-success alert-dismissible fade show forum-alert mb-4" role="alert">
-          <i class="bi bi-check-circle me-2"></i>{{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
-        </div>
-      {% endfor %}
-      {% for message in app.flashes('error') %}
-        <div class="alert alert-danger alert-dismissible fade show forum-alert mb-4" role="alert">
-          <i class="bi bi-exclamation-circle me-2"></i>{{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
-        </div>
-      {% endfor %}
-
-      <nav aria-label="Fil d'Ariane" class="forum-breadcrumb">
-        <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
-          <li class="breadcrumb-item"><a href="{{ path('publication_index') }}">Forum</a></li>
-          <li class="breadcrumb-item active" aria-current="page">{{ publication.titre|length > 45 ? publication.titre|slice(0, 45) ~ '…' : publication.titre }}</li>
-        </ol>
-      </nav>
-
-      <article class="forum-article">
-        <header class="forum-article-header">
-          <div class="d-flex justify-content-between align-items-start gap-3">
-            <div class="flex-grow-1">
-              <h1 class="forum-article-title" data-publication-title="{{ publication.id }}">{{ publication.titre }}</h1>
-              <div class="forum-article-meta">
-                <span><i class="bi bi-person me-1"></i> {{ publication.auteur ? publication.auteur.nom : 'Anonyme' }}</span>
-                <span><i class="bi bi-calendar3 me-1"></i> {{ publication.createdAt|date('d/m/Y à H:i') }}</span>
-                <span class="forum-meta-badge badge bg-{{ publication.statut == 'publie' ? 'success' : 'warning' }} text-dark">{{ publication.statut == 'publie' ? 'Publié' : 'Brouillon' }}</span>
-              </div>
-            </div>
-            <button class="btn btn-sm btn-outline-primary translate-btn" 
-                    data-translate-publication="{{ publication.id }}"
-                    title="Traduire ce contenu">
-              <i class="bi bi-translate"></i> <span class="d-none d-sm-inline">Traduire</span>
-            </button>
-          </div>
-        </header>
-        {% if publication.imageUrl %}
-          <div class="forum-article-image mb-4">
-            <img src="{{ asset('uploads/forum/' ~ publication.imageUrl) }}" alt="{{ publication.titre }}" class="img-fluid rounded" style="max-width: 100%; height: auto;">
-          </div>
-        {% endif %}
-        <div class="forum-article-body" data-publication-content="{{ publication.id }}">
-          {{ publication.contenu|nl2br }}
-        </div>
-        <div class="forum-article-stats">
-          <span><i class="bi bi-eye me-1"></i> {{ publication.nbVues }} vues</span>
-          <button class="publication-like-btn" data-publication-id="{{ publication.id }}" title="J'aime cette publication">
-            <i class="bi bi-heart"></i> <span class="like-count">{{ publication.nbLikes }}</span>
-          </button>
-          <span><i class="bi bi-chat-dots me-1"></i> {{ totalCommentaires }} commentaire(s)</span>
-        </div>
-        <div class="forum-article-actions">
-          <a href="{{ path('publication_index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Retour au forum</a>
-          {% if is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN') %}
-            <a href="{{ path('publication_edit', {id: publication.id}) }}" class="btn btn-outline-primary">Modifier</a>
-            <form method="post" action="{{ path('publication_delete', {id: publication.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette publication ?');">
-              <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ publication.id) }}">
-              <button type="submit" class="btn btn-outline-danger">Supprimer</button>
-            </form>
-          {% endif %}
-        </div>
-      </article>
-
-      <section class="forum-comments-card" id="comments">
-        <div class="forum-comments-header">
-          <h2 class="forum-comments-title">
-            <i class="bi bi-chat-left-text"></i> Commentaires
-            <span class="forum-comments-count">({{ totalCommentaires }})</span>
-          </h2>
-        </div>
-
-        {% if not can_comment and publication.statut == 'brouillon' %}
-          <div class="forum-comment-form-wrap forum-brouillon-notice">
-            <p class="text-warning mb-0"><i class="bi bi-pencil-square me-2"></i>Cette publication est en brouillon. Les commentaires sont désactivés jusqu'à sa publication.</p>
-          </div>
-        {% elseif can_comment and app.user %}
-          <div class="forum-comment-form-wrap comment-editor-wrapper">
-            <h6 class="mb-3"><i class="bi bi-chat-dots me-1"></i> Ajouter un commentaire</h6>
-            <p class="text-muted small mb-3">Partagez votre avis ou posez une question. En tant que patient, vous pouvez commenter les publications des coachs.</p>
-            <form method="post" action="{{ path('commentaire_add', {publicationId: publication.id}) }}" id="commentaire_form">
-              <input type="hidden" name="_token" value="{{ csrf_token('commentaire_add') }}">
-              
-              <!-- Main comment textarea -->
-              <textarea name="contenu" class="form-control mb-3" rows="4" placeholder="Écrivez votre commentaire..." required minlength="3"></textarea>
-              
-              <!-- Rich Formatting Toolbar -->
-              <div class="comment-toolbar">
-                <div class="toolbar-group">
-                  <label for="fontStyle">Style de texte</label>
-                  <select name="fontStyle" id="fontStyle" class="form-select">
-                    <option value="normal">Normal</option>
-                    <option value="bold">Gras</option>
-                    <option value="italic">Italique</option>
-                    <option value="underline">Souligné</option>
-                    <option value="strikethrough">Barré</option>
-                  </select>
-                </div>
-                
-                <div class="toolbar-group">
-                  <label for="fontSize">Taille de police</label>
-                  <select name="fontSize" id="fontSize" class="form-select">
-                    <option value="medium" selected>Moyen</option>
-                    <option value="small">Petit</option>
-                    <option value="large">Grand</option>
-                  </select>
-                </div>
-                
-                <div class="toolbar-group">
-                  <label for="textColor">Couleur du texte</label>
-                  <input type="color" name="textColor" id="textColor" class="form-control" style="height: 38px;">
-                </div>
-                
-                <div class="toolbar-group">
-                  <button type="button" class="emoji-picker-button" data-emoji-toggle>
-                    <i class="bi bi-emoji-smile me-1"></i> Emojis
-                  </button>
-                </div>
-              </div>
-              
-              <!-- Emoji Picker Container -->
-              <div class="emoji-picker-container" id="emoji-picker-container">
-                <div class="emoji-grid" id="emoji-grid"></div>
-              </div>
-              
-              <!-- Comment Preview -->
-              <div class="comment-preview-wrapper">
-                <label class="comment-preview-label">Aperçu :</label>
-                <div id="commentaire-preview" class="comment-preview"></div>
-              </div>
-              
-              <!-- Form Controls -->
-              <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" name="is_anonymous" id="is_anonymous" value="1">
-                <label class="form-check-label" for="is_anonymous">Publier en anonyme</label>
-              </div>
-              
-              <button type="submit" class="btn btn-primary">Publier le commentaire</button>
-            </form>
-          </div>
-        {% elseif can_comment and not app.user %}
-          <div class="forum-comment-form-wrap text-center py-4">
-            <p class="text-muted mb-0"><a href="{{ path('connexion') }}" class="fw-semibold">Connectez-vous</a> pour participer et commenter.</p>
-          </div>
-        {% endif %}
-
-        <div class="forum-comments-list">
-          {% for commentaire in commentaires %}
-            {# Top-level comment #}
-            <div class="forum-comment-item" id="comment-{{ commentaire.id }}">
-              <div class="forum-comment-avatar" title="{{ commentaire.nomAuteur }}">
-                {{ commentaire.nomAuteur|slice(0, 1)|upper }}
-              </div>
-              <div class="forum-comment-body">
-                <div class="forum-comment-head">
-                  <span class="forum-comment-author">{{ commentaire.nomAuteur }}</span>
-                  <span class="forum-comment-date">{{ commentaire.createdAt|date('d/m/Y à H:i') }}</span>
-                  {% if commentaire.updatedAt and commentaire.updatedAt != commentaire.createdAt %}
-                    <span class="forum-comment-edited text-muted small">(modifié)</span>
-                  {% endif %}
-                </div>
-                
-                {# Calculate inline styles for rich content #}
-                {% set commentStyle = '' %}
-                {% if commentaire.fontStyle %}
-                  {% if commentaire.fontStyle == 'bold' %}
-                    {% set commentStyle = commentStyle ~ 'font-weight: bold;' %}
-                  {% elseif commentaire.fontStyle == 'italic' %}
-                    {% set commentStyle = commentStyle ~ 'font-style: italic;' %}
-                  {% elseif commentaire.fontStyle == 'underline' %}
-                    {% set commentStyle = commentStyle ~ 'text-decoration: underline;' %}
-                  {% elseif commentaire.fontStyle == 'strikethrough' %}
-                    {% set commentStyle = commentStyle ~ 'text-decoration: line-through;' %}
-                  {% endif %}
-                {% endif %}
-                
-                {% if commentaire.fontSize %}
-                  {% if commentaire.fontSize == 'small' %}
-                    {% set commentStyle = commentStyle ~ 'font-size: 0.85rem;' %}
-                  {% elseif commentaire.fontSize == 'large' %}
-                    {% set commentStyle = commentStyle ~ 'font-size: 1.15rem;' %}
-                  {% else %}
-                    {% set commentStyle = commentStyle ~ 'font-size: 0.95rem;' %}
-                  {% endif %}
-                {% endif %}
-                
-                {% if commentaire.textColor %}
-                  {% set commentStyle = commentStyle ~ 'color: ' ~ commentaire.textColor ~ ';' %}
-                {% endif %}
-                
-                <div class="forum-comment-text" {% if commentStyle %}style="{{ commentStyle }}"{% endif %} data-comment-content="{{ commentaire.id }}">
-                  {{ commentaire.contenu|nl2br }}
-                </div>
-                
-                <div class="forum-comment-actions">
-                  <button class="comment-like-btn" data-comment-id="{{ commentaire.id }}" title="J'aime ce commentaire">
-                    <i class="bi bi-heart"></i> <span class="like-count">{{ commentaire.likeCount }}</span>
-                  </button>
-                  
-                  <button class="btn btn-sm btn-outline-secondary translate-btn" 
-                          data-translate-comment="{{ commentaire.id }}"
-                          title="Traduire ce commentaire">
-                    <i class="bi bi-translate"></i> <span class="d-none d-sm-inline">Traduire</span>
-                  </button>
-                  
-                  {# Reply button #}
-                  {% if app.user and can_comment %}
-                    <button class="btn btn-sm btn-link reply-btn" data-comment-id="{{ commentaire.id }}">
-                      <i class="bi bi-reply"></i> Répondre
-                    </button>
-                  {% endif %}
-                  
-                  {# Show reply count if any #}
-                  {% if commentaire.hasReplies %}
-                    <span class="text-muted small">
-                      <i class="bi bi-chat-dots"></i> {{ commentaire.replyCount }} réponse(s)
-                    </span>
-                  {% endif %}
-                  
-                  {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
-                    <a href="{{ path('commentaire_edit', {id: commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
-                    <form method="post" action="{{ path('commentaire_delete', {id: commentaire.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce commentaire ?');">
-                      <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ commentaire.id) }}">
-                      <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
-                    </form>
-                  {% endif %}
-                </div>
-
-                {# Reply form (hidden by default) #}
-                {% if app.user and can_comment %}
-                  <div class="reply-form-wrapper" id="reply-form-{{ commentaire.id }}" style="display: none;">
-                    <form method="post" action="{{ path('commentaire_reply', {parentId: commentaire.id}) }}" class="reply-form">
-                      <input type="hidden" name="_token" value="{{ csrf_token('commentaire_reply') }}">
-                      <textarea name="contenu" class="form-control mb-2" rows="3" placeholder="Écrivez votre réponse..." required minlength="3"></textarea>
-                      <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" name="is_anonymous" id="reply_anonymous_{{ commentaire.id }}" value="1">
-                        <label class="form-check-label" for="reply_anonymous_{{ commentaire.id }}">Publier en anonyme</label>
-                      </div>
-                      <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-sm btn-primary">Envoyer</button>
-                        <button type="button" class="btn btn-sm btn-secondary cancel-reply">Annuler</button>
-                      </div>
-                    </form>
-                  </div>
-                {% endif %}
-
-                {# Nested replies #}
-                {% if commentaire.hasReplies %}
-                  <div class="comment-replies">
-                    {% for reply in commentaire.replies %}
-                      <div class="forum-comment-item reply-item reply-level-{{ reply.nestingLevel }}">
-                        <div class="forum-comment-avatar" title="{{ reply.nomAuteur }}">
-                          {{ reply.nomAuteur|slice(0, 1)|upper }}
-                        </div>
-                        <div class="forum-comment-body">
-                          <div class="forum-comment-head">
-                            <span class="forum-comment-author">{{ reply.nomAuteur }}</span>
-                            <span class="forum-comment-date">{{ reply.createdAt|date('d/m/Y à H:i') }}</span>
-                            <span class="text-muted small">
-                              <i class="bi bi-reply"></i> Réponse à {{ reply.parent.nomAuteur }}
-                            </span>
-                          </div>
-                          
-                          {# Calculate inline styles for reply #}
-                          {% set replyStyle = '' %}
-                          {% if reply.fontStyle %}
-                            {% if reply.fontStyle == 'bold' %}
-                              {% set replyStyle = replyStyle ~ 'font-weight: bold;' %}
-                            {% elseif reply.fontStyle == 'italic' %}
-                              {% set replyStyle = replyStyle ~ 'font-style: italic;' %}
-                            {% elseif reply.fontStyle == 'underline' %}
-                              {% set replyStyle = replyStyle ~ 'text-decoration: underline;' %}
-                            {% elseif reply.fontStyle == 'strikethrough' %}
-                              {% set replyStyle = replyStyle ~ 'text-decoration: line-through;' %}
-                            {% endif %}
-                          {% endif %}
-                          
-                          {% if reply.fontSize %}
-                            {% if reply.fontSize == 'small' %}
-                              {% set replyStyle = replyStyle ~ 'font-size: 0.85rem;' %}
-                            {% elseif reply.fontSize == 'large' %}
-                              {% set replyStyle = replyStyle ~ 'font-size: 1.15rem;' %}
-                            {% endif %}
-                          {% endif %}
-                          
-                          {% if reply.textColor %}
-                            {% set replyStyle = replyStyle ~ 'color: ' ~ reply.textColor ~ ';' %}
-                          {% endif %}
-                          
-                          <div class="forum-comment-text" {% if replyStyle %}style="{{ replyStyle }}"{% endif %} data-comment-content="{{ reply.id }}">
-                            {{ reply.contenu|nl2br }}
-                          </div>
-                          
-                          <div class="forum-comment-actions">
-                            <button class="comment-like-btn" data-comment-id="{{ reply.id }}">
-                              <i class="bi bi-heart"></i> <span class="like-count">{{ reply.likeCount }}</span>
-                            </button>
-                            
-                            <button class="btn btn-sm btn-outline-secondary translate-btn" 
-                                    data-translate-comment="{{ reply.id }}"
-                                    title="Traduire cette réponse">
-                              <i class="bi bi-translate"></i> <span class="d-none d-sm-inline">Traduire</span>
-                            </button>
-                            
-                            {% if app.user and (reply.auteur and reply.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
-                              <a href="{{ path('commentaire_edit', {id: reply.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
-                              <form method="post" action="{{ path('commentaire_delete', {id: reply.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette réponse ?');">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ reply.id) }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
-                              </form>
-                            {% endif %}
-                          </div>
-                        </div>
-                      </div>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-            </div>
-          {% else %}
-            <p class="forum-comments-empty">Aucun commentaire pour le moment. Soyez le premier à réagir.</p>
-          {% endfor %}
-        </div>
-
-        {% if totalPages > 1 %}
-          <nav class="forum-comment-pagination" aria-label="Pagination commentaires">
-            <ul class="pagination justify-content-center mb-0">
-              {% if currentPage > 1 %}
-                <li class="page-item">
-                  <a class="page-link" href="{{ path('publication_show', {id: publication.id, page: currentPage - 1}) }}#comments">Précédent</a>
-                </li>
-              {% endif %}
-              {% for p in 1..totalPages %}
-                <li class="page-item {{ p == currentPage ? 'active' }}">
-                  <a class="page-link" href="{{ path('publication_show', {id: publication.id, page: p}) }}#comments">{{ p }}</a>
-                </li>
-              {% endfor %}
-              {% if currentPage < totalPages %}
-                <li class="page-item">
-                  <a class="page-link" href="{{ path('publication_show', {id: publication.id, page: currentPage + 1}) }}#comments">Suivant</a>
-                </li>
-              {% endif %}
-            </ul>
-          </nav>
-        {% endif %}
-      </section>
-    </div>
-  </main>
-
-  <style>
+    /* Styles existants pour les likes et commentaires */
     .publication-like-btn,
     .comment-like-btn {
       background: none;
@@ -433,35 +248,311 @@
       transform: scale(1.2);
     }
   </style>
+{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+
+  <main class="main forum-page">
+    <div class="container">
+      {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show forum-alert mb-4" role="alert">
+          <i class="bi bi-check-circle me-2"></i>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+        </div>
+      {% endfor %}
+      {% for message in app.flashes('error') %}
+        <div class="alert alert-danger alert-dismissible fade show forum-alert mb-4" role="alert">
+          <i class="bi bi-exclamation-circle me-2"></i>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+        </div>
+      {% endfor %}
+
+      <nav aria-label="Fil d'Ariane" class="forum-breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ path('index') }}">Accueil</a></li>
+          <li class="breadcrumb-item"><a href="{{ path('publication_index') }}">Forum</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{{ publication.titre|length > 45 ? publication.titre|slice(0, 45) ~ '…' : publication.titre }}</li>
+        </ol>
+      </nav>
+
+      {# 🤖 SECTION RÉSUMÉ IA #}
+      <div class="ai-summary-section">
+        {% if publication.resume %}
+          {# Résumé existant - avec bouton pour le révéler #}
+          <div style="text-align: center;">
+            <button class="reveal-summary-btn" id="reveal-summary-btn">
+              <span class="icon">🤖</span>
+              <span>Voir le Résumé IA</span>
+              <span class="icon">✨</span>
+            </button>
+          </div>
+          
+          <div class="ai-summary-card" id="ai-summary-display">
+            <div class="ai-summary-header">
+              <span class="ai-summary-icon">🤖</span>
+              <span>Résumé IA</span>
+            </div>
+            <div class="ai-summary-content">
+              {{ publication.resume }}
+            </div>
+            {% if app.user %}
+              <div style="margin-top: 1rem; text-align: center;">
+                <button class="regenerate-btn" data-language="fr">
+                  <i class="bi bi-arrow-clockwise"></i> 🇫🇷 Régénérer FR
+                </button>
+                <button class="regenerate-btn" data-language="en">
+                  <i class="bi bi-arrow-clockwise"></i> 🇬🇧 Regenerate EN
+                </button>
+              </div>
+            {% endif %}
+          </div>
+        {% elseif app.user %}
+          {# Pas de résumé - montrer les boutons de génération #}
+          <div class="ai-buttons-container" id="ai-generate-container">
+            <div class="ai-buttons-title">
+              <i class="bi bi-stars"></i>
+              <strong>Générer un résumé automatique avec l'IA</strong>
+            </div>
+            <div>
+              <button class="ai-generate-btn" id="generate-summary-fr-btn" data-publication-id="{{ publication.id }}" data-language="fr">
+                <i class="bi bi-magic"></i> 🇫🇷 Résumé Français
+              </button>
+              <button class="ai-generate-btn" id="generate-summary-en-btn" data-publication-id="{{ publication.id }}" data-language="en">
+                <i class="bi bi-magic"></i> 🇬🇧 English Summary
+              </button>
+            </div>
+            <small class="text-muted d-block mt-2">
+              <i class="bi bi-info-circle"></i> Génération gratuite et instantanée
+            </small>
+          </div>
+        {% endif %}
+      </div>
+
+      <article class="forum-article">
+        <header class="forum-article-header">
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div class="flex-grow-1">
+              <h1 class="forum-article-title" data-publication-title="{{ publication.id }}">{{ publication.titre }}</h1>
+              <div class="forum-article-meta">
+                <span><i class="bi bi-person me-1"></i> {{ publication.auteur ? publication.auteur.nom : 'Anonyme' }}</span>
+                <span><i class="bi bi-calendar3 me-1"></i> {{ publication.createdAt|date('d/m/Y à H:i') }}</span>
+                <span class="forum-meta-badge badge bg-{{ publication.statut == 'publie' ? 'success' : 'warning' }} text-dark">{{ publication.statut == 'publie' ? 'Publié' : 'Brouillon' }}</span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-outline-primary translate-btn" 
+                    data-translate-publication="{{ publication.id }}"
+                    title="Traduire ce contenu">
+              <i class="bi bi-translate"></i> <span class="d-none d-sm-inline">Traduire</span>
+            </button>
+          </div>
+        </header>
+        {% if publication.imageUrl %}
+          <div class="forum-article-image mb-4">
+            <img src="{{ asset('uploads/forum/' ~ publication.imageUrl) }}" alt="{{ publication.titre }}" class="img-fluid rounded">
+          </div>
+        {% endif %}
+        <div class="forum-article-body" data-publication-content="{{ publication.id }}">
+          {{ publication.contenu|nl2br }}
+        </div>
+        <div class="forum-article-stats">
+          <span><i class="bi bi-eye me-1"></i> {{ publication.nbVues }} vues</span>
+          <button class="publication-like-btn" data-publication-id="{{ publication.id }}" title="J'aime cette publication">
+            <i class="bi bi-heart"></i> <span class="like-count">{{ publication.nbLikes }}</span>
+          </button>
+          <span><i class="bi bi-chat-dots me-1"></i> {{ totalCommentaires }} commentaire(s)</span>
+        </div>
+        <div class="forum-article-actions">
+          <a href="{{ path('publication_index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Retour au forum</a>
+          {# ✅ FIX: Show edit/delete buttons only if user is author OR has admin/coach role #}
+          {% if app.user and (publication.auteur and publication.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
+            <a href="{{ path('publication_edit', {id: publication.id}) }}" class="btn btn-outline-primary">Modifier</a>
+            <form method="post" action="{{ path('publication_delete', {id: publication.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette publication ?');">
+              <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ publication.id) }}">
+              <button type="submit" class="btn btn-outline-danger">Supprimer</button>
+            </form>
+          {% endif %}
+        </div>
+      </article>
+
+      <section class="forum-comments-card" id="comments">
+        <div class="forum-comments-header">
+          <h2 class="forum-comments-title">
+            <i class="bi bi-chat-left-text"></i> Commentaires
+            <span class="forum-comments-count">({{ totalCommentaires }})</span>
+          </h2>
+        </div>
+
+        {% if not can_comment and publication.statut == 'brouillon' %}
+          <div class="forum-comment-form-wrap forum-brouillon-notice">
+            <p class="text-warning mb-0"><i class="bi bi-pencil-square me-2"></i>Cette publication est en brouillon. Les commentaires sont désactivés jusqu'à sa publication.</p>
+          </div>
+        {% elseif can_comment and app.user %}
+          <div class="forum-comment-form-wrap comment-editor-wrapper">
+            <h6 class="mb-3"><i class="bi bi-chat-dots me-1"></i> Ajouter un commentaire</h6>
+            <p class="text-muted small mb-3">Partagez votre avis ou posez une question.</p>
+            <form method="post" action="{{ path('commentaire_add', {publicationId: publication.id}) }}" id="commentaire_form">
+              <input type="hidden" name="_token" value="{{ csrf_token('commentaire_add') }}">
+              <textarea name="contenu" class="form-control mb-3" rows="4" placeholder="Écrivez votre commentaire..." required minlength="3"></textarea>
+              
+              <div class="comment-toolbar">
+                <div class="toolbar-group">
+                  <label for="fontStyle">Style</label>
+                  <select name="fontStyle" id="fontStyle" class="form-select">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Gras</option>
+                    <option value="italic">Italique</option>
+                  </select>
+                </div>
+                
+                <div class="toolbar-group">
+                  <label for="fontSize">Taille</label>
+                  <select name="fontSize" id="fontSize" class="form-select">
+                    <option value="medium" selected>Moyen</option>
+                    <option value="small">Petit</option>
+                    <option value="large">Grand</option>
+                  </select>
+                </div>
+                
+                <div class="toolbar-group">
+                  <label for="textColor">Couleur</label>
+                  <input type="color" name="textColor" id="textColor" class="form-control" style="height: 38px;">
+                </div>
+              </div>
+              
+              <div class="comment-preview-wrapper">
+                <label class="comment-preview-label">Aperçu :</label>
+                <div id="commentaire-preview" class="comment-preview"></div>
+              </div>
+              
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="is_anonymous" id="is_anonymous" value="1">
+                <label class="form-check-label" for="is_anonymous">Publier en anonyme</label>
+              </div>
+              
+              <button type="submit" class="btn btn-primary">Publier</button>
+            </form>
+          </div>
+        {% elseif can_comment and not app.user %}
+          <div class="forum-comment-form-wrap text-center py-4">
+            <p class="text-muted mb-0"><a href="{{ path('connexion') }}" class="fw-semibold">Connectez-vous</a> pour commenter.</p>
+          </div>
+        {% endif %}
+
+        <div class="forum-comments-list">
+          {% for commentaire in commentaires %}
+            <div class="forum-comment-item" id="comment-{{ commentaire.id }}">
+              <div class="forum-comment-avatar" title="{{ commentaire.nomAuteur }}">
+                {{ commentaire.nomAuteur|slice(0, 1)|upper }}
+              </div>
+              <div class="forum-comment-body">
+                <div class="forum-comment-head">
+                  <span class="forum-comment-author">{{ commentaire.nomAuteur }}</span>
+                  <span class="forum-comment-date">{{ commentaire.createdAt|date('d/m/Y à H:i') }}</span>
+                </div>
+                
+                {% set commentStyle = '' %}
+                {% if commentaire.fontStyle == 'bold' %}
+                  {% set commentStyle = commentStyle ~ 'font-weight: bold;' %}
+                {% elseif commentaire.fontStyle == 'italic' %}
+                  {% set commentStyle = commentStyle ~ 'font-style: italic;' %}
+                {% endif %}
+                
+                {% if commentaire.fontSize == 'small' %}
+                  {% set commentStyle = commentStyle ~ 'font-size: 0.85rem;' %}
+                {% elseif commentaire.fontSize == 'large' %}
+                  {% set commentStyle = commentStyle ~ 'font-size: 1.15rem;' %}
+                {% endif %}
+                
+                {% if commentaire.textColor %}
+                  {% set commentStyle = commentStyle ~ 'color: ' ~ commentaire.textColor ~ ';' %}
+                {% endif %}
+                
+                <div class="forum-comment-text" {% if commentStyle %}style="{{ commentStyle }}"{% endif %}>
+                  {{ commentaire.contenu|nl2br }}
+                </div>
+                
+                <div class="forum-comment-actions">
+                  <button class="comment-like-btn" data-comment-id="{{ commentaire.id }}">
+                    <i class="bi bi-heart"></i> <span class="like-count">{{ commentaire.likeCount }}</span>
+                  </button>
+                  
+                  {# ✅ COMMENT PERMISSIONS: Already correct - checks authorship #}
+                  {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN')) %}
+                    <a href="{{ path('commentaire_edit', {id: commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                    <form method="post" action="{{ path('commentaire_delete', {id: commentaire.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ?');">
+                      <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ commentaire.id) }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <p class="forum-comments-empty">Aucun commentaire. Soyez le premier à réagir.</p>
+          {% endfor %}
+        </div>
+
+        {% if totalPages > 1 %}
+          <nav class="forum-comment-pagination">
+            <ul class="pagination justify-content-center mb-0">
+              {% if currentPage > 1 %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ path('publication_show', {id: publication.id, page: currentPage - 1}) }}#comments">Précédent</a>
+                </li>
+              {% endif %}
+              {% for p in 1..totalPages %}
+                <li class="page-item {{ p == currentPage ? 'active' }}">
+                  <a class="page-link" href="{{ path('publication_show', {id: publication.id, page: p}) }}#comments">{{ p }}</a>
+                </li>
+              {% endfor %}
+              {% if currentPage < totalPages %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ path('publication_show', {id: publication.id, page: currentPage + 1}) }}#comments">Suivant</a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      </section>
+    </div>
+  </main>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Track liked items in localStorage
+      console.log('🚀 Script AI Summary chargé');
+      
+      // Bouton reveal
+      const revealBtn = document.getElementById('reveal-summary-btn');
+      const summaryCard = document.getElementById('ai-summary-display');
+      
+      if (revealBtn && summaryCard) {
+        revealBtn.addEventListener('click', function() {
+          summaryCard.classList.add('show');
+          this.style.display = 'none';
+        });
+      }
+      
+      // Likes localStorage
       const likedPublications = JSON.parse(localStorage.getItem('likedPublications') || '{}');
       const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
 
-      // Update UI based on localStorage
       Object.keys(likedPublications).forEach(pubId => {
         const btn = document.querySelector(`[data-publication-id="${pubId}"]`);
-        if (btn && likedPublications[pubId]) {
-          btn.classList.add('liked');
-        }
+        if (btn && likedPublications[pubId]) btn.classList.add('liked');
       });
 
       Object.keys(likedComments).forEach(comId => {
         const btn = document.querySelector(`[data-comment-id="${comId}"]`);
-        if (btn && likedComments[comId]) {
-          btn.classList.add('liked');
-        }
+        if (btn && likedComments[comId]) btn.classList.add('liked');
       });
 
-      // Publication like button
+      // Publication like
       document.querySelectorAll('.publication-like-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const publicationId = this.dataset.publicationId;
           const isLiked = likedPublications[publicationId] || false;
           const action = isLiked ? 'unlike' : 'like';
-          const likeCountSpan = this.querySelector('.like-count');
 
           fetch('{{ path('publication_like', {id: 0}) }}'.replace('/0', '/' + publicationId), {
             method: 'POST',
@@ -473,22 +564,20 @@
             if (data.success) {
               likedPublications[publicationId] = !isLiked;
               localStorage.setItem('likedPublications', JSON.stringify(likedPublications));
-              
-              likeCountSpan.textContent = data.likes;
+              this.querySelector('.like-count').textContent = data.likes;
               this.classList.toggle('liked', !isLiked);
             }
           })
-          .catch(error => console.error('Error:', error));
+          .catch(err => console.error('❌ Error:', err));
         });
       });
 
-      // Comment like button
+      // Comment like
       document.querySelectorAll('.comment-like-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const commentId = this.dataset.commentId;
           const isLiked = likedComments[commentId] || false;
           const action = isLiked ? 'unlike' : 'like';
-          const likeCountSpan = this.querySelector('.like-count');
 
           fetch('{{ path('commentaire_like', {id: 0}) }}'.replace('/0', '/' + commentId), {
             method: 'POST',
@@ -500,42 +589,150 @@
             if (data.success) {
               likedComments[commentId] = !isLiked;
               localStorage.setItem('likedComments', JSON.stringify(likedComments));
-              
-              likeCountSpan.textContent = data.likes;
+              this.querySelector('.like-count').textContent = data.likes;
               this.classList.toggle('liked', !isLiked);
             }
           })
-          .catch(error => console.error('Error:', error));
+          .catch(err => console.error('❌ Error:', err));
         });
       });
 
-      // Reply button handlers
-      document.querySelectorAll('.reply-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const commentId = this.dataset.commentId;
-          const replyForm = document.getElementById('reply-form-' + commentId);
-          
-          // Hide all other reply forms
-          document.querySelectorAll('.reply-form-wrapper').forEach(form => {
-            if (form.id !== 'reply-form-' + commentId) {
-              form.style.display = 'none';
-            }
-          });
-          
-          // Toggle this reply form
-          replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-          
-          // Focus on textarea
-          if (replyForm.style.display === 'block') {
-            replyForm.querySelector('textarea').focus();
+      // 🤖 GÉNÉRATION RÉSUMÉ IA
+      function generateSummary(button, language) {
+        console.log(`🤖 Génération résumé (${language})`);
+        
+        button.disabled = true;
+        const originalHTML = button.innerHTML;
+        const loadingText = language === 'fr' ? '⏳ Génération...' : '⏳ Generating...';
+        button.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${loadingText}`;
+        
+        document.querySelectorAll('[data-language]').forEach(btn => btn.disabled = true);
+        
+        const publicationId = button.dataset.publicationId || '{{ publication.id }}';
+        
+        fetch(`/publication/generate-summary/${publicationId}?lang=${language}`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
           }
+        })
+        .then(response => {
+          console.log(`📡 Status: ${response.status}`);
+          return response.json();
+        })
+        .then(data => {
+          console.log('✅ Réponse:', data);
+          
+          if (data.success) {
+            let summaryCard = document.getElementById('ai-summary-display');
+            const container = document.getElementById('ai-generate-container');
+            
+            if (!summaryCard) {
+              summaryCard = document.createElement('div');
+              summaryCard.id = 'ai-summary-display';
+              summaryCard.className = 'ai-summary-card show';
+              document.querySelector('.ai-summary-section').appendChild(summaryCard);
+            } else {
+              summaryCard.classList.add('show');
+            }
+            
+            const langBadge = language === 'fr' ? '🇫🇷 FR' : '🇬🇧 EN';
+            const fallbackNotice = data.fallback 
+              ? `<div class="ai-fallback-notice">
+                  <strong><i class="bi bi-exclamation-triangle"></i> Mode secours</strong>
+                  L'API Groq n'a pas répondu. Le résumé est dans la langue du texte original.
+                </div>` 
+              : '';
+            
+            summaryCard.innerHTML = `
+              <div class="ai-summary-header">
+                <span class="ai-summary-icon">🤖</span>
+                <span>Résumé IA</span>
+                <span class="ai-language-badge">${langBadge}</span>
+              </div>
+              <div class="ai-summary-content">
+                ${data.summary}
+              </div>
+              ${fallbackNotice}
+              <div style="margin-top: 1rem; text-align: center;">
+                <button class="regenerate-btn" data-language="fr">
+                  <i class="bi bi-arrow-clockwise"></i> 🇫🇷 Régénérer FR
+                </button>
+                <button class="regenerate-btn" data-language="en">
+                  <i class="bi bi-arrow-clockwise"></i> 🇬🇧 Regenerate EN
+                </button>
+              </div>
+            `;
+            
+            if (container) container.remove();
+            
+            // Re-attach events
+            document.querySelectorAll('.regenerate-btn').forEach(btn => {
+              btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                generateSummary(this, this.dataset.language);
+              });
+            });
+            
+            // Success message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show';
+            alert.innerHTML = `
+              <i class="bi bi-check-circle me-2"></i>${data.message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container').insertBefore(alert, document.querySelector('.container').firstChild);
+            setTimeout(() => alert.remove(), 5000);
+            
+          } else {
+            console.error('❌ Erreur:', data.error);
+            alert(`Erreur : ${data.error || 'Impossible de générer le résumé'}`);
+            
+            document.querySelectorAll('[data-language]').forEach(btn => {
+              btn.disabled = false;
+              if (btn === button) btn.innerHTML = originalHTML;
+            });
+          }
+        })
+        .catch(error => {
+          console.error('❌ Exception:', error);
+          alert('Erreur réseau. Vérifiez votre connexion.');
+          
+          document.querySelectorAll('[data-language]').forEach(btn => {
+            btn.disabled = false;
+            if (btn === button) btn.innerHTML = originalHTML;
+          });
         });
-      });
-
-      // Cancel reply button handlers
-      document.querySelectorAll('.cancel-reply').forEach(btn => {
-        btn.addEventListener('click', function() {
-          this.closest('.reply-form-wrapper').style.display = 'none';
+      }
+      
+      // Attach events
+      const generateBtnFr = document.getElementById('generate-summary-fr-btn');
+      const generateBtnEn = document.getElementById('generate-summary-en-btn');
+      
+      if (generateBtnFr) {
+        console.log('✅ Bouton FR trouvé');
+        generateBtnFr.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('🖱️ Clic FR');
+          generateSummary(this, 'fr');
+        });
+      }
+      
+      if (generateBtnEn) {
+        console.log('✅ Bouton EN trouvé');
+        generateBtnEn.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('🖱️ Clic EN');
+          generateSummary(this, 'en');
+        });
+      }
+      
+      // Regenerate buttons
+      document.querySelectorAll('.regenerate-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          generateSummary(this, this.dataset.language);
         });
       });
     });

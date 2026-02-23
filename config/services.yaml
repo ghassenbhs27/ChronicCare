@@ -11,6 +11,8 @@ parameters:
     holiday_country: '%env(default:holiday_country_default:HOLIDAY_COUNTRY)%'
     holiday_api_base: 'https://date.nager.at/api/v3'
     forum_upload_dir: '%kernel.project_dir%/public/uploads/forum'
+    groq_api_key: '%env(GROQ_API_KEY)%'
+
 
 services:
     # default configuration for services in *this* file
@@ -35,6 +37,10 @@ services:
     App\Service\FileUploadService:
         arguments:
             $forumUploadDir: '%forum_upload_dir%'
+
+    App\Service\AiSummaryService:
+        arguments:
+            $groqApiKey: '%groq_api_key%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
