@@ -8,10 +8,14 @@ use App\Entity\User;
 use App\Repository\ConsultationRepository;
 use App\Repository\RDVRepository;
 use App\Repository\UserRepository;
+use App\Service\AiConsultationService;
+use App\Service\RuleBasedConsultationService;
 use App\Service\RDVService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -75,6 +79,23 @@ final class RDVProController extends AbstractController
     }
 
     #[IsGranted('ROLE_COACH')]
+    #[Route('/rdv/{id}/complete', name: 'pro_rdv_complete', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    public function complete(Request $request, RDV $rdv, RDVService $rdvService): Response
+    {
+        $user = $this->getUser();
+        if ($user instanceof User && $rdv->getProfessionnel()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($this->isCsrfTokenValid('complete_rdv_' . $rdv->getId(), (string) $request->request->get('_token'))) {
+            $rdvService->complete($rdv);
+            $this->addFlash('success', 'Rendez-vous marque comme termine.');
+        }
+
+        return $this->redirectToRoute('pro_rdv_list');
+    }
+
+    #[IsGranted('ROLE_COACH')]
     #[Route('/rdv/{id}/cancel', name: 'pro_rdv_cancel', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function cancelProfessionnel(Request $request, RDV $rdv, RDVService $rdvService): Response
     {
@@ -97,8 +118,10 @@ final class RDVProController extends AbstractController
         Request $request,
         RDV $rdv,
         ConsultationRepository $consultationRepository,
-        \Doctrine\ORM\EntityManagerInterface $em,
-        ValidatorInterface $validator
+        EntityManagerInterface $em,
+        ValidatorInterface $validator,
+        AiConsultationService $aiService,
+        RuleBasedConsultationService $ruleBasedService
     ): Response {
         $user = $this->getUser();
         if ($user instanceof User && $rdv->getProfessionnel()->getId() !== $user->getId()) {
@@ -123,6 +146,18 @@ final class RDVProController extends AbstractController
             $diagnostic = trim((string) $request->request->get('diagnostic', ''));
             $consultation->setDiagnostic($diagnostic !== '' ? $diagnostic : null);
 
+            $resume = trim((string) $request->request->get('resume', ''));
+            $consultation->setResume($resume !== '' ? $resume : null);
+
+            $conseils = trim((string) $request->request->get('conseils', ''));
+            $consultation->setConseils($conseils !== '' ? $conseils : null);
+
+            /** @var UploadedFile|null $uploaded */
+            $uploaded = $request->files->get('document');
+            if ($uploaded instanceof UploadedFile) {
+                $consultation->setDocumentFile($uploaded);
+            }
+
             $violations = $validator->validate($consultation);
             if (count($violations) > 0) {
                 foreach ($violations as $violation) {
@@ -132,11 +167,27 @@ final class RDVProController extends AbstractController
                 return $this->render('rdv/pro_note.html.twig', [
                     'rdv' => $rdv,
                     'consultation' => $consultation,
+                    'aiEnabled' => $aiService->isEnabled(),
                 ]);
             }
 
             if (!$consultation->getId()) {
                 $em->persist($consultation);
+            }
+
+            if ($consultation->getResume() === null && $consultation->getConseils() === null) {
+                if ($aiService->isEnabled()) {
+                    $ai = $aiService->generateSummaryAndAdvice($consultation->getNotes(), $consultation->getDiagnostic());
+                    if ($ai) {
+                        $consultation->setResume($ai['resume']);
+                        $consultation->setConseils($ai['conseils']);
+                        $consultation->setAiGeneratedAt(new \DateTimeImmutable());
+                    }
+                } else {
+                    $rule = $ruleBasedService->generateSummaryAndAdvice($consultation->getNotes(), $consultation->getDiagnostic());
+                    $consultation->setResume($rule['resume']);
+                    $consultation->setConseils($rule['conseils']);
+                }
             }
 
             $em->flush();
@@ -147,6 +198,7 @@ final class RDVProController extends AbstractController
         return $this->render('rdv/pro_note.html.twig', [
             'rdv' => $rdv,
             'consultation' => $consultation,
+            'aiEnabled' => $aiService->isEnabled(),
         ]);
     }
 }

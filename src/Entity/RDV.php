@@ -41,6 +41,13 @@ class RDV
     )]
     private ?string $motif = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(
+        max: 2000,
+        maxMessage: 'Les conseils ne peuvent pas depasser {{ limit }} caracteres.'
+    )]
+    private ?string $conseilsPreconsultation = null;
+
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: 'Le statut est obligatoire.')]
     #[Assert\Choice(
@@ -52,6 +59,9 @@ class RDV
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Assert\NotNull(message: 'La date de creation est obligatoire.')]
     private \DateTimeImmutable $createdAt;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $reminderSentAt = null;
 
     #[ORM\OneToOne(mappedBy: 'rdv', cascade: ['persist', 'remove'])]
     private ?Consultation $consultation = null;
@@ -111,6 +121,17 @@ class RDV
         return $this;
     }
 
+    public function getConseilsPreconsultation(): ?string
+    {
+        return $this->conseilsPreconsultation;
+    }
+
+    public function setConseilsPreconsultation(?string $conseilsPreconsultation): self
+    {
+        $this->conseilsPreconsultation = $conseilsPreconsultation;
+        return $this;
+    }
+
     public function getStatut(): string
     {
         return $this->statut;
@@ -125,6 +146,17 @@ class RDV
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getReminderSentAt(): ?\DateTimeImmutable
+    {
+        return $this->reminderSentAt;
+    }
+
+    public function setReminderSentAt(?\DateTimeImmutable $reminderSentAt): self
+    {
+        $this->reminderSentAt = $reminderSentAt;
+        return $this;
     }
 
     public function getConsultation(): ?Consultation

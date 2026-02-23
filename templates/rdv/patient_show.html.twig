@@ -24,11 +24,16 @@
 
             <dt class="col-sm-3">Motif</dt>
             <dd class="col-sm-9">{{ rdv.motif ?: 'Non renseigné' }}</dd>
+
+            {% if rdv.conseilsPreconsultation %}
+            <dt class="col-sm-3">Conseils rapides</dt>
+            <dd class="col-sm-9"><pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ rdv.conseilsPreconsultation }}</pre></dd>
+            {% endif %}
           </dl>
         </div>
       </div>
 
-      {% if rdv.consultation %}
+      {% if rdv.consultation and rdv.statut == 'termine' %}
       <div class="card border-primary">
         <div class="card-header bg-primary bg-opacity-10 text-primary">
           <h3 class="h5 mb-0"><i class="bi bi-journal-text me-2"></i>Note de consultation</h3>
@@ -40,11 +45,38 @@
             <p class="mb-0 mt-1">{{ rdv.consultation.notes|nl2br }}</p>
           </div>
           {% if rdv.consultation.diagnostic %}
-          <div>
+          <div class="mb-3">
             <strong class="text-muted small">Diagnostic / Synthèse</strong>
             <p class="mb-0 mt-1">{{ rdv.consultation.diagnostic|nl2br }}</p>
           </div>
           {% endif %}
+          {% if rdv.consultation.resume %}
+          <div class="mb-3">
+            <strong class="text-muted small">Résumé</strong>
+            <p class="mb-0 mt-1">{{ rdv.consultation.resume|nl2br }}</p>
+          </div>
+          {% endif %}
+          {% if rdv.consultation.conseils %}
+          <div class="mb-3">
+            <strong class="text-muted small">Conseils</strong>
+            <p class="mb-0 mt-1">{{ rdv.consultation.conseils|nl2br }}</p>
+          </div>
+          {% endif %}
+          {% if rdv.consultation.documentName %}
+          <div>
+            <strong class="text-muted small">Document</strong>
+            <p class="mb-0 mt-1">
+              <a href="{{ vich_uploader_asset(rdv.consultation, 'documentFile') }}" target="_blank" rel="noopener">Télécharger le document</a>
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% elseif rdv.consultation %}
+      <div class="card border-light">
+        <div class="card-body text-muted text-center py-4">
+          <i class="bi bi-journal-text fs-1"></i>
+          <p class="mb-0 mt-2">La note de consultation sera visible après la consultation.</p>
         </div>
       </div>
       {% else %}

@@ -179,6 +179,7 @@
 <body class="{% block body_class %}{% endblock %}">
 {% block body %}{% endblock %}
 
+{% block javascripts %}
 <!-- Vendor JS Files -->
 <script
   id="bootstrap-js-local"
@@ -264,6 +265,7 @@
     }, true);
   })();
 </script>
+{% endblock %}
 
 <!-- Profile Modal -->
 <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">

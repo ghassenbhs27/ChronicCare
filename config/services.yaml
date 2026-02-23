@@ -10,6 +10,9 @@ parameters:
     holiday_country_default: 'TN'
     holiday_country: '%env(default:holiday_country_default:HOLIDAY_COUNTRY)%'
     holiday_api_base: 'https://date.nager.at/api/v3'
+    openai_model_default: 'gpt-4.1-mini'
+    openai_api_key: '%env(OPENAI_API_KEY)%'
+    openai_model: '%env(default:openai_model_default:OPENAI_MODEL)%'
 
 services:
     # default configuration for services in *this* file
@@ -30,6 +33,16 @@ services:
     App\EventSubscriber\DoctrineSanitizeSubscriber:
         tags:
             - { name: doctrine.event_subscriber }
+
+    App\Service\HolidayService:
+        arguments:
+            $countryCode: '%holiday_country%'
+            $apiBase: '%holiday_api_base%'
+
+    App\Service\AiConsultationService:
+        arguments:
+            $apiKey: '%openai_api_key%'
+            $model: '%openai_model%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

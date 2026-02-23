@@ -27,7 +27,14 @@
             RDV avec <strong>{{ rdv.patient.prenom }} {{ rdv.patient.nom }}</strong> — {{ rdv.dateRdv|date('d/m/Y à H:i') }}
           </p>
 
-          <form method="post">
+          {% if rdv.conseilsPreconsultation %}
+            <div class="alert alert-info">
+              <strong>Conseils rapides saisis par le patient :</strong>
+              <div class="mt-2" style="white-space: pre-wrap;">{{ rdv.conseilsPreconsultation }}</div>
+            </div>
+          {% endif %}
+
+          <form method="post" enctype="multipart/form-data">
             <input type="hidden" name="_token" value="{{ csrf_token('consultation_note_' ~ rdv.id) }}">
             <div class="mb-4">
               <label for="notes" class="form-label">Notes de consultation <span class="text-danger">*</span></label>
@@ -36,6 +43,26 @@
             <div class="mb-4">
               <label for="diagnostic" class="form-label">Diagnostic (optionnel)</label>
               <textarea class="form-control" id="diagnostic" name="diagnostic" rows="3" placeholder="Diagnostic ou synthèse si pertinent">{{ consultation.diagnostic ?? '' }}</textarea>
+            </div>
+            <div class="mb-4">
+              <label for="resume" class="form-label">Résumé de consultation (optionnel)</label>
+              <textarea class="form-control" id="resume" name="resume" rows="4" placeholder="Résumé clair de la consultation">{{ consultation.resume ?? '' }}</textarea>
+              {% if aiEnabled %}
+                <small class="text-muted d-block mt-1">L'IA peut proposer un résumé si vous laissez ce champ vide.</small>
+              {% else %}
+                <small class="text-muted d-block mt-1">Résumé automatique (règles simples) si vous laissez ce champ vide.</small>
+              {% endif %}
+            </div>
+            <div class="mb-4">
+              <label for="conseils" class="form-label">Conseils au patient (optionnel)</label>
+              <textarea class="form-control" id="conseils" name="conseils" rows="4" placeholder="Conseils courts et pratiques">{{ consultation.conseils ?? '' }}</textarea>
+            </div>
+            <div class="mb-4">
+              <label for="document" class="form-label">Document de consultation (PDF ou image)</label>
+              <input type="file" class="form-control" id="document" name="document" accept=".pdf,image/*">
+              {% if consultation.documentOriginalName %}
+                <small class="text-muted d-block mt-1">Document actuel : {{ consultation.documentOriginalName }}</small>
+              {% endif %}
             </div>
             <div class="coach-form-actions">
               <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Enregistrer</button>

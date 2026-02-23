@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Form\SearchProfessionnelFormType;
+use App\Repository\RDVRepository;
 use App\Repository\UserRepository;
 use App\Service\CalendarService;
+use App\Service\HolidayService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,7 +31,13 @@ final class ProfessionnelController extends AbstractController
     }
 
     #[Route('/{id}', name: 'professionnels_show', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function show(int $id, UserRepository $userRepository, CalendarService $calendarService): Response
+    public function show(
+        int $id,
+        UserRepository $userRepository,
+        RDVRepository $rdvRepository,
+        CalendarService $calendarService,
+        HolidayService $holidayService
+    ): Response
     {
         $professionnel = $userRepository->find($id);
         if (
@@ -40,11 +48,21 @@ final class ProfessionnelController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        $slots = $calendarService->getAvailableSlots($professionnel);
+        $start = new \DateTimeImmutable('today');
+        $end = $start->modify('+30 days');
+        $holidayDates = $holidayService->getHolidayDatesInRange($start, $end);
+        $reservedSlots = $rdvRepository->findReservedSlotsForProfessionnel($professionnel->getId(), $start, $end);
+        $reservedDates = array_values(array_unique(array_map(static function ($d): string {
+            if ($d instanceof \DateTimeInterface) {
+                return $d->format('Y-m-d');
+            }
+            return (new \DateTimeImmutable((string) $d))->format('Y-m-d');
+        }, $reservedSlots)));
 
         return $this->render('professionnel/show.html.twig', [
             'professionnel' => $professionnel,
-            'slots' => $slots,
+            'holidayDates' => $holidayDates,
+            'reservedDates' => $reservedDates,
         ]);
     }
 }
