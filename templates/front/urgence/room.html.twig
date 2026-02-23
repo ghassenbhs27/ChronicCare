@@ -1,0 +1,88 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Appel urgent{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+  <main class="main">
+    <div class="container py-5">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-2">Appel urgent</h1>
+          <p class="text-muted mb-3">
+            Salle d appel:
+            <code>{{ urgence.meetingUrl }}</code>
+          </p>
+
+          <div class="d-flex gap-2 flex-wrap mb-4">
+            <a class="btn btn-danger" href="{{ urgence.meetingUrl }}" target="_blank" rel="noopener noreferrer">
+              Ouvrir l appel
+            </a>
+            {% if isPatientOwner %}
+              <form method="post" action="{{ path('front_urgence_cancel', {id: urgence.id}) }}" onsubmit="return confirm('Annuler cet appel urgent ?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('cancel_urgence_' ~ urgence.id) }}">
+                <button type="submit" class="btn btn-outline-danger">Annuler meet</button>
+              </form>
+            {% endif %}
+            <a class="btn btn-outline-secondary" href="{{ path('front_etat_index') }}">Retour</a>
+          </div>
+
+          <div class="ratio ratio-16x9 border rounded">
+            <iframe
+              src="{{ urgence.meetingUrl }}"
+              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              referrerpolicy="no-referrer"
+            ></iframe>
+          </div>
+
+          {% if isPatientOwner %}
+            <hr class="my-4">
+            <h2 class="h6 mb-2">Evaluation du coach/nutritionniste</h2>
+            {% if urgence.patientRating is not null %}
+              <p class="mb-0">
+                Vous avez note cet appel:
+                <strong>
+                  {% for i in 1..5 %}
+                    {% if i <= urgence.patientRating %}★{% else %}☆{% endif %}
+                  {% endfor %}
+                </strong>
+              </p>
+            {% else %}
+              <form method="post" action="{{ path('front_urgence_rate', {id: urgence.id}) }}" class="d-flex flex-wrap gap-2 align-items-center">
+                <input type="hidden" name="_token" value="{{ csrf_token('rate_urgence_' ~ urgence.id) }}">
+                <label for="rating" class="form-label mb-0">Note:</label>
+                <select id="rating" name="rating" class="form-select" style="width: auto;" required>
+                  <option value="">Choisir</option>
+                  <option value="5">★★★★★ (5)</option>
+                  <option value="4">★★★★☆ (4)</option>
+                  <option value="3">★★★☆☆ (3)</option>
+                  <option value="2">★★☆☆☆ (2)</option>
+                  <option value="1">★☆☆☆☆ (1)</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Terminer et noter</button>
+              </form>
+            {% endif %}
+          {% endif %}
+
+          {% if isProfessionalViewer %}
+            <hr class="my-4">
+            <h2 class="h6 mb-2">Evaluation du patient</h2>
+            {% if urgence.patientRating is not null %}
+              {% set patientName = urgence.patient ? (urgence.patient.prenom ~ ' ' ~ urgence.patient.nom)|trim : 'Patient' %}
+              <p class="mb-0">
+                Note recue de {{ patientName }}:
+                <strong>
+                  {% for i in 1..5 %}
+                    {% if i <= urgence.patientRating %}★{% else %}☆{% endif %}
+                  {% endfor %}
+                </strong>
+              </p>
+            {% else %}
+              <p class="text-muted mb-0">Le patient n a pas encore note cet appel.</p>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

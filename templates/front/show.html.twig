@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+  <h1>Détails activité</h1>
+
+  <ul>
+    <li><b>Type:</b> {{ activite.type }}</li>
+    <li><b>Durée:</b> {{ activite.duree }} min</li>
+    <li><b>Calories:</b> {{ activite.calories }}</li>
+    <li><b>Date:</b> {{ activite.dateActivite ? activite.dateActivite|date('Y-m-d') : '' }}</li>
+    <li><b>Notes:</b> {{ activite.notes }}</li>
+  </ul>
+
+  <a href="{{ path('front_activite_index') }}">Retour</a>
+{% endblock %}
