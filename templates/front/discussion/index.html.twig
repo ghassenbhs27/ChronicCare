@@ -5,6 +5,102 @@
 {% block stylesheets %}
   {{ parent() }}
   <style>
+    .discussion-page {
+      background:
+        radial-gradient(900px 380px at 100% -10%, rgba(6, 182, 212, .18), transparent 60%),
+        radial-gradient(900px 420px at -10% 0%, rgba(16, 185, 129, .16), transparent 55%),
+        #f5f9fc;
+      min-height: calc(100vh - 80px);
+    }
+    .discussion-title {
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: .2px;
+    }
+    .discussion-panel {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 16px 35px rgba(15, 23, 42, .08);
+    }
+    .discussion-panel .card-header,
+    .discussion-panel .card-footer {
+      background: #ffffff;
+      border-color: #e2e8f0;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    #discussionPartners {
+      max-height: 540px;
+      overflow: auto;
+    }
+    .partner-item {
+      border: 0;
+      border-bottom: 1px solid #edf2f7;
+      padding: .95rem 1rem;
+      transition: background-color .2s ease, color .2s ease;
+    }
+    .partner-item:hover {
+      background: #f8fafc;
+    }
+    .partner-item.active {
+      background: #eaf7ff;
+      color: #0f172a;
+      border-left: 4px solid #0ea5e9;
+      padding-left: calc(1rem - 4px);
+    }
+    .partner-subtitle {
+      font-size: .82rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    #discussionMessages {
+      max-height: 500px;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      padding: 1rem;
+    }
+    .message-row {
+      display: flex;
+      margin-bottom: .6rem;
+    }
+    .message-row.mine {
+      justify-content: flex-end;
+    }
+    .message-row.theirs {
+      justify-content: flex-start;
+    }
+    .message-bubble {
+      max-width: 78%;
+      border-radius: 14px;
+      padding: .55rem .75rem;
+      border: 1px solid #dbe7f3;
+      background: #ffffff;
+    }
+    .message-row.mine .message-bubble {
+      background: #0ea5e9;
+      border-color: #0284c7;
+      color: #ffffff;
+    }
+    .message-meta {
+      font-size: .74rem;
+      margin-bottom: .25rem;
+      color: #64748b;
+    }
+    .message-row.mine .message-meta {
+      color: rgba(255, 255, 255, .8);
+    }
+    .discussion-composer .form-control {
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: .7rem .9rem;
+      resize: none;
+    }
+    .discussion-composer .btn {
+      border-radius: 12px;
+      padding: .7rem 1rem;
+      font-weight: 600;
+    }
     .online-dot {
       display: inline-block;
       width: 10px;
@@ -20,14 +116,25 @@
       70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
       100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
     }
+    @media (max-width: 991.98px) {
+      #discussionPartners {
+        max-height: 280px;
+      }
+      #discussionMessages {
+        max-height: 420px;
+      }
+      .message-bubble {
+        max-width: 88%;
+      }
+    }
   </style>
 {% endblock %}
 
 {% block body %}
   {% include 'partials/_navbar.html.twig' %}
-  <main class="main">
+  <main class="main discussion-page">
     <div class="container py-5">
-      <h1 class="h4 mb-3">
+      <h1 class="h4 mb-3 discussion-title">
         {% if isProfessional %}
           Discussion - patients
         {% else %}
@@ -43,14 +150,14 @@
 
       <div class="row g-3">
         <div class="col-lg-4">
-          <div class="card border-0 shadow-sm">
+          <div class="card discussion-panel">
             <div class="card-header bg-white">{{ isProfessional ? 'Patients' : 'En ligne' }}</div>
             <div id="discussionPartners" class="list-group list-group-flush">
               {% for p in partners %}
-                <a class="list-group-item list-group-item-action {{ selectedPartner and selectedPartner.id == p.id ? 'active' : '' }}"
+                <a class="list-group-item list-group-item-action partner-item {{ selectedPartner and selectedPartner.id == p.id ? 'active' : '' }}"
                    href="{{ path('front_discussion_index', {with: p.id}) }}">
                   {% if not isProfessional %}<span class="online-dot"></span>{% endif %}{{ p.prenom }} {{ p.nom }}
-                  <div class="small opacity-75">
+                  <div class="partner-subtitle">
                     {% if isProfessional %}
                       Patient
                     {% else %}
@@ -68,7 +175,7 @@
         </div>
 
         <div class="col-lg-8">
-          <div class="card border-0 shadow-sm">
+          <div class="card discussion-panel">
             <div id="discussionHeader" class="card-header bg-white">
               {% if selectedPartner %}
                 Conversation avec {{ selectedPartner.prenom }} {{ selectedPartner.nom }}
@@ -76,13 +183,13 @@
                 Selectionnez un contact
               {% endif %}
             </div>
-            <div id="discussionMessages" class="card-body" style="max-height: 420px; overflow-y: auto;">
+            <div id="discussionMessages" class="card-body">
               {% if selectedPartner %}
                 {% for m in messages %}
                   {% set mine = app.user and m.sender and m.sender.id == app.user.id %}
-                  <div class="mb-2 d-flex {{ mine ? 'justify-content-end' : 'justify-content-start' }}">
-                    <div class="p-2 rounded {{ mine ? 'bg-primary text-white' : 'bg-light' }}" style="max-width: 80%;">
-                      <div class="small {{ mine ? 'text-white-50' : 'text-muted' }}">
+                  <div class="message-row {{ mine ? 'mine' : 'theirs' }}">
+                    <div class="message-bubble">
+                      <div class="message-meta">
                         {{ m.sender.prenom }} {{ m.sender.nom }} - {{ m.createdAt|date('d/m/Y H:i') }}
                       </div>
                       <div>{{ m.content|nl2br }}</div>
@@ -93,8 +200,8 @@
                 {% endfor %}
               {% endif %}
             </div>
-            <div id="discussionFooter" class="card-footer bg-white">
-              <form id="discussionForm" method="post" action="{{ path('front_discussion_index') }}">
+            <div id="discussionFooter" class="card-footer bg-white discussion-composer">
+              <form id="discussionForm" method="post" action="{{ path('front_discussion_index') }}" class="discussion-composer">
                 <input id="discussionWith" type="hidden" name="with" value="{{ selectedPartner ? selectedPartner.id : '' }}">
                 <input id="discussionToken" type="hidden" name="_token" value="{{ csrf_token('discussion_send') }}">
                 <div class="input-group">
@@ -151,9 +258,9 @@
             const active = Number(p.id) === Number(selectedPartnerId) ? ' active' : '';
             const dot = !isProfessional && p.online ? '<span class=\"online-dot\"></span>' : '';
             const subtitle = isProfessional ? 'Patient' : (esc(p.roleLabel) + ' - En ligne');
-            return '<a class=\"list-group-item list-group-item-action' + active + '\" href=\"#\" data-partner-id=\"' + Number(p.id) + '\">' +
+            return '<a class=\"list-group-item list-group-item-action partner-item' + active + '\" href=\"#\" data-partner-id=\"' + Number(p.id) + '\">' +
               dot + esc(p.name) +
-              '<div class=\"small opacity-75\">' + subtitle + '</div>' +
+              '<div class=\"partner-subtitle\">' + subtitle + '</div>' +
               '</a>';
           }).join('');
         };
@@ -176,9 +283,9 @@
           let html = '';
           for (const m of messages) {
             const mine = Number(m.senderId) === Number(currentUserId);
-            html += '<div class=\"mb-2 d-flex ' + (mine ? 'justify-content-end' : 'justify-content-start') + '\">' +
-              '<div class=\"p-2 rounded ' + (mine ? 'bg-primary text-white' : 'bg-light') + '\" style=\"max-width: 80%;\">' +
-              '<div class=\"small ' + (mine ? 'text-white-50' : 'text-muted') + '\">' + esc(m.senderName) + ' - ' + esc(m.createdAt) + '</div>' +
+            html += '<div class=\"message-row ' + (mine ? 'mine' : 'theirs') + '\">' +
+              '<div class=\"message-bubble\">' +
+              '<div class=\"message-meta\">' + esc(m.senderName) + ' - ' + esc(m.createdAt) + '</div>' +
               '<div>' + esc(m.content).replace(/\\n/g, '<br>') + '</div>' +
               '</div></div>';
             lastMessageId = Math.max(lastMessageId, Number(m.id || 0));
