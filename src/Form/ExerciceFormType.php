@@ -22,25 +22,28 @@ class ExerciceFormType extends AbstractType
         $builder
             ->add('nom', null, [
                 'label' => 'Nom',
+                'trim' => true,
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
+                'trim' => true,
                 'attr' => [
                     'rows' => 5,
                 ],
             ])
             ->add('duree', IntegerType::class, [
-                'label' => 'Durée (minutes)',
+                'label' => 'Duree (minutes)',
             ])
             ->add('repetitions', IntegerType::class, [
-                'label' => 'Répétitions',
+                'label' => 'Repetitions',
                 'required' => false,
             ])
             ->add('evenement', EntityType::class, [
-                'label' => 'Événement',
+                'label' => 'Evenement',
                 'class' => Evenement::class,
                 'choice_label' => 'titre',
-                'placeholder' => 'Sélectionner un événement',
+                'placeholder' => 'Selectionner un evenement',
+                'required' => true,
                 'query_builder' => function (EvenementRepository $repo) use ($coach) {
                     $qb = $repo->createQueryBuilder('e')
                         ->orderBy('e.dateDebut', 'DESC');

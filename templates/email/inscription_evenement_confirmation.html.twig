@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation inscription</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,sans-serif;color:#1f2937;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fb;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="620" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+          <tr>
+            <td style="background:#0d6efd;color:#ffffff;padding:20px 24px;font-size:20px;font-weight:700;">
+              Confirmation d'inscription
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px;">
+              <p style="margin:0 0 12px 0;font-size:16px;">Bonjour {{ inscription.prenom }} {{ inscription.nom }},</p>
+              <p style="margin:0 0 18px 0;line-height:1.6;">
+                Votre inscription a bien ete enregistree pour l'evenement <strong>{{ evenement.titre }}</strong>.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;">
+                <tr>
+                  <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;width:35%;font-weight:600;">Date debut</td>
+                  <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;">{{ evenement.dateDebut|date('d/m/Y H:i') }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;font-weight:600;">Date fin</td>
+                  <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;">{{ evenement.dateFin|date('d/m/Y H:i') }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 14px;font-weight:600;">Lieu</td>
+                  <td style="padding:12px 14px;">{{ evenement.lieu }}</td>
+                </tr>
+              </table>
+
+              <div style="margin:20px 0 10px 0;padding:16px;border:1px solid #e5e7eb;border-radius:10px;background:#ffffff;">
+                <p style="margin:0 0 12px 0;font-weight:600;">Votre ticket QR code</p>
+                <p style="margin:0 0 12px 0;line-height:1.6;">
+                  Utilisez ce ticket le jour de l'evenement:
+                  <a href="{{ ticket_url }}" style="color:#0d6efd;text-decoration:none;">ouvrir mon ticket</a>
+                </p>
+                <p style="margin:0;text-align:center;">
+                  <img src="{{ qr_code_data_uri(ticket_url, 'default', { size: 220, margin: 8 }) }}" alt="QR code ticket evenement" style="display:inline-block;border:1px solid #e5e7eb;border-radius:8px;">
+                </p>
+              </div>
+
+              <p style="margin:18px 0 0 0;line-height:1.6;">
+                Merci et a bientot,<br>
+                <strong>Equipe Chronic Care</strong>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

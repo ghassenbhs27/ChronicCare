@@ -7,11 +7,15 @@ use App\Entity\User;
 use App\Form\EvenementFormType;
 use App\Repository\EvenementRepository;
 use App\Repository\InscriptionEvenementRepository;
+use App\Service\EvenementAiService;
 use App\Service\EvenementService;
 use App\Service\HolidayService;
+use App\Service\MapGeocodingService;
+use App\Service\WeatherService;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -21,6 +25,55 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_COACH')]
 class EvenementController extends AbstractController
 {
+    #[Route('/coach/evenements/ai-description', name: 'evenement_ai_description', methods: ['POST'])]
+    public function aiDescription(Request $request, EvenementAiService $aiService): JsonResponse
+    {
+        $payload = json_decode((string) $request->getContent(), true);
+        if (!is_array($payload)) {
+            return new JsonResponse(['error' => 'Requete invalide.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $titre = trim((string) ($payload['titre'] ?? ''));
+        if (strlen($titre) < 3) {
+            return new JsonResponse(['error' => 'Le titre de l evenement est requis.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $lieu = trim((string) ($payload['lieu'] ?? ''));
+        $dateDebut = trim((string) ($payload['dateDebut'] ?? ''));
+        $dateFin = trim((string) ($payload['dateFin'] ?? ''));
+
+        return new JsonResponse(
+            $aiService->suggestDescription(
+                $titre,
+                $lieu !== '' ? $lieu : null,
+                $dateDebut !== '' ? $dateDebut : null,
+                $dateFin !== '' ? $dateFin : null
+            ),
+            Response::HTTP_OK
+        );
+    }
+
+    #[Route('/coach/evenements/ai-improve-description', name: 'evenement_ai_improve_description', methods: ['POST'])]
+    public function aiImproveDescription(Request $request, EvenementAiService $aiService): JsonResponse
+    {
+        $payload = json_decode((string) $request->getContent(), true);
+        if (!is_array($payload)) {
+            return new JsonResponse(['error' => 'Requete invalide.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $description = trim((string) ($payload['description'] ?? ''));
+        if (mb_strlen($description) < 10) {
+            return new JsonResponse(['error' => 'La description est trop courte pour etre amelioree.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $titre = trim((string) ($payload['titre'] ?? ''));
+
+        return new JsonResponse(
+            $aiService->improveDescription($description, $titre !== '' ? $titre : null),
+            Response::HTTP_OK
+        );
+    }
+
     #[Route('/coach/evenements', name: 'evenement_index')]
     public function index(
         Request $request,
@@ -97,7 +150,9 @@ class EvenementController extends AbstractController
     public function show(
         Evenement $evenement,
         InscriptionEvenementRepository $inscriptionRepository,
-        HolidayService $holidayService
+        HolidayService $holidayService,
+        MapGeocodingService $mapGeocodingService,
+        WeatherService $weatherService
     ): Response {
         $this->assertCoach($evenement);
 
@@ -106,6 +161,8 @@ class EvenementController extends AbstractController
         $inscriptions = $inscriptionRepository->findForEvenement($evenement);
         $holidayDebut = $holidayService->getHolidayName($evenement->getDateDebut());
         $holidayFin = $holidayService->getHolidayName($evenement->getDateFin());
+        $mapLocation = $mapGeocodingService->resolveLocation($evenement->getLieu());
+        $weather = $weatherService->getEventWeather($evenement->getDateDebut(), $evenement->getLieu());
 
         return $this->render('evenement/show.html.twig', [
             'evenement' => $evenement,
@@ -113,6 +170,8 @@ class EvenementController extends AbstractController
             'inscriptions' => $inscriptions,
             'holiday_debut' => $holidayDebut,
             'holiday_fin' => $holidayFin,
+            'map_location' => $mapLocation,
+            'weather' => $weather,
         ]);
     }
 

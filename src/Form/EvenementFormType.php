@@ -17,15 +17,9 @@ class EvenementFormType extends AbstractType
         $builder
             ->add('titre', TextType::class, [
                 'trim' => true,
-                'attr' => [
-                    'maxlength' => 200,
-                ],
             ])
             ->add('description', TextareaType::class, [
                 'trim' => true,
-                'attr' => [
-                    'maxlength' => 5000,
-                ],
             ])
             ->add('dateDebut', DateTimeType::class, [
                 'label' => 'Date debut',
@@ -39,9 +33,6 @@ class EvenementFormType extends AbstractType
             ])
             ->add('lieu', TextType::class, [
                 'trim' => true,
-                'attr' => [
-                    'maxlength' => 255,
-                ],
             ])
         ;
     }

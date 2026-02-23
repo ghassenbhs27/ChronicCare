@@ -10,6 +10,10 @@ use App\Repository\EvenementRepository;
 use App\Repository\InscriptionEvenementRepository;
 use App\Repository\ProduitRepository;
 use App\Service\HolidayService;
+use App\Service\InscriptionEvenementMailer;
+use App\Service\InscriptionTicketUrlService;
+use App\Service\MapGeocodingService;
+use App\Service\WeatherService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -148,7 +152,11 @@ final class FrontController extends AbstractController
         Evenement $evenement,
         EntityManagerInterface $em,
         HolidayService $holidayService,
-        InscriptionEvenementRepository $inscriptionRepo
+        InscriptionEvenementRepository $inscriptionRepo,
+        MapGeocodingService $mapGeocodingService,
+        WeatherService $weatherService,
+        InscriptionEvenementMailer $inscriptionEvenementMailer,
+        InscriptionTicketUrlService $ticketUrlService
     ): Response {
         if ($evenement->getStatut() === Evenement::STATUT_REFUSE) {
             throw $this->createNotFoundException('Evenement non disponible.');
@@ -156,8 +164,19 @@ final class FrontController extends AbstractController
 
         $user = $this->getUser();
         $alreadyInscrit = false;
+        $ticketUrl = null;
+        $sessionTicketKey = 'event_ticket_' . $evenement->getId();
         if ($user instanceof User && $user->getEmail()) {
-            $alreadyInscrit = $inscriptionRepo->findOneByEvenementAndEmail($evenement, $user->getEmail()) !== null;
+            $existingInscription = $inscriptionRepo->findOneByEvenementAndEmail($evenement, $user->getEmail());
+            $alreadyInscrit = $existingInscription !== null;
+            if ($existingInscription instanceof InscriptionEvenement) {
+                $ticketUrl = $ticketUrlService->generateSignedTicketUrl($existingInscription);
+            }
+        } else {
+            $ticketFromSession = $request->getSession()?->remove($sessionTicketKey);
+            if (is_string($ticketFromSession) && $ticketFromSession !== '') {
+                $ticketUrl = $ticketFromSession;
+            }
         }
 
         $inscription = new InscriptionEvenement();
@@ -185,19 +204,54 @@ final class FrontController extends AbstractController
             }
             $em->persist($inscription);
             $em->flush();
+            $ticketUrl = $ticketUrlService->generateSignedTicketUrl($inscription);
+            $inscriptionEvenementMailer->sendConfirmation($inscription, $ticketUrl);
             $this->addFlash('success', 'Votre inscription a bien Ã©tÃ© enregistrÃ©e. Vous recevrez les informations pratiques par email si besoin.');
+            if (!$user instanceof User) {
+                $request->getSession()?->set($sessionTicketKey, $ticketUrl);
+            }
+
             return $this->redirectToRoute('front_evenement_show', ['id' => $evenement->getId()]);
         }
 
         $holidayDebut = $holidayService->getHolidayName($evenement->getDateDebut());
         $holidayFin = $holidayService->getHolidayName($evenement->getDateFin());
+        $mapLocation = $mapGeocodingService->resolveLocation($evenement->getLieu());
+        $weather = $weatherService->getEventWeather($evenement->getDateDebut(), $evenement->getLieu());
 
         return $this->render('front/evenement_show.html.twig', [
             'evenement' => $evenement,
             'form' => $form->createView(),
             'holiday_debut' => $holidayDebut,
             'holiday_fin' => $holidayFin,
+            'map_location' => $mapLocation,
             'already_inscrit' => $alreadyInscrit,
+            'ticket_url' => $ticketUrl,
+            'weather' => $weather,
+        ]);
+    }
+
+    #[Route('/inscriptions/{id}/ticket', name: 'front_inscription_ticket', requirements: ['id' => '\d+'])]
+    public function inscriptionTicket(
+        Request $request,
+        InscriptionEvenement $inscription,
+        InscriptionTicketUrlService $ticketUrlService
+    ): Response {
+        if (!$ticketUrlService->isRequestSignatureValid($request)) {
+            throw $this->createAccessDeniedException('Lien de ticket invalide ou expire.');
+        }
+
+        $evenement = $inscription->getEvenement();
+        if ($evenement === null) {
+            throw $this->createNotFoundException('Inscription introuvable.');
+        }
+
+        $ticketUrl = $ticketUrlService->generateSignedTicketUrl($inscription);
+
+        return $this->render('front/inscription_ticket.html.twig', [
+            'inscription' => $inscription,
+            'evenement' => $evenement,
+            'ticket_url' => $ticketUrl,
         ]);
     }
 
