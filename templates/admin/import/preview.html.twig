@@ -1,0 +1,276 @@
+{% extends 'back/base.html.twig' %}
+
+{% block page_title %}Prévisualisation{% endblock %}
+{% block page_subtitle %}Vérifiez les corrections avant import{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  {# Barre d'info #}
+  <div class="alert alert-info d-flex align-items-center mb-4">
+    <i class="bi bi-info-circle fs-4 me-3"></i>
+    <div>
+      <strong>Fichier:</strong> {{ filename }}
+      {% if usedAI %}
+        <span class="badge bg-success ms-2"><i class="bi bi-cpu me-1"></i>Traité avec AI</span>
+      {% else %}
+        <span class="badge bg-secondary ms-2">Traitement basique</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Statistiques #}
+  <div class="row mb-4">
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body">
+          <h3 class="text-primary mb-0">{{ stats.totalProducts }}</h3>
+          <small class="text-muted">Produits</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body">
+          <h3 class="text-success mb-0">{{ stats.productsWithChanges }}</h3>
+          <small class="text-muted">Corrigés</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body">
+          <h3 class="text-secondary mb-0">{{ stats.productsUnchanged }}</h3>
+          <small class="text-muted">Inchangés</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body">
+          <h3 class="text-info mb-0">{{ stats.totalChanges }}</h3>
+          <small class="text-muted">Corrections</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body">
+          <h3 class="text-warning mb-0">{{ stats.warnings }}</h3>
+          <small class="text-muted">Avertissements</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body">
+          <h3 class="text-danger mb-0">{{ stats.errors }}</h3>
+          <small class="text-muted">Erreurs</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Formulaire de confirmation #}
+  <form action="{{ path('admin_import_products_confirm') }}" method="post" id="confirmForm">
+    {# Actions #}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <button type="button" class="btn btn-outline-secondary" onclick="toggleAll(true)">
+          <i class="bi bi-check-all me-1"></i>Tout sélectionner
+        </button>
+        <button type="button" class="btn btn-outline-secondary ms-2" onclick="toggleAll(false)">
+          <i class="bi bi-x me-1"></i>Tout désélectionner
+        </button>
+        <button type="button" class="btn btn-outline-info ms-2" onclick="toggleOnlyChanged()">
+          <i class="bi bi-filter me-1"></i>Seulement les corrigés
+        </button>
+      </div>
+      <div>
+        <a href="{{ path('admin_import_products_cancel') }}" class="btn btn-outline-danger me-2">
+          <i class="bi bi-x-lg me-1"></i>Annuler
+        </a>
+        <button type="submit" class="btn btn-success" id="confirmBtn">
+          <i class="bi bi-check-lg me-1"></i>Importer les produits sélectionnés
+        </button>
+      </div>
+    </div>
+
+    {# Liste des produits #}
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" id="productsTable">
+            <thead class="table-light">
+              <tr>
+                <th width="40">
+                  <input type="checkbox" class="form-check-input" id="selectAllCheckbox" onchange="toggleAll(this.checked)">
+                </th>
+                <th>Nom</th>
+                <th>Description</th>
+                <th width="90">Prix</th>
+                <th width="70">Stock</th>
+                <th>Catégorie</th>
+                <th width="100">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in products %}
+              <tr class="{% if product.hasChanges %}table-warning{% endif %}" data-has-changes="{{ product.hasChanges ? '1' : '0' }}">
+                <td>
+                  <input type="checkbox" class="form-check-input product-checkbox" name="selected_products[]" value="{{ product.index }}" checked>
+                </td>
+                <td>
+                  {% if product.changes.nom is defined %}
+                    <div class="change-indicator">
+                      <del class="text-danger small">{{ product.original.nom }}</del>
+                      <br>
+                      <span class="text-success">{{ product.cleaned.nom }}</span>
+                      <span class="badge bg-info ms-1" title="{{ product.changes.nom.reason }}">
+                        <i class="bi bi-magic"></i>
+                      </span>
+                    </div>
+                  {% else %}
+                    {{ product.cleaned.nom }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if product.changes.description is defined %}
+                    <div class="change-indicator">
+                      <del class="text-danger small">{{ product.original.description|slice(0, 50) }}...</del>
+                      <br>
+                      <span class="text-success">{{ product.cleaned.description|slice(0, 50) }}...</span>
+                      <span class="badge bg-info ms-1" title="{{ product.changes.description.reason }}">
+                        <i class="bi bi-magic"></i>
+                      </span>
+                    </div>
+                  {% else %}
+                    {{ product.cleaned.description|length > 60 ? product.cleaned.description|slice(0, 60) ~ '...' : product.cleaned.description }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if product.changes.prix is defined %}
+                    <div class="change-indicator">
+                      <del class="text-danger small">{{ product.original.prix }}</del>
+                      <br>
+                      <span class="text-success">{{ product.cleaned.prix }} €</span>
+                    </div>
+                  {% else %}
+                    {{ product.cleaned.prix }} €
+                  {% endif %}
+                </td>
+                <td>
+                  {% if product.changes.stock is defined %}
+                    <div class="change-indicator">
+                      <del class="text-danger small">{{ product.original.stock }}</del>
+                      <br>
+                      <span class="text-success">{{ product.cleaned.stock }}</span>
+                    </div>
+                  {% else %}
+                    {{ product.cleaned.stock }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if product.changes.categorie is defined %}
+                    <div class="change-indicator">
+                      <del class="text-danger small">{{ product.original.categorie }}</del>
+                      <br>
+                      <span class="text-success">{{ product.cleaned.categorie }}</span>
+                    </div>
+                  {% else %}
+                    {{ product.cleaned.categorie }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if product.hasChanges %}
+                    <span class="badge bg-warning text-dark">
+                      <i class="bi bi-pencil me-1"></i>{{ product.changes|length }} modif.
+                    </span>
+                  {% else %}
+                    <span class="badge bg-secondary">
+                      <i class="bi bi-check me-1"></i>OK
+                    </span>
+                  {% endif %}
+                  
+                  {# Suggestions/Erreurs #}
+                  {% for suggestion in product.suggestions %}
+                    <br>
+                    <span class="badge bg-{{ suggestion.type == 'error' ? 'danger' : (suggestion.type == 'warning' ? 'warning text-dark' : 'info') }} mt-1" title="{{ suggestion.message }}">
+                      <i class="bi bi-{{ suggestion.type == 'error' ? 'x-circle' : (suggestion.type == 'warning' ? 'exclamation-triangle' : 'info-circle') }}"></i>
+                      {{ suggestion.field }}
+                    </span>
+                  {% endfor %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# Compteur de sélection #}
+    <div class="fixed-bottom bg-white border-top p-3 shadow">
+      <div class="container-fluid d-flex justify-content-between align-items-center">
+        <span>
+          <strong id="selectedCount">{{ products|length }}</strong> produit(s) sélectionné(s) sur {{ products|length }}
+        </span>
+        <div>
+          <a href="{{ path('admin_import_products_cancel') }}" class="btn btn-outline-danger me-2">
+            <i class="bi bi-x-lg me-1"></i>Annuler
+          </a>
+          <button type="submit" class="btn btn-success btn-lg">
+            <i class="bi bi-check-lg me-1"></i>Confirmer l'import
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<style>
+  .change-indicator {
+    line-height: 1.4;
+  }
+  .change-indicator del {
+    opacity: 0.7;
+  }
+  /* Espace pour la barre fixe en bas */
+  .card:last-of-type {
+    margin-bottom: 100px;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  updateSelectedCount();
+  
+  // Mettre à jour le compteur quand on change les checkboxes
+  document.querySelectorAll('.product-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+  });
+});
+
+function toggleAll(checked) {
+  document.querySelectorAll('.product-checkbox').forEach(cb => {
+    cb.checked = checked;
+  });
+  document.getElementById('selectAllCheckbox').checked = checked;
+  updateSelectedCount();
+}
+
+function toggleOnlyChanged() {
+  document.querySelectorAll('#productsTable tbody tr').forEach(row => {
+    const checkbox = row.querySelector('.product-checkbox');
+    const hasChanges = row.dataset.hasChanges === '1';
+    checkbox.checked = hasChanges;
+  });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const checked = document.querySelectorAll('.product-checkbox:checked').length;
+  document.getElementById('selectedCount').textContent = checked;
+  document.getElementById('confirmBtn').disabled = checked === 0;
+}
+</script>
+{% endblock %}

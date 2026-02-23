@@ -5,7 +5,7 @@ namespace App\Form;
 use App\Entity\Commande;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -56,29 +56,12 @@ class AdvancedCommandeFormType extends AbstractType
                     ])
                 ]
             ])
-            ->add('adresse', TextareaType::class, [
-                'label' => 'Adresse de livraison',
-                'attr' => [
-                    'class' => 'form-control',
-                    'rows' => 4,
-                    'placeholder' => 'Ex: 123 Rue de Paris, 75001 Paris',
-                    'maxlength' => '500'
-                ],
+            // Champ caché pour l'IP du client
+            ->add('ipAddress', HiddenType::class, [
+                'mapped' => false,
+                'label' => false,
                 'required' => false,
-                'empty_data' => null,
-                'constraints' => [
-                    new Assert\Length([
-                        'max' => 500,
-                        'maxMessage' => 'L\'adresse ne peut pas dépasser 500 caractères'
-                    ]),
-                ]
-            ]);
-    }
-
-    public function configureOptions(OptionsResolver $resolver): void
-    {
-        $resolver->setDefaults([
-            'data_class' => Commande::class,
+                'attr' => ['class' => 'geolocation-ip']
         ]);
     }
 }

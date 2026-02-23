@@ -127,7 +127,6 @@ class CommandeWorkflowSubscriber implements EventSubscriberInterface
 
         // Déterminer ancien et nouveau statut
         $newStatus = array_key_first($marking->getPlaces());
-        $metadata = $event->getTransition()->getMetadata();
 
         $this->logger?->info('Workflow Completed: Transition terminée', [
             'commande_id' => $commande->getId(),
@@ -141,7 +140,7 @@ class CommandeWorkflowSubscriber implements EventSubscriberInterface
             oldStatus: $event->getTransition()->getFroms()[0] ?? 'unknown',
             newStatus: $newStatus,
             user: $user,
-            reason: sprintf('Transition: %s', $metadata['title'] ?? $transition)
+            reason: sprintf('Transition: %s', $transition)
         );
     }
 

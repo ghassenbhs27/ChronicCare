@@ -1,0 +1,110 @@
+{% extends 'pdf/base.html.twig' %}
+
+{% block title %}Facture {{ commande.numeroCommande }}{% endblock %}
+
+{% block content %}
+<div class="document-title">Facture</div>
+<div class="document-subtitle">N° {{ commande.numeroCommande }}</div>
+
+<div class="row">
+    <!-- Informations client -->
+    <div class="col-half">
+        <div class="info-box">
+            <div class="info-box-title">📋 Informations client</div>
+            <div class="info-row">
+                <span class="info-label">Client:</span> 
+                {{ commande.utilisateur.prenom }} {{ commande.utilisateur.nom }}
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span> 
+                {{ commande.utilisateur.email }}
+            </div>
+            {% if commande.utilisateur.telephone %}
+            <div class="info-row">
+                <span class="info-label">Téléphone:</span> 
+                {{ commande.utilisateur.telephone }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Informations commande -->
+    <div class="col-half">
+        <div class="info-box">
+            <div class="info-box-title">📦 Détails commande</div>
+            <div class="info-row">
+                <span class="info-label">Date:</span> 
+                {{ commande.createdAt|date('d/m/Y à H:i') }}
+            </div>
+            <div class="info-row">
+                <span class="info-label">Statut:</span> 
+                <span class="badge {% if commande.statut == 'livre' %}badge-success{% elseif commande.statut == 'en_cours' %}badge-info{% elseif commande.statut == 'annule' %}badge-danger{% else %}badge-warning{% endif %}">
+                    {{ commande.statut|replace({'_': ' '})|capitalize }}
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Paiement:</span> 
+                {{ commande.methodePaiement|default('Carte bancaire')|capitalize }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Détail des produits -->
+<h3 style="margin: 20px 0 10px; color: #198754;">🛒 Détail de la commande</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 50%">Produit</th>
+            <th class="text-center">Quantité</th>
+            <th class="text-right">Prix unitaire</th>
+            <th class="text-right">Sous-total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ligne in commande.lignes %}
+        <tr>
+            <td>
+                <strong>{{ ligne.produit.nom }}</strong>
+                {% if ligne.produit.categorie %}
+                <br><small style="color: #666;">{{ ligne.produit.categorie }}</small>
+                {% endif %}
+            </td>
+            <td class="text-center">{{ ligne.quantite }}</td>
+            <td class="text-right">{{ ligne.prixUnitaire|number_format(2, ',', ' ') }} €</td>
+            <td class="text-right">{{ ligne.sousTotal|number_format(2, ',', ' ') }} €</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Totaux -->
+<div class="clearfix">
+    <div class="totals">
+        <div class="total-row">
+            <span>Sous-total HT</span>
+            <span>{{ (commande.total / 1.19)|number_format(2, ',', ' ') }} €</span>
+        </div>
+        <div class="total-row">
+            <span>TVA (19%)</span>
+            <span>{{ (commande.total - commande.total / 1.19)|number_format(2, ',', ' ') }} €</span>
+        </div>
+        <div class="total-row grand-total">
+            <span>TOTAL TTC</span>
+            <span>{{ commande.total|number_format(2, ',', ' ') }} €</span>
+        </div>
+    </div>
+</div>
+
+<!-- Message de remerciement -->
+<div class="highlight-box mt-20" style="clear: both;">
+    <h3>✨ Merci pour votre confiance !</h3>
+    <p>Votre commande sera traitée dans les plus brefs délais. Pour toute question, contactez notre service client.</p>
+</div>
+
+<!-- Conditions -->
+<div style="margin-top: 30px; font-size: 9px; color: #666; border-top: 1px dashed #dee2e6; padding-top: 15px;">
+    <strong>Conditions générales:</strong> Cette facture est payable à réception. En cas de retard de paiement, des pénalités pourront être appliquées conformément à la législation en vigueur. Les produits de santé ne sont ni repris ni échangés sauf défaut de fabrication.
+</div>
+{% endblock %}

@@ -55,26 +55,30 @@
               </div>
             </div>
 
-            <!-- ÉTAPE 2 : ADRESSE DE LIVRAISON -->
+            <!-- ÉTAPE 2 : GÉOLOCALISATION AUTOMATIQUE -->
             <div class="card mb-3 checkout-section" id="section-2">
               <div class="card-header bg-light d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
                   <span class="badge bg-primary me-2">2</span>
-                  <h5 class="mb-0">ADRESSES</h5>
+                  <h5 class="mb-0">LOCALISATION DE LIVRAISON</h5>
                 </div>
               </div>
               <div class="card-body">
-                <div class="mb-3">
-                  <label class="form-label fw-bold">Adresse de livraison <span class="text-danger">*</span></label>
-                  <textarea 
-                    name="adresse" 
-                    class="form-control form-control-lg" 
-                    rows="3" 
-                    placeholder="Rue, code postal, ville..."
-                    required>{{ app.request.get('adresse') }}</textarea>
-                  <small class="text-muted">
-                    <i class="bi bi-info-circle"></i> Minimum 10 caractères requis
-                  </small>
+                <!-- Champ caché pour l'IP -->
+                <input type="hidden" name="ipAddress" class="geolocation-ip">
+                
+                <!-- Conteneur pour afficher les infos de géolocalisation -->
+                <div id="geolocation-info"></div>
+                
+                <!-- Fallback si la géolocalisation n'est pas disponible -->
+                <div id="geolocation-loading" class="alert alert-info d-flex align-items-center gap-2">
+                  <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                  </div>
+                  <div>
+                    <strong>Détection de votre localisation en cours...</strong><br>
+                    <span class="small">Nous détectons automatiquement votre lieu de livraison via votre adresse IP.</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -124,14 +128,15 @@
                   <label class="form-label fw-bold">Mode de paiement <span class="text-danger">*</span></label>
                   <div class="row g-3">
                     <div class="col-md-6">
-                      <div class="form-check card p-3 h-100" id="payment-card-option">
-                        <input class="form-check-input" type="radio" name="paymentMethod" id="payCard" value="card" checked>
-                        <label class="form-check-label w-100 d-flex align-items-center gap-2" for="payCard" style="cursor:pointer;">
-                          <i class="bi bi-credit-card-2-front fs-4 text-primary"></i>
+                      <div class="form-check card p-3 h-100 border-primary" id="payment-stripe-option">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="payStripe" value="stripe" checked>
+                        <label class="form-check-label w-100 d-flex align-items-center gap-2" for="payStripe" style="cursor:pointer;">
+                          <i class="bi bi-stripe fs-4 text-primary"></i>
                           <div>
-                            <strong>Payer par carte</strong>
-                            <div class="text-muted small">Visa, Mastercard, etc.</div>
+                            <strong>Payer par carte (Stripe)</strong>
+                            <div class="text-muted small">Visa, Mastercard, etc. — paiement sécurisé</div>
                           </div>
+                          <img src="https://img.icons8.com/color/48/stripe.png" alt="Stripe" style="height:28px;margin-left:auto;">
                         </label>
                       </div>
                     </div>
@@ -150,61 +155,13 @@
                   </div>
                 </div>
 
-                <!-- Champs carte (affichés/masqués selon le choix) -->
-                <div id="cardFields">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Nom sur la carte <span class="text-danger">*</span></label>
-                    <input 
-                      type="text" 
-                      name="cardHolder" 
-                      class="form-control form-control-lg" 
-                      placeholder="Ex: Jean Dupont"
-                      value="{{ app.request.get('cardHolder') }}">
-                    <small class="text-muted">
-                      <i class="bi bi-info-circle"></i> Minimum 2 caractères
-                    </small>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Numéro de carte <span class="text-danger">*</span></label>
-                    <input 
-                      type="text" 
-                      name="cardNumber" 
-                      class="form-control form-control-lg" 
-                      placeholder="1234 5678 9012 3456"
-                      value="{{ app.request.get('cardNumber') }}"
-                      inputmode="numeric">
-                    <small class="text-muted">
-                      <i class="bi bi-info-circle"></i> 16 chiffres requis
-                    </small>
-                  </div>
-
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label fw-bold">Expiration <span class="text-danger">*</span></label>
-                      <input 
-                        type="text" 
-                        name="expiration" 
-                        class="form-control form-control-lg" 
-                        placeholder="MM/YY"
-                        value="{{ app.request.get('expiration') }}">
-                      <small class="text-muted">
-                        <i class="bi bi-info-circle"></i> Format: MM/YY
-                      </small>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label fw-bold">CVV <span class="text-danger">*</span></label>
-                      <input 
-                        type="text" 
-                        name="cvv" 
-                        class="form-control form-control-lg" 
-                        placeholder="123" 
-                        maxlength="4"
-                        value="{{ app.request.get('cvv') }}"
-                        inputmode="numeric">
-                      <small class="text-muted">
-                        <i class="bi bi-info-circle"></i> 3 ou 4 chiffres
-                      </small>
+                <!-- Message Stripe -->
+                <div id="stripeMessage">
+                  <div class="alert alert-info d-flex align-items-center gap-2 mb-0">
+                    <i class="bi bi-shield-lock-fill fs-5"></i>
+                    <div>
+                      <strong>Paiement sécurisé par Stripe</strong><br>
+                      <span class="small">Vous serez redirigé vers la page de paiement sécurisée de Stripe pour finaliser votre commande. Vos données bancaires ne transitent jamais par notre serveur.</span>
                     </div>
                   </div>
                 </div>
@@ -235,7 +192,7 @@
                 <i class="bi bi-arrow-left"></i> Retour au panier
               </a>
               <button type="submit" class="btn btn-success btn-lg w-100" id="submitBtn">
-                <i class="bi bi-credit-card" id="submitIcon"></i> <span id="submitText">Payer {{ total|number_format(2, ',', ' ') }} €</span>
+                <i class="bi bi-lock-fill" id="submitIcon"></i> <span id="submitText">Payer {{ total|number_format(2, ',', ' ') }} € avec Stripe</span>
               </button>
             </div>
           </form>
@@ -325,11 +282,11 @@
 (function() {
   // === Éléments DOM ===
   const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
-  const cardFields = document.getElementById('cardFields');
+  const stripeMessage = document.getElementById('stripeMessage');
   const codMessage = document.getElementById('codMessage');
   const submitIcon = document.getElementById('submitIcon');
   const submitText = document.getElementById('submitText');
-  const cardOption = document.getElementById('payment-card-option');
+  const stripeOption = document.getElementById('payment-stripe-option');
   const codOption = document.getElementById('payment-cod-option');
   const livraisonRadios = document.querySelectorAll('input[name="livraison"]');
   const totalPriceEl = document.getElementById('total-price');
@@ -370,16 +327,16 @@
     // Mettre à jour le total TTC
     totalPriceEl.innerHTML = '<strong>' + formatPrice(total) + '</strong>';
 
-    // Mettre à jour le bouton de paiement si mode carte
+    // Mettre à jour le bouton de paiement
     updateSubmitButton();
   }
 
   // === Mise à jour du bouton submit ===
   function updateSubmitButton() {
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-    if (paymentMethod === 'card') {
-      submitIcon.className = 'bi bi-credit-card';
-      submitText.textContent = 'Payer ' + formatPrice(getCurrentTotal());
+    if (paymentMethod === 'stripe') {
+      submitIcon.className = 'bi bi-lock-fill';
+      submitText.textContent = 'Payer ' + formatPrice(getCurrentTotal()) + ' avec Stripe';
     } else {
       submitIcon.className = 'bi bi-truck';
       submitText.textContent = 'Confirmer la commande (' + formatPrice(getCurrentTotal()) + ')';
@@ -389,15 +346,15 @@
   // === Gestion du choix de mode de paiement ===
   function updatePaymentMethod() {
     const selected = document.querySelector('input[name="paymentMethod"]:checked').value;
-    if (selected === 'card') {
-      cardFields.style.display = 'block';
+    if (selected === 'stripe') {
+      stripeMessage.style.display = 'block';
       codMessage.style.display = 'none';
-      cardOption.classList.add('border-primary');
+      stripeOption.classList.add('border-primary');
       codOption.classList.remove('border-success');
     } else {
-      cardFields.style.display = 'none';
+      stripeMessage.style.display = 'none';
       codMessage.style.display = 'block';
-      cardOption.classList.remove('border-primary');
+      stripeOption.classList.remove('border-primary');
       codOption.classList.add('border-success');
     }
     updateSubmitButton();
@@ -421,6 +378,121 @@
       section.scrollIntoView({ behavior: 'smooth' });
     });
   });
+})();
+</script>
+
+<!-- Script de géolocalisation automatique - INLINE pour éviter le cache navigateur -->
+<script>
+/**
+ * Géolocalisation automatique via API Symfony (serveur)
+ * Le serveur appelle IP-API, PAS le navigateur = pas de 403 CORS
+ */
+(function() {
+    const TIMEOUT = 15000; // 15 secondes (IP-API peut être lent en dev)
+    const IP_INPUT = '.geolocation-ip';
+    const INFO_CONT = '#geolocation-info';
+    const LOAD_DIV = '#geolocation-loading';
+    
+    console.log('🌍 [INLINE] Géolocalisation chargée');
+    
+    function init() {
+        console.log('🌍 [INLINE] Initialisée...');
+        const ipInput = document.querySelector(IP_INPUT);
+        if (!ipInput) {
+            console.warn('⚠️ [INLINE] Champ .geolocation-ip non trouvé');
+            return;
+        }
+        fetchGeo();
+    }
+    
+    function fetchGeo() {
+        console.log('📡 [INLINE] Appel /api/geolocation/client (timeout: ' + TIMEOUT + 'ms)');
+        
+        const timeoutProm = new Promise((_, reject) =>
+            setTimeout(() => {
+                console.error('⏱️ [INLINE] Timeout après ' + TIMEOUT + 'ms');
+                reject(new Error('Serveur non réactif (' + TIMEOUT + 'ms)'));
+            }, TIMEOUT)
+        );
+        
+        const fetchProm = fetch('/api/geolocation/client', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        Promise.race([fetchProm, timeoutProm])
+            .then(res => {
+                console.log('✅ [INLINE] Réponse reçue:', res.status);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(data => {
+                console.log('📦 [INLINE] Données reçues:', data);
+                if (data && (data.status === 'success' || data.status === 'partial') && data.data) {
+                    console.log('✅ [INLINE] Succès:', data.data.city, data.data.country);
+                    handleSuccess(data);
+                } else if (data && data.ip) {
+                    // Si pas de données de géoloc mais on a l'IP, c'est ok aussi
+                    console.log('✅ [INLINE] IP reçue:', data.ip);
+                    handleSuccess(data);
+                } else {
+                    throw new Error('Réponse invalide');
+                }
+            })
+            .catch(err => {
+                console.error('❌ [INLINE] Erreur:', err.message);
+                showError('Erreur: ' + err.message);
+            });
+    }
+    
+    function handleSuccess(data) {
+        console.log('🎉 [INLINE] Traitement des données...');
+        const ipInput = document.querySelector(IP_INPUT);
+        if (ipInput && data.ip) {
+            ipInput.value = data.ip;
+            console.log('✅ [INLINE] IP définie:', data.ip);
+        }
+        
+        const infoCont = document.querySelector(INFO_CONT);
+        if (infoCont && data.data) {
+            const d = data.data;
+            const city = d.city || 'N/A';
+            const region = d.region ? d.region + ', ' : '';
+            const country = d.country || 'N/A';
+            const lat = typeof d.latitude === 'number' ? d.latitude.toFixed(4) : '--';
+            const lon = typeof d.longitude === 'number' ? d.longitude.toFixed(4) : '--';
+            
+            infoCont.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>✓ Localisation détectée</strong><br>
+                    📍 ${city}, ${region}${country}<br>
+                    ${lat}°N, ${lon}°E
+                </div>
+            `;
+            console.log('📍 [INLINE] Infos affichées');
+        }
+        
+        const loadDiv = document.querySelector(LOAD_DIV);
+        if (loadDiv) {
+            loadDiv.style.display = 'none';
+            console.log('✅ [INLINE] Loading masqué');
+        }
+    }
+    
+    function showError(msg) {
+        const loadDiv = document.querySelector(LOAD_DIV);
+        if (loadDiv) {
+            loadDiv.className = 'alert alert-warning';
+            loadDiv.innerHTML = `<strong>⚠️ ${msg}</strong><br><small>La commande fonctionnera quand même sans localisation.</small>`;
+        }
+        console.error('❌ [INLINE] Erreur affichée:', msg);
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();
 </script>
 

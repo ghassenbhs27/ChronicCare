@@ -59,20 +59,42 @@ class Commande
     #[Assert\Type("DateTimeInterface")]
     private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Assert\Length(
-        max: 1000,
-        maxMessage: 'L adresse ne peut pas depasser {{ limit }} caracteres.'
-    )]
-    #[ValidAddress]
-    private ?string $adresse = null;
+    #[ORM\Column(length: 45, nullable: true)]
+    private ?string $ipAddress = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $country = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $city = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $region = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $latitude = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $longitude = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $timezone = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $isp = null;
 
     #[ORM\Column(length: 30, options: ['default' => 'card'])]
     #[Assert\Choice(
-        choices: ['card', 'cash_on_delivery'],
+        choices: ['card', 'cash_on_delivery', 'stripe'],
         message: "Le mode de paiement '{{ value }}' n'est pas valide."
     )]
     private string $methodePaiement = 'card';
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $stripeSessionId = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $stripePaymentIntentId = null;
 
     /**
      * @var Collection<int, LigneCommande>
@@ -168,15 +190,113 @@ class Commande
         return $this;
     }
 
-    public function getAdresse(): ?string
+    public function getIpAddress(): ?string
     {
-        return $this->adresse;
+        return $this->ipAddress;
     }
 
-    public function setAdresse(?string $adresse): self
+    public function setIpAddress(?string $ipAddress): self
     {
-        $this->adresse = $adresse;
+        $this->ipAddress = $ipAddress;
         return $this;
+    }
+
+    public function getCountry(): ?string
+    {
+        return $this->country;
+    }
+
+    public function setCountry(?string $country): self
+    {
+        $this->country = $country;
+        return $this;
+    }
+
+    public function getCity(): ?string
+    {
+        return $this->city;
+    }
+
+    public function setCity(?string $city): self
+    {
+        $this->city = $city;
+        return $this;
+    }
+
+    public function getRegion(): ?string
+    {
+        return $this->region;
+    }
+
+    public function setRegion(?string $region): self
+    {
+        $this->region = $region;
+        return $this;
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude): self
+    {
+        $this->latitude = $latitude;
+        return $this;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude): self
+    {
+        $this->longitude = $longitude;
+        return $this;
+    }
+
+    public function getTimezone(): ?string
+    {
+        return $this->timezone;
+    }
+
+    public function setTimezone(?string $timezone): self
+    {
+        $this->timezone = $timezone;
+        return $this;
+    }
+
+    public function getIsp(): ?string
+    {
+        return $this->isp;
+    }
+
+    public function setIsp(?string $isp): self
+    {
+        $this->isp = $isp;
+        return $this;
+    }
+
+    /**
+     * Retourne l'adresse formatée pour l'affichage
+     */
+    public function getAdresse(): ?string
+    {
+        if (!$this->city && !$this->country) {
+            return null;
+        }
+        $parts = [];
+        if ($this->region) {
+            $parts[] = $this->region;
+        }
+        if ($this->city) {
+            $parts[] = $this->city;
+        }
+        if ($this->country) {
+            $parts[] = $this->country;
+        }
+        return implode(', ', $parts);
     }
 
     public function getMethodePaiement(): string
@@ -187,6 +307,28 @@ class Commande
     public function setMethodePaiement(string $methodePaiement): self
     {
         $this->methodePaiement = $methodePaiement;
+        return $this;
+    }
+
+    public function getStripeSessionId(): ?string
+    {
+        return $this->stripeSessionId;
+    }
+
+    public function setStripeSessionId(?string $stripeSessionId): self
+    {
+        $this->stripeSessionId = $stripeSessionId;
+        return $this;
+    }
+
+    public function getStripePaymentIntentId(): ?string
+    {
+        return $this->stripePaymentIntentId;
+    }
+
+    public function setStripePaymentIntentId(?string $stripePaymentIntentId): self
+    {
+        $this->stripePaymentIntentId = $stripePaymentIntentId;
         return $this;
     }
 }

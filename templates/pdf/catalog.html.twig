@@ -1,0 +1,186 @@
+{% extends 'pdf/base.html.twig' %}
+
+{% block title %}Catalogue Produits - ChronicCare{% endblock %}
+
+{% block extra_styles %}
+.catalog-header {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.catalog-title {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.catalog-subtitle {
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.catalog-stats {
+    display: table;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.catalog-stat {
+    display: table-cell;
+    text-align: center;
+    padding: 10px;
+}
+
+.catalog-stat-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.catalog-stat-label {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.product-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    page-break-inside: avoid;
+}
+
+.product-card-header {
+    display: table;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.product-card-name {
+    display: table-cell;
+    font-weight: bold;
+    font-size: 14px;
+    color: #333;
+}
+
+.product-card-price {
+    display: table-cell;
+    text-align: right;
+    font-weight: bold;
+    font-size: 16px;
+    color: #198754;
+}
+
+.product-card-category {
+    display: inline-block;
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.product-card-desc {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.product-card-footer {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    font-size: 10px;
+    color: #999;
+}
+
+.category-section {
+    margin-top: 30px;
+    page-break-before: auto;
+}
+
+.category-title {
+    background: #198754;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+{% endblock %}
+
+{% block content %}
+<!-- En-tête catalogue -->
+<div class="catalog-header">
+    <div class="catalog-title">📦 Catalogue Produits</div>
+    <div class="catalog-subtitle">ChronicCare - Votre partenaire santé</div>
+    
+    {# Calculer les catégories uniques #}
+    {% set categories = [] %}
+    {% for produit in produits %}
+        {% if produit.categorie not in categories %}
+            {% set categories = categories|merge([produit.categorie]) %}
+        {% endif %}
+    {% endfor %}
+    
+    <div class="catalog-stats">
+        <div class="catalog-stat">
+            <div class="catalog-stat-value">{{ produits|length }}</div>
+            <div class="catalog-stat-label">Produits</div>
+        </div>
+        <div class="catalog-stat">
+            <div class="catalog-stat-value">{{ categories|length }}</div>
+            <div class="catalog-stat-label">Catégories</div>
+        </div>
+        <div class="catalog-stat">
+            <div class="catalog-stat-value">{{ generatedAt|date('d/m/Y') }}</div>
+            <div class="catalog-stat-label">Édition</div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des produits par catégorie -->
+{% for categorie in categories %}
+<div class="category-section">
+    <div class="category-title">{{ categorie }}</div>
+    
+    {% for produit in produits %}
+        {% if produit.categorie == categorie %}
+        <div class="product-card">
+            <div class="product-card-header">
+                <div class="product-card-name">{{ produit.nom }}</div>
+                <div class="product-card-price">{{ produit.prix|number_format(2, ',', ' ') }} €</div>
+            </div>
+            
+            <div class="product-card-category">{{ produit.categorie }}</div>
+            
+            <div class="product-card-desc">
+                {{ produit.description|length > 200 ? produit.description|slice(0, 200) ~ '...' : produit.description }}
+            </div>
+            
+            <div class="product-card-footer">
+                <span>Réf: PRD-{{ produit.id }}</span> | 
+                <span>Stock: {{ produit.stock }} unité(s)</span> |
+                <span>{% if produit.isActive %}✓ Disponible{% else %}✗ Indisponible{% endif %}</span>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endfor %}
+
+<!-- Pied de catalogue -->
+<div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+    <h3 style="color: #198754; margin-bottom: 10px;">📞 Comment commander ?</h3>
+    <p>Visitez notre site web ou contactez-nous directement</p>
+    <p style="margin-top: 10px;">
+        <strong>🌐</strong> www.chroniccare.com | 
+        <strong>📧</strong> commandes@chroniccare.com | 
+        <strong>📞</strong> +216 XX XXX XXX
+    </p>
+</div>
+{% endblock %}

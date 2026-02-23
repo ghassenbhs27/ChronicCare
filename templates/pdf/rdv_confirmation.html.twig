@@ -1,0 +1,164 @@
+{% extends 'pdf/base.html.twig' %}
+
+{% block title %}Confirmation RDV - {{ rdv.id }}{% endblock %}
+
+{% block extra_styles %}
+.rdv-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.rdv-title {
+    font-size: 14px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.rdv-date {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+.rdv-time {
+    font-size: 20px;
+}
+
+.rdv-number {
+    background: rgba(255,255,255,0.2);
+    padding: 5px 15px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 15px;
+    font-size: 12px;
+}
+
+.reminder-box {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.reminder-box h4 {
+    color: #856404;
+    margin-bottom: 10px;
+}
+
+.reminder-box ul {
+    margin-left: 20px;
+    color: #856404;
+}
+{% endblock %}
+
+{% block content %}
+<!-- En-tête RDV -->
+<div class="rdv-header">
+    <div class="rdv-title">Confirmation de rendez-vous</div>
+    <div class="rdv-date">
+        {{ rdv.dateHeure|date('l d F Y')|capitalize }}
+    </div>
+    <div class="rdv-time">
+        🕐 {{ rdv.dateHeure|date('H:i') }}
+    </div>
+    <div class="rdv-number">RDV N° {{ rdv.id }}</div>
+</div>
+
+<div class="row">
+    <!-- Informations patient -->
+    <div class="col-half">
+        <div class="info-box">
+            <div class="info-box-title">👤 Patient</div>
+            <div class="info-row">
+                <span class="info-label">Nom:</span> 
+                {{ rdv.patient.prenom }} {{ rdv.patient.nom }}
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span> 
+                {{ rdv.patient.email }}
+            </div>
+            {% if rdv.patient.telephone %}
+            <div class="info-row">
+                <span class="info-label">Téléphone:</span> 
+                {{ rdv.patient.telephone }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Informations professionnel -->
+    <div class="col-half">
+        <div class="info-box">
+            <div class="info-box-title">👨‍⚕️ Professionnel</div>
+            <div class="info-row">
+                <span class="info-label">Nom:</span> 
+                Dr. {{ rdv.professionnel.prenom }} {{ rdv.professionnel.nom }}
+            </div>
+            {% if rdv.professionnel.specialite is defined %}
+            <div class="info-row">
+                <span class="info-label">Spécialité:</span> 
+                {{ rdv.professionnel.specialite }}
+            </div>
+            {% endif %}
+            <div class="info-row">
+                <span class="info-label">Contact:</span> 
+                {{ rdv.professionnel.email }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Détails du RDV -->
+<div class="info-box">
+    <div class="info-box-title">📋 Détails du rendez-vous</div>
+    <div class="info-row">
+        <span class="info-label">Date:</span> 
+        {{ rdv.dateHeure|date('d/m/Y') }}
+    </div>
+    <div class="info-row">
+        <span class="info-label">Heure:</span> 
+        {{ rdv.dateHeure|date('H:i') }}
+    </div>
+    <div class="info-row">
+        <span class="info-label">Durée estimée:</span> 
+        {{ rdv.duree|default(30) }} minutes
+    </div>
+    <div class="info-row">
+        <span class="info-label">Statut:</span> 
+        <span class="badge badge-success">Confirmé</span>
+    </div>
+    {% if rdv.motif is defined and rdv.motif %}
+    <div class="info-row">
+        <span class="info-label">Motif:</span> 
+        {{ rdv.motif }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Rappel important -->
+<div class="reminder-box">
+    <h4>⚠️ Rappels importants</h4>
+    <ul>
+        <li>Veuillez vous présenter <strong>15 minutes avant</strong> l'heure du RDV</li>
+        <li>Apportez votre <strong>carte d'identité</strong> et votre <strong>carte vitale</strong></li>
+        <li>En cas d'empêchement, prévenez-nous <strong>24h à l'avance</strong></li>
+        <li>Apportez vos <strong>ordonnances et résultats d'examens</strong> récents</li>
+    </ul>
+</div>
+
+<!-- Contact -->
+<div class="highlight-box">
+    <h3>📞 Besoin de modifier ou annuler ?</h3>
+    <p>Contactez-nous dès que possible pour toute modification.</p>
+    <p style="margin-top: 10px;">
+        <strong>📧</strong> rdv@chroniccare.com | 
+        <strong>📞</strong> +216 XX XXX XXX
+    </p>
+</div>
+{% endblock %}

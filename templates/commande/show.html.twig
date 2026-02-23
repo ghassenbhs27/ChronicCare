@@ -45,6 +45,11 @@
                 <i class="bi {{ commande.methodePaiement == 'cash_on_delivery' ? 'bi-cash-coin' : 'bi-credit-card' }}"></i>
                 {% if commande.methodePaiement == 'cash_on_delivery' %}
                   <span class="badge bg-warning text-dark">Paiement à la livraison</span>
+                {% elseif commande.methodePaiement == 'stripe' %}
+                  <span class="badge bg-info">Payé par Stripe</span>
+                  {% if commande.stripePaymentIntentId %}
+                    <br><small class="text-muted">Ref: {{ commande.stripePaymentIntentId[:20] }}...</small>
+                  {% endif %}
                 {% else %}
                   <span class="badge bg-success">Payé par carte</span>
                 {% endif %}

@@ -6,6 +6,9 @@ use App\Repository\CommandeRepository;
 use App\Service\CartService;
 use App\Service\CommandeService;
 use App\Service\PaymentService;
+use App\Service\StripePaymentService;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,7 +23,10 @@ class CommandeController extends AbstractController
         private readonly CommandeService $commandeService,
         private readonly CommandeRepository $commandeRepository,
         private readonly CartService $cartService,
-        private readonly PaymentService $paymentService
+        private readonly PaymentService $paymentService,
+        private readonly StripePaymentService $stripePaymentService,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly LoggerInterface $logger
     ) {
     }
 
@@ -55,99 +61,120 @@ class CommandeController extends AbstractController
             return $this->redirectToRoute('cart_show');
         }
 
-if ($request->isMethod('POST') && $this->isCsrfTokenValid('checkout', (string) $request->request->get('_token'))) {
-            // Validation côté serveur
-            $errors = [];
+        if ($request->isMethod('POST') && $this->isCsrfTokenValid('checkout', (string) $request->request->get('_token'))) {
+            // Récupérer l'IP du client
+            $clientIp = $request->getClientIp();
             
-            // Validation adresse
-            $adresse = trim((string) $request->request->get('adresse', ''));
-            if (empty($adresse)) {
-                $errors[] = 'L\'adresse de livraison est obligatoire';
-            } elseif (strlen($adresse) < 10) {
-                $errors[] = 'L\'adresse doit contenir au moins 10 caracteres';
-            } elseif (preg_match('/[<>"\'{};]/', $adresse)) {
-                $errors[] = 'L\'adresse contient des caracteres non autorises';
+            // Déterminer le mode de paiement
+            $paymentMethod = $request->request->get('paymentMethod', 'stripe');
+            
+            // Créer la commande avec géolocalisation automatique
+            $commande = $this->commandeService->createCommande(
+                $this->getUser(),
+                array_values($cart),
+                $clientIp,
+                $paymentMethod === 'cash_on_delivery' ? 'cash_on_delivery' : 'stripe'
+            );
+
+            if (!$commande) {
+                $this->addFlash('error', 'Stock insuffisant pour certains produits. Vérifiez le panier.');
+                return $this->redirectToRoute('cart_show');
             }
 
-            // Determiner le mode de paiement
-            $paymentMethod = $request->request->get('paymentMethod', 'card');
-            
-            if ($paymentMethod === 'card') {
-                // Validation nom sur carte
-                $cardHolder = trim((string) $request->request->get('cardHolder', ''));
-                if (empty($cardHolder)) {
-                    $errors[] = 'Le nom sur la carte est obligatoire';
-                } elseif (strlen($cardHolder) < 2) {
-                    $errors[] = 'Le nom sur la carte doit contenir au moins 2 caracteres';
-                } elseif (!preg_match('/^[a-zA-ZÀ-ÿ\s\'-]+$/', $cardHolder)) {
-                    $errors[] = 'Le nom sur la carte ne peut contenir que des lettres';
-                }
-                
-                // Validation numero de carte
-                $cardNumber = preg_replace('/\s+/', '', (string) $request->request->get('cardNumber', ''));
-                if (empty($cardNumber)) {
-                    $errors[] = 'Le numero de carte est obligatoire';
-                } elseif (!preg_match('/^\d{16}$/', $cardNumber)) {
-                    $errors[] = 'Le numero de carte doit contenir exactement 16 chiffres';
-                }
-                
-                // Validation CVV
-                $cvv = trim((string) $request->request->get('cvv', ''));
-                if (empty($cvv)) {
-                    $errors[] = 'Le code CVV est obligatoire';
-                } elseif (!preg_match('/^\d{3,4}$/', $cvv)) {
-                    $errors[] = 'Le code CVV doit contenir 3 ou 4 chiffres';
-                }
-            }
-            
-            // Si erreurs de validation
-            if (!empty($errors)) {
-                foreach ($errors as $error) {
-                    $this->addFlash('error', $error);
-                }
-                return $this->render('commande/checkout.html.twig', [
-                    'cart' => $cart,
-                    'total' => $this->cartService->getCartTotal(),
-                ]);
-            }
-            
-            // Donnees validees, continuer le traitement
-            $paymentSuccess = false;
-
+            // Paiement à la livraison : pas besoin de Stripe
             if ($paymentMethod === 'cash_on_delivery') {
-                $paymentSuccess = true;
-            } else {
-                $paymentData = [
-                    'cardHolder' => $cardHolder,
-                    'cardNumber' => $cardNumber,
-                    'cvv' => $cvv,
-                ];
-                $paymentSuccess = $this->paymentService->processPayment(null, $paymentData);
-            }
-
-            if ($paymentSuccess) {
-                $commande = $this->commandeService->createCommande(
-                    $this->getUser(),
-                    array_values($cart),
-                    $adresse,
-                    $paymentMethod
-                );
-                if (!$commande) {
-                    $this->addFlash('error', 'Stock insuffisant pour certains produits. Verifiez le panier.');
-                    return $this->redirectToRoute('cart_show');
-                }
                 $this->cartService->clearCart();
-                $this->addFlash('success', 'Commande creee avec succes !');
+                $this->addFlash('success', 'Commande créée avec succès ! Paiement à la livraison.');
                 return $this->redirectToRoute('commande_show', ['id' => $commande->getId()]);
             }
 
-            $this->addFlash('error', 'Paiement refuse. Verifiez les informations.');
-            return $this->redirectToRoute('commande_create');
+            // Paiement Stripe : créer une session Checkout
+            try {
+                $session = $this->stripePaymentService->createCheckoutSession($commande, array_values($cart));
+                
+                // Sauvegarder l'ID de session Stripe dans la commande
+                $commande->setStripeSessionId($session->id);
+                $this->entityManager->flush();
+
+                // Vider le panier maintenant (la commande est créée)
+                $this->cartService->clearCart();
+
+                // Rediriger vers la page de paiement Stripe
+                return $this->redirect($session->url);
+            } catch (\Exception $e) {
+                $this->logger->error('Erreur Stripe Checkout: ' . $e->getMessage());
+                $this->addFlash('error', 'Erreur lors de la création de la session de paiement. Veuillez réessayer.');
+                return $this->redirectToRoute('commande_create');
+            }
         }
 
         return $this->render('commande/checkout.html.twig', [
             'cart' => $cart,
             'total' => $this->cartService->getCartTotal(),
+            'stripe_public_key' => $this->stripePaymentService->getPublicKey(),
+        ]);
+    }
+
+    /**
+     * Page de succès après paiement Stripe
+     */
+    #[Route('/stripe/success/{id}', name: 'stripe_success', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    public function stripeSuccess(int $id, Request $request): Response
+    {
+        $this->denyIfNotPatient();
+        $commande = $this->commandeService->getCommandeById($id);
+        
+        if (!$commande || $commande->getUtilisateur() !== $this->getUser()) {
+            throw $this->createNotFoundException('Commande non trouvée');
+        }
+
+        $sessionId = $request->query->get('session_id');
+        
+        if ($sessionId && $commande->getStripeSessionId() === $sessionId) {
+            // Vérifier le paiement auprès de Stripe
+            if ($this->stripePaymentService->isPaymentSuccessful($sessionId)) {
+                // Récupérer le PaymentIntent ID
+                try {
+                    $session = $this->stripePaymentService->retrieveSession($sessionId);
+                    $commande->setStripePaymentIntentId($session->payment_intent);
+                    
+                    // Valider automatiquement la commande
+                    if ($commande->getStatut() === 'en_attente') {
+                        $this->commandeService->applyTransition($commande, 'valider');
+                    }
+                    $this->entityManager->flush();
+                } catch (\Exception $e) {
+                    $this->logger->error('Erreur récupération session Stripe: ' . $e->getMessage());
+                }
+
+                $this->addFlash('success', 'Paiement effectué avec succès ! Votre commande a été validée.');
+            } else {
+                $this->addFlash('warning', 'Le paiement est en cours de traitement. Vous recevrez une confirmation bientôt.');
+            }
+        }
+
+        return $this->render('commande/stripe_success.html.twig', [
+            'commande' => $commande,
+        ]);
+    }
+
+    /**
+     * Page d'annulation du paiement Stripe
+     */
+    #[Route('/stripe/cancel/{id}', name: 'stripe_cancel', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    public function stripeCancel(int $id): Response
+    {
+        $this->denyIfNotPatient();
+        $commande = $this->commandeService->getCommandeById($id);
+        
+        if (!$commande || $commande->getUtilisateur() !== $this->getUser()) {
+            throw $this->createNotFoundException('Commande non trouvée');
+        }
+
+        $this->addFlash('warning', 'Le paiement a été annulé. Votre commande reste en attente.');
+
+        return $this->render('commande/stripe_cancel.html.twig', [
+            'commande' => $commande,
         ]);
     }
 
@@ -164,37 +191,6 @@ if ($request->isMethod('POST') && $this->isCsrfTokenValid('checkout', (string) $
         }
 
         return $this->render('commande/track.html.twig', ['commande' => $commande]);
-    }
-
-    /**
-     * @return string[]
-     */
-    private function validateCheckoutInput(string $adresse, array $paymentData): array
-    {
-        $errors = [];
-
-        if ($adresse === '') {
-            $errors[] = 'L\'adresse de livraison est obligatoire.';
-        } elseif (mb_strlen($adresse) < 5 || mb_strlen($adresse) > 1000) {
-            $errors[] = 'L\'adresse doit contenir entre 5 et 1000 caracteres.';
-        }
-
-        $cardHolder = (string) ($paymentData['cardHolder'] ?? '');
-        if (!preg_match('/^[\p{L} .\'-]{3,100}$/u', $cardHolder)) {
-            $errors[] = 'Le nom sur la carte est invalide.';
-        }
-
-        $cardNumber = (string) ($paymentData['cardNumber'] ?? '');
-        if (!preg_match('/^\d{14,16}$/', $cardNumber)) {
-            $errors[] = 'Le numero de carte doit contenir 14 a 16 chiffres.';
-        }
-
-        $cvv = (string) ($paymentData['cvv'] ?? '');
-        if (!preg_match('/^\d{3,4}$/', $cvv)) {
-            $errors[] = 'Le CVV doit contenir 3 ou 4 chiffres.';
-        }
-
-        return $errors;
     }
 
     private function denyIfNotPatient(): void

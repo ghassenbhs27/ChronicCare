@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paiement réussi - Chronic Care{% endblock %}
+{% block body_class %}checkout-page{% endblock %}
+
+{% block body %}
+{% include 'partials/_navbar.html.twig' %}
+
+<main class="main">
+  <div class="page-title">
+    <div class="container">
+      <h1>Paiement réussi</h1>
+    </div>
+  </div>
+
+  <section class="section light-background">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card text-center shadow-sm">
+            <div class="card-body py-5">
+              <!-- Icône de succès animée -->
+              <div class="mb-4">
+                <div class="success-checkmark" style="width:80px;height:80px;border-radius:50%;background:#28a745;display:inline-flex;align-items:center;justify-content:center;">
+                  <i class="bi bi-check-lg text-white" style="font-size:3rem;"></i>
+                </div>
+              </div>
+
+              <h2 class="text-success mb-3">Merci pour votre commande !</h2>
+              <p class="lead text-muted mb-4">Votre paiement a été traité avec succès par Stripe.</p>
+
+              <!-- Détails de la commande -->
+              <div class="card bg-light mx-auto" style="max-width:500px;">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">N° de commande :</span>
+                    <strong>{{ commande.numeroCommande }}</strong>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Montant total :</span>
+                    <strong class="text-success">{{ commande.total|number_format(2, ',', ' ') }} €</strong>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Statut :</span>
+                    <span class="badge bg-{{ commande.statut == 'validee' ? 'success' : 'primary' }}">
+                      {{ commande.statut|replace({'_': ' '})|capitalize }}
+                    </span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Mode de paiement :</span>
+                    <span><i class="bi bi-credit-card"></i> Stripe</span>
+                  </div>
+                  {% if commande.adresse %}
+                  <div class="d-flex justify-content-between">
+                    <span class="text-muted">Adresse :</span>
+                    <span class="text-end" style="max-width:250px;">{{ commande.adresse }}</span>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Articles commandés -->
+              <div class="mt-4 mx-auto" style="max-width:500px;">
+                <h6 class="text-muted mb-3">Articles commandés</h6>
+                {% for ligne in commande.ligneCommandes %}
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                  <div class="text-start">
+                    <strong>{{ ligne.produit.nom }}</strong>
+                    <span class="text-muted small">x{{ ligne.quantite }}</span>
+                  </div>
+                  <span>{{ ligne.sousTotal|number_format(2, ',', ' ') }} €</span>
+                </div>
+                {% endfor %}
+              </div>
+
+              <!-- Actions -->
+              <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+                <a href="{{ path('commande_show', {id: commande.id}) }}" class="btn btn-primary btn-lg">
+                  <i class="bi bi-eye"></i> Voir ma commande
+                </a>
+                <a href="{{ path('commande_history') }}" class="btn btn-outline-secondary btn-lg">
+                  <i class="bi bi-clock-history"></i> Mes commandes
+                </a>
+                <a href="{{ path('produit_list') }}" class="btn btn-outline-success btn-lg">
+                  <i class="bi bi-shop"></i> Continuer mes achats
+                </a>
+              </div>
+
+              <p class="text-muted small mt-4 mb-0">
+                <i class="bi bi-envelope"></i> Un email de confirmation vous sera envoyé prochainement.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include 'partials/_footer.html.twig' %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{# Widget de recommandations à intégrer dans d'autres pages #}
+<div class="recommendations-widget">
+    <div class="widget-header d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="bi bi-stars text-success me-2"></i>
+            Recommandés pour vous
+        </h5>
+        <a href="{{ path('patient_recommendations') }}" class="btn btn-sm btn-outline-success">
+            Voir tout
+        </a>
+    </div>
+    
+    {% if recommendations.produits is not empty %}
+    <div class="row g-3">
+        {% for produit in recommendations.produits %}
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-2 text-center">
+                    <i class="bi bi-box-seam text-success" style="font-size: 2rem;"></i>
+                    <h6 class="card-title mt-2 mb-1" style="font-size: 0.9rem;">
+                        {{ produit.nom|slice(0, 25) }}{% if produit.nom|length > 25 %}...{% endif %}
+                    </h6>
+                    <p class="text-success fw-bold mb-2">{{ produit.prix|number_format(2, ',', ' ') }} €</p>
+                    <a href="{{ path('produit_detail', {id: produit.id}) }}" class="btn btn-sm btn-success w-100">
+                        Voir
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if recommendations.alertes is not empty %}
+    <div class="alert alert-warning mt-3 mb-0 py-2">
+        <small>
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            {{ recommendations.alertes|first }}
+        </small>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-4 text-muted">
+        <i class="bi bi-person-gear" style="font-size: 2rem;"></i>
+        <p class="mt-2 mb-0">
+            <a href="{{ path('patient_profil_medical') }}">Créez votre profil</a> 
+            pour des recommandations personnalisées
+        </p>
+    </div>
+    {% endif %}
+</div>

@@ -1,0 +1,287 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Profil Médical - ChronicCare{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+    
+    .form-section-title {
+        color: #28a745;
+        border-bottom: 2px solid #28a745;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+    }
+    
+    .checkbox-grid .form-check {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+        margin: 0;
+    }
+    
+    .checkbox-grid .form-check:hover {
+        background: #e8f5e9;
+    }
+    
+    .checkbox-grid .form-check-input:checked + .form-check-label {
+        font-weight: 500;
+        color: #28a745;
+    }
+    
+    .checkbox-grid .form-check-input:checked ~ .form-check {
+        background: #e8f5e9;
+        border-left: 3px solid #28a745;
+    }
+    
+    .privacy-notice {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 1rem;
+        border-radius: 0 0.5rem 0.5rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .form-help {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+    
+    .progress-indicator {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+    
+    .progress-step {
+        flex: 1;
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        margin: 0 0.25rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s;
+    }
+    
+    .progress-step.active {
+        background: #28a745;
+        color: white;
+    }
+    
+    .progress-step.completed {
+        background: #e8f5e9;
+        color: #28a745;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 1rem 3rem;
+        font-size: 1.1rem;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1><i class="bi bi-clipboard2-pulse me-2"></i>Mon Profil Médical</h1>
+                <p class="lead mb-0">
+                    Ces informations nous permettent de personnaliser vos recommandations et de détecter 
+                    les incompatibilités potentielles avec les produits.
+                </p>
+            </div>
+            <div class="col-lg-4 text-end">
+                <a href="{{ path('patient_recommendations') }}" class="btn btn-light">
+                    <i class="bi bi-arrow-left me-2"></i>Retour aux recommandations
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notice de confidentialité -->
+    <div class="privacy-notice">
+        <h6><i class="bi bi-shield-lock me-2"></i>Protection de vos données</h6>
+        <p class="mb-0 small">
+            Vos informations médicales sont strictement confidentielles et sécurisées. Elles ne sont utilisées 
+            que pour personnaliser vos recommandations et ne sont jamais partagées avec des tiers.
+        </p>
+    </div>
+
+    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+    
+    <!-- Section: Conditions chroniques -->
+    <div class="form-section">
+        <h3 class="form-section-title">
+            <i class="bi bi-heart-pulse"></i>
+            Conditions chroniques
+        </h3>
+        <p class="text-muted">Sélectionnez les conditions médicales qui vous concernent :</p>
+        
+        <div class="checkbox-grid">
+            {{ form_widget(form.conditionsChroniques) }}
+        </div>
+        <p class="form-help">
+            <i class="bi bi-info-circle me-1"></i>
+            Ces informations nous permettent d'éviter les produits contre-indiqués.
+        </p>
+    </div>
+
+    <!-- Section: Allergies -->
+    <div class="form-section">
+        <h3 class="form-section-title">
+            <i class="bi bi-exclamation-triangle"></i>
+            Allergies connues
+        </h3>
+        <p class="text-muted">Indiquez vos allergies pour éviter tout risque :</p>
+        
+        <div class="checkbox-grid">
+            {{ form_widget(form.allergies) }}
+        </div>
+        <p class="form-help">
+            <i class="bi bi-shield-exclamation me-1"></i>
+            Nous vérifierons systématiquement la présence de ces allergènes dans les produits recommandés.
+        </p>
+    </div>
+
+    <!-- Section: Médicaments -->
+    <div class="form-section">
+        <h3 class="form-section-title">
+            <i class="bi bi-capsule"></i>
+            Médicaments actuels
+        </h3>
+        <p class="text-muted">Quels médicaments prenez-vous actuellement ?</p>
+        
+        <div class="checkbox-grid">
+            {{ form_widget(form.medicamentsActuels) }}
+        </div>
+        <p class="form-help">
+            <i class="bi bi-arrow-left-right me-1"></i>
+            Nous vérifierons les interactions médicamenteuses potentielles avec les produits.
+        </p>
+    </div>
+
+    <!-- Section: Objectifs santé -->
+    <div class="form-section">
+        <h3 class="form-section-title">
+            <i class="bi bi-bullseye"></i>
+            Vos objectifs santé
+        </h3>
+        <p class="text-muted">Quels sont vos objectifs de santé ?</p>
+        
+        <div class="checkbox-grid">
+            {{ form_widget(form.objectifsSante) }}
+        </div>
+        <p class="form-help">
+            <i class="bi bi-lightbulb me-1"></i>
+            Nous vous proposerons des produits correspondant à vos objectifs.
+        </p>
+    </div>
+
+    <!-- Section: Informations complémentaires -->
+    <div class="form-section">
+        <h3 class="form-section-title">
+            <i class="bi bi-person-lines-fill"></i>
+            Informations complémentaires
+        </h3>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                {{ form_row(form.regimeAlimentaire) }}
+            </div>
+            <div class="col-md-4">
+                {{ form_row(form.trancheAge) }}
+            </div>
+            <div class="col-md-4">
+                {{ form_row(form.niveauActivite) }}
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            {{ form_row(form.notesMedicales) }}
+        </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="text-center mt-4">
+        <button type="submit" class="btn btn-success btn-submit">
+            <i class="bi bi-check-lg me-2"></i>
+            {% if profil.id %}Mettre à jour mon profil{% else %}Créer mon profil{% endif %}
+        </button>
+        
+        <p class="text-muted mt-3 small">
+            <i class="bi bi-lock me-1"></i>
+            Vos données sont cryptées et sécurisées
+        </p>
+    </div>
+
+    {{ form_end(form) }}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation au scroll des sections
+    const sections = document.querySelectorAll('.form-section');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = 1;
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+
+    sections.forEach(section => {
+        section.style.opacity = 0;
+        section.style.transform = 'translateY(20px)';
+        section.style.transition = 'all 0.5s ease';
+        observer.observe(section);
+    });
+
+    // Validation du formulaire
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enregistrement...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

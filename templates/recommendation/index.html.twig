@@ -1,0 +1,421 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recommandations Personnalisées - ChronicCare{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .recommendation-hero {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-status {
+        background: rgba(255,255,255,0.2);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #28a745;
+    }
+    
+    .section-title i {
+        font-size: 1.5rem;
+        color: #28a745;
+    }
+    
+    .product-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .product-card .card-img-top {
+        height: 160px;
+        object-fit: cover;
+        border-radius: 1rem 1rem 0 0;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .product-card .card-img-top i {
+        font-size: 4rem;
+        color: #28a745;
+        opacity: 0.5;
+    }
+    
+    .recommendation-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 0.75rem;
+    }
+    
+    .recommendation-reason {
+        font-size: 0.85rem;
+        color: #28a745;
+        background: #e8f5e9;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .alert-card {
+        border-left: 4px solid;
+        background: #fff;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .alert-card.danger {
+        border-color: #dc3545;
+        background: #fff5f5;
+    }
+    
+    .alert-card.warning {
+        border-color: #ffc107;
+        background: #fffbeb;
+    }
+    
+    .similar-section {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .ai-badge {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .compatibility-indicator {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+    
+    .compatibility-indicator.compatible {
+        background: #28a745;
+        color: white;
+    }
+    
+    .compatibility-indicator.warning {
+        background: #ffc107;
+        color: #333;
+    }
+    
+    .compatibility-indicator.danger {
+        background: #dc3545;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <!-- Hero Section -->
+    <div class="recommendation-hero">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1><i class="bi bi-heart-pulse me-2"></i>Vos Recommandations Personnalisées</h1>
+                <p class="lead mb-0">
+                    Des produits sélectionnés spécialement pour vous, en tenant compte de votre profil médical.
+                </p>
+                
+                {% if profil %}
+                <div class="profile-status">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Profil médical actif</strong> - 
+                    {{ profil.conditionsChroniques|length }} condition(s), 
+                    {{ profil.allergies|length }} allergie(s) surveillée(s)
+                    {% if aiAvailable %}
+                        <span class="ai-badge ms-2"><i class="bi bi-robot"></i> IA Active</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="profile-status">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <strong>Profil non configuré</strong> - 
+                    <a href="{{ path('patient_profil_medical') }}" class="text-white text-decoration-underline">
+                        Créez votre profil médical
+                    </a> pour des recommandations optimales
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-4 text-end d-none d-lg-block">
+                <a href="{{ path('patient_profil_medical') }}" class="btn btn-light btn-lg">
+                    <i class="bi bi-person-gear me-2"></i>
+                    {% if profil %}Modifier mon profil{% else %}Créer mon profil{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertes éventuelles -->
+    {% if recommendations.alertes is not empty %}
+    <div class="mb-4">
+        <h5 class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Alertes importantes</h5>
+        {% for alerte in recommendations.alertes %}
+        <div class="alert-card danger">
+            <strong>{{ alerte }}</strong>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Recommandations principales -->
+    <section class="mb-5">
+        <div class="section-title">
+            <i class="bi bi-stars"></i>
+            <h2 class="mb-0">Recommandés pour vous</h2>
+            {% if recommendations.source == 'ai' %}
+                <span class="ai-badge"><i class="bi bi-robot"></i> Analyse IA</span>
+            {% endif %}
+        </div>
+        
+        {% if recommendations.produits is not empty %}
+        <div class="row g-4">
+            {% for produit in recommendations.produits %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card product-card position-relative">
+                    <span class="recommendation-badge badge bg-success">
+                        <i class="bi bi-hand-thumbs-up"></i> Recommandé
+                    </span>
+                    <div class="card-img-top">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="card-body">
+                        <span class="badge bg-secondary mb-2">{{ produit.categorie }}</span>
+                        <h5 class="card-title">{{ produit.nom }}</h5>
+                        <p class="card-text text-muted small">
+                            {{ produit.description|slice(0, 80) }}...
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 text-success mb-0">{{ produit.prix|number_format(2, ',', ' ') }} €</span>
+                            <span class="text-muted small">
+                                {% if produit.stock > 0 %}
+                                    <i class="bi bi-check-circle text-success"></i> En stock
+                                {% else %}
+                                    <i class="bi bi-x-circle text-danger"></i> Rupture
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        {% if recommendations.raisons[produit.id] is defined %}
+                        <div class="recommendation-reason">
+                            <i class="bi bi-lightbulb me-1"></i>
+                            {{ recommendations.raisons[produit.id] }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-transparent border-0">
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('produit_show', {id: produit.id}) }}" class="btn btn-outline-success">
+                                <i class="bi bi-eye me-1"></i> Voir détails
+                            </a>
+                            <button class="btn btn-success add-to-cart" data-product-id="{{ produit.id }}">
+                                <i class="bi bi-cart-plus me-1"></i> Ajouter au panier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            Complétez votre profil médical pour recevoir des recommandations personnalisées.
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Patients similaires -->
+    {% if similarPurchases.produits is not empty %}
+    <section class="similar-section">
+        <div class="section-title">
+            <i class="bi bi-people"></i>
+            <h2 class="mb-0">Patients comme vous ont aussi acheté</h2>
+        </div>
+        
+        {% if similarPurchases.message %}
+        <p class="text-muted mb-4">{{ similarPurchases.message }}</p>
+        {% endif %}
+        
+        <div class="row g-4">
+            {% for produit in similarPurchases.produits %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card product-card">
+                    <span class="recommendation-badge badge bg-info">
+                        <i class="bi bi-people"></i> Populaire
+                    </span>
+                    <div class="card-img-top">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="card-body">
+                        <span class="badge bg-secondary mb-2">{{ produit.categorie }}</span>
+                        <h5 class="card-title">{{ produit.nom }}</h5>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="h5 text-success mb-0">{{ produit.prix|number_format(2, ',', ' ') }} €</span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-0">
+                        <a href="{{ path('produit_show', {id: produit.id}) }}" class="btn btn-outline-info w-100">
+                            Voir le produit
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Produits populaires -->
+    <section class="mt-5">
+        <div class="section-title">
+            <i class="bi bi-graph-up-arrow"></i>
+            <h2 class="mb-0">Produits populaires</h2>
+        </div>
+        
+        <div class="row g-4">
+            {% for produit in popularProducts %}
+            <div class="col-md-6 col-lg-2">
+                <div class="card product-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-box-seam text-muted" style="font-size: 2rem;"></i>
+                        <h6 class="card-title mt-2">{{ produit.nom }}</h6>
+                        <p class="text-success fw-bold mb-0">{{ produit.prix|number_format(2, ',', ' ') }} €</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<!-- Modal de compatibilité -->
+<div class="modal fade" id="compatibilityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-shield-check me-2"></i>Analyse de compatibilité</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="compatibilityContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-success" role="status"></div>
+                    <p class="mt-2">Analyse en cours...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Vérification de compatibilité au survol
+    document.querySelectorAll('.product-card').forEach(card => {
+        const productId = card.querySelector('.add-to-cart')?.dataset.productId;
+        if (productId) {
+            card.addEventListener('mouseenter', () => checkCompatibility(productId, card));
+        }
+    });
+    
+    async function checkCompatibility(productId, card) {
+        // Ne vérifie qu'une seule fois
+        if (card.dataset.checked) return;
+        card.dataset.checked = 'true';
+        
+        try {
+            const response = await fetch(`/patient/recommandations/check/${productId}`);
+            const data = await response.json();
+            
+            // Ajouter indicateur de compatibilité
+            let indicator = card.querySelector('.compatibility-indicator');
+            if (!indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'compatibility-indicator';
+                card.querySelector('.card-img-top').appendChild(indicator);
+            }
+            
+            if (data.needsProfile) {
+                indicator.className = 'compatibility-indicator warning';
+                indicator.innerHTML = '<i class="bi bi-person-exclamation"></i>';
+                indicator.title = 'Créez votre profil pour une analyse personnalisée';
+            } else if (data.compatible) {
+                indicator.className = 'compatibility-indicator compatible';
+                indicator.innerHTML = '<i class="bi bi-check"></i>';
+                indicator.title = 'Compatible avec votre profil';
+            } else {
+                indicator.className = 'compatibility-indicator danger';
+                indicator.innerHTML = '<i class="bi bi-exclamation"></i>';
+                indicator.title = 'Attention: incompatibilité détectée';
+                
+                // Afficher alerte
+                if (data.alertes && data.alertes.length > 0) {
+                    card.querySelector('.card-body').insertAdjacentHTML('beforeend', 
+                        `<div class="alert alert-danger mt-2 p-2 small">${data.summary.message}</div>`
+                    );
+                }
+            }
+        } catch (e) {
+            console.error('Erreur vérification compatibilité:', e);
+        }
+    }
+    
+    // Ajout au panier
+    document.querySelectorAll('.add-to-cart').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const productId = this.dataset.productId;
+            // Implémenter selon votre logique de panier
+            this.innerHTML = '<i class="bi bi-check me-1"></i> Ajouté';
+            this.classList.remove('btn-success');
+            this.classList.add('btn-outline-success');
+            setTimeout(() => {
+                this.innerHTML = '<i class="bi bi-cart-plus me-1"></i> Ajouter au panier';
+                this.classList.add('btn-success');
+                this.classList.remove('btn-outline-success');
+            }, 2000);
+        });
+    });
+});
+</script>
+{% endblock %}

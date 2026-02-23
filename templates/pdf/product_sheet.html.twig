@@ -1,0 +1,155 @@
+{% extends 'pdf/base.html.twig' %}
+
+{% block title %}Fiche Produit - {{ produit.nom }}{% endblock %}
+
+{% block extra_styles %}
+.product-header {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+}
+
+.product-name {
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.product-category {
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.product-price {
+    font-size: 32px;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+.product-price small {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.spec-grid {
+    display: table;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.spec-item {
+    display: table-cell;
+    width: 33.33%;
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.spec-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #198754;
+}
+
+.spec-label {
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+}
+{% endblock %}
+
+{% block content %}
+<!-- En-tête produit -->
+<div class="product-header">
+    <div class="product-category">{{ produit.categorie }}</div>
+    <div class="product-name">{{ produit.nom }}</div>
+    <div class="product-price">
+        {{ produit.prix|number_format(2, ',', ' ') }} €
+        <small>TTC</small>
+    </div>
+</div>
+
+<!-- Spécifications rapides -->
+<div class="spec-grid">
+    <div class="spec-item" style="border-radius: 10px 0 0 10px;">
+        <div class="spec-value">{{ produit.stock }}</div>
+        <div class="spec-label">En stock</div>
+    </div>
+    <div class="spec-item">
+        <div class="spec-value">
+            {% if produit.isActive %}
+                <span style="color: #198754;">✓</span>
+            {% else %}
+                <span style="color: #dc3545;">✗</span>
+            {% endif %}
+        </div>
+        <div class="spec-label">Disponible</div>
+    </div>
+    <div class="spec-item" style="border-radius: 0 10px 10px 0;">
+        <div class="spec-value">{{ produit.createdAt|date('Y') }}</div>
+        <div class="spec-label">Ajouté</div>
+    </div>
+</div>
+
+<!-- Description -->
+<div class="info-box">
+    <div class="info-box-title">📝 Description du produit</div>
+    <p style="line-height: 1.8; text-align: justify;">
+        {{ produit.description }}
+    </p>
+</div>
+
+<!-- Informations complémentaires -->
+<div class="row">
+    <div class="col-half">
+        <div class="info-box">
+            <div class="info-box-title">📦 Informations</div>
+            <div class="info-row">
+                <span class="info-label">Référence:</span> 
+                PRD-{{ produit.id|default('N/A') }}
+            </div>
+            <div class="info-row">
+                <span class="info-label">Catégorie:</span> 
+                {{ produit.categorie }}
+            </div>
+            <div class="info-row">
+                <span class="info-label">Statut:</span> 
+                <span class="badge {% if produit.isActive %}badge-success{% else %}badge-danger{% endif %}">
+                    {% if produit.isActive %}Actif{% else %}Inactif{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-half">
+        <div class="info-box">
+            <div class="info-box-title">💰 Tarification</div>
+            <div class="info-row">
+                <span class="info-label">Prix HT:</span> 
+                {{ (produit.prix / 1.19)|number_format(2, ',', ' ') }} €
+            </div>
+            <div class="info-row">
+                <span class="info-label">TVA (19%):</span> 
+                {{ (produit.prix - produit.prix / 1.19)|number_format(2, ',', ' ') }} €
+            </div>
+            <div class="info-row">
+                <span class="info-label">Prix TTC:</span> 
+                <strong style="color: #198754;">{{ produit.prix|number_format(2, ',', ' ') }} €</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bandeau de commande -->
+<div class="highlight-box">
+    <h3>🛒 Commander ce produit</h3>
+    <p>Rendez-vous sur notre boutique en ligne ou contactez-nous directement pour passer commande.</p>
+    <p style="margin-top: 10px;">
+        <strong>📧</strong> contact@chroniccare.com | 
+        <strong>📞</strong> +216 XX XXX XXX
+    </p>
+</div>
+{% endblock %}

@@ -10,6 +10,9 @@ parameters:
     holiday_country_default: 'TN'
     holiday_country: '%env(default:holiday_country_default:HOLIDAY_COUNTRY)%'
     holiday_api_base: 'https://date.nager.at/api/v3'
+    stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
+    stripe_public_key: '%env(STRIPE_PUBLIC_KEY)%'
+    stripe_webhook_secret: '%env(STRIPE_WEBHOOK_SECRET)%'
 
 services:
     # default configuration for services in *this* file
@@ -30,6 +33,32 @@ services:
     App\EventSubscriber\DoctrineSanitizeSubscriber:
         tags:
             - { name: doctrine.event_subscriber }
+
+    App\Service\StripePaymentService:
+        arguments:
+            $stripeSecretKey: '%stripe_secret_key%'
+            $stripePublicKey: '%stripe_public_key%'
+            $stripeWebhookSecret: '%stripe_webhook_secret%'
+
+    App\Service\GeoLocationService:
+        arguments:
+            $environment: '%kernel.environment%'
+
+    App\Service\AIDataCleanerService:
+        arguments:
+            $openaiApiKey: '%env(OPENAI_API_KEY)%'
+
+    App\Service\PdfGeneratorService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Service\ProductRecommendationService:
+        arguments:
+            $openaiApiKey: '%env(OPENAI_API_KEY)%'
+
+    App\Service\DrugCompatibilityService:
+        arguments:
+            $openaiApiKey: '%env(OPENAI_API_KEY)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

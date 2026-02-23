@@ -1,0 +1,243 @@
+{% extends 'back/base.html.twig' %}
+
+{% block page_title %}Import Excel{% endblock %}
+{% block page_subtitle %}Importer des produits avec nettoyage AI{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  {# Messages Flash #}
+  {% for label, messages in app.flashes %}
+    {% for message in messages %}
+      <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endfor %}
+
+  <div class="row">
+    {# Colonne principale - Upload #}
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+          <h5 class="mb-0">
+            <i class="bi bi-file-earmark-excel text-success me-2"></i>
+            Importer un fichier Excel
+          </h5>
+        </div>
+        <div class="card-body">
+          <form action="{{ path('admin_import_products_upload') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+            {# Zone de drop #}
+            <div class="upload-zone border-2 border-dashed rounded-3 p-5 text-center mb-4" id="dropZone">
+              <div class="upload-icon mb-3">
+                <i class="bi bi-cloud-upload display-3 text-muted"></i>
+              </div>
+              <h5>Glissez votre fichier ici</h5>
+              <p class="text-muted mb-3">ou cliquez pour sélectionner</p>
+              <input type="file" name="excel_file" id="excelFile" class="d-none" accept=".xlsx,.xls,.csv">
+              <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('excelFile').click()">
+                <i class="bi bi-folder2-open me-2"></i>Parcourir
+              </button>
+              <p class="small text-muted mt-3 mb-0">Formats acceptés: .xlsx, .xls, .csv</p>
+            </div>
+
+            {# Fichier sélectionné #}
+            <div class="selected-file d-none mb-4" id="selectedFile">
+              <div class="d-flex align-items-center p-3 bg-light rounded-3">
+                <i class="bi bi-file-earmark-spreadsheet text-success fs-2 me-3"></i>
+                <div class="flex-grow-1">
+                  <h6 class="mb-0" id="fileName">fichier.xlsx</h6>
+                  <small class="text-muted" id="fileSize">0 KB</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+
+            {# Options AI #}
+            <div class="ai-options p-3 bg-light rounded-3 mb-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="use_ai" value="1" id="useAI" {% if aiConfigured %}checked{% endif %} {% if not aiConfigured %}disabled{% endif %}>
+                <label class="form-check-label" for="useAI">
+                  <i class="bi bi-cpu me-1"></i>
+                  Utiliser l'AI pour la correction orthographique
+                </label>
+              </div>
+              
+              {% if aiConfigured %}
+                <div class="mt-2">
+                  <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>OpenAI connecté</span>
+                </div>
+              {% else %}
+                <div class="mt-2">
+                  <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle me-1"></i>{{ aiMessage }}</span>
+                  <p class="small text-muted mt-2 mb-0">Configurez OPENAI_API_KEY dans .env.local pour activer l'AI</p>
+                </div>
+              {% endif %}
+            </div>
+
+            {# Bouton d'import #}
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-success btn-lg" id="uploadBtn" disabled>
+                <i class="bi bi-upload me-2"></i>Analyser et prévisualiser
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    {# Colonne latérale - Aide #}
+    <div class="col-lg-4">
+      {# Télécharger modèle #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h6><i class="bi bi-download me-2"></i>Modèle Excel</h6>
+          <p class="small text-muted mb-3">Téléchargez notre modèle pré-formaté pour un import optimal.</p>
+          <a href="{{ path('admin_import_products_template') }}" class="btn btn-outline-success w-100">
+            <i class="bi bi-file-earmark-arrow-down me-2"></i>Télécharger le modèle
+          </a>
+        </div>
+      </div>
+
+      {# Instructions #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Instructions</h6>
+        </div>
+        <div class="card-body">
+          <ol class="small text-muted ps-3 mb-0">
+            <li class="mb-2">Préparez votre fichier Excel avec les colonnes: <strong>nom, description, prix, stock, categorie</strong></li>
+            <li class="mb-2">La première ligne doit contenir les en-têtes</li>
+            <li class="mb-2">Uploadez le fichier</li>
+            <li class="mb-2">L'AI corrigera automatiquement les fautes d'orthographe</li>
+            <li class="mb-2">Vérifiez les corrections proposées</li>
+            <li>Confirmez l'import</li>
+          </ol>
+        </div>
+      </div>
+
+      {# Fonctionnalités AI #}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h6 class="mb-0"><i class="bi bi-magic me-2"></i>Fonctionnalités AI</h6>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled small mb-0">
+            <li class="mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Correction orthographique
+            </li>
+            <li class="mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Normalisation des catégories
+            </li>
+            <li class="mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Formatage des prix
+            </li>
+            <li class="mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Détection d'erreurs
+            </li>
+            <li>
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Suggestions d'amélioration
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .upload-zone {
+    border-color: #dee2e6 !important;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: #198754 !important;
+    background-color: rgba(25, 135, 84, 0.05);
+  }
+  .upload-zone.dragover .upload-icon i {
+    color: #198754 !important;
+    transform: scale(1.1);
+  }
+  .upload-icon i {
+    transition: all 0.3s ease;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('excelFile');
+  const selectedFile = document.getElementById('selectedFile');
+  const fileName = document.getElementById('fileName');
+  const fileSize = document.getElementById('fileSize');
+  const uploadBtn = document.getElementById('uploadBtn');
+
+  // Drag & Drop
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+  });
+
+  dropZone.addEventListener('drop', handleDrop, false);
+  dropZone.addEventListener('click', () => fileInput.click());
+
+  function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files.length) {
+      fileInput.files = files;
+      updateFileDisplay(files[0]);
+    }
+  }
+
+  fileInput.addEventListener('change', function() {
+    if (this.files.length) {
+      updateFileDisplay(this.files[0]);
+    }
+  });
+
+  function updateFileDisplay(file) {
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    selectedFile.classList.remove('d-none');
+    dropZone.classList.add('d-none');
+    uploadBtn.disabled = false;
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  window.clearFile = function() {
+    fileInput.value = '';
+    selectedFile.classList.add('d-none');
+    dropZone.classList.remove('d-none');
+    uploadBtn.disabled = true;
+  };
+});
+</script>
+{% endblock %}

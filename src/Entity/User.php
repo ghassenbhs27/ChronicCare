@@ -125,6 +125,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Publication::class, mappedBy: 'auteur')]
     private Collection $publications;
 
+    /**
+     * Profil médical du patient pour les recommandations personnalisées
+     */
+    #[ORM\OneToOne(mappedBy: 'utilisateur', targetEntity: ProfilMedical::class, cascade: ['persist', 'remove'])]
+    private ?ProfilMedical $profilMedical = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -463,5 +469,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function isRejected(): bool
     {
         return $this->approvalStatus === self::APPROVAL_REJECTED;
+    }
+
+    /**
+     * Profil médical pour recommandations personnalisées
+     */
+    public function getProfilMedical(): ?ProfilMedical
+    {
+        return $this->profilMedical;
+    }
+
+    public function setProfilMedical(?ProfilMedical $profilMedical): self
+    {
+        // Unset the owning side of the relation if necessary
+        if ($profilMedical === null && $this->profilMedical !== null) {
+            $this->profilMedical->setUtilisateur(null);
+        }
+
+        // Set the owning side of the relation if necessary
+        if ($profilMedical !== null && $profilMedical->getUtilisateur() !== $this) {
+            $profilMedical->setUtilisateur($this);
+        }
+
+        $this->profilMedical = $profilMedical;
+        return $this;
+    }
+
+    /**
+     * Vérifie si l'utilisateur a un profil médical renseigné
+     */
+    public function hasProfilMedical(): bool
+    {
+        return $this->profilMedical !== null;
     }
 }

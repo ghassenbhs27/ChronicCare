@@ -44,6 +44,7 @@ security:
         - { path: ^/verify-email, roles: PUBLIC_ACCESS }
         - { path: ^/resend-verification, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/webhook/stripe, roles: PUBLIC_ACCESS }
         - { path: ^/evenements, roles: PUBLIC_ACCESS }
         - { path: ^/evenements/\d+$, roles: PUBLIC_ACCESS }
         - { path: ^/products, roles: PUBLIC_ACCESS }

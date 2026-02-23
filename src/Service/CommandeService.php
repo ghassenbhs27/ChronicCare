@@ -18,11 +18,12 @@ class CommandeService
         private readonly ProduitService $produitService,
         private readonly EntityManagerInterface $entityManager,
         private readonly WorkflowInterface $commandeWorkflow,
-        private readonly CommandeEventStore $eventStore
+        private readonly CommandeEventStore $eventStore,
+        private readonly GeoLocationService $geoLocationService
     ) {
     }
 
-    public function createCommande(User $user, array $items, ?string $adresse = null, string $methodePaiement = 'card'): ?Commande
+    public function createCommande(User $user, array $items, ?string $ipAddress = null, string $methodePaiement = 'card'): ?Commande
     {
         foreach ($items as $item) {
             $produit = $this->produitRepository->find($item['id']);
@@ -62,10 +63,21 @@ class CommandeService
 
         $commande->setTotal((string) round($total, 2));
         $commande->setMethodePaiement($methodePaiement);
-        if ($adresse !== null) {
-            $commande->setAdresse($adresse);
+        
+        // 🌍 Géolocalisation automatique
+        if ($ipAddress) {
+            $commande->setIpAddress($ipAddress);
+            $locationData = $this->geoLocationService->getLocationByIp($ipAddress);
+            if ($locationData) {
+                $commande->setCountry($locationData['country']);
+                $commande->setCity($locationData['city']);
+                $commande->setRegion($locationData['region']);
+                $commande->setLatitude($locationData['latitude']);
+                $commande->setLongitude($locationData['longitude']);
+                $commande->setTimezone($locationData['timezone']);
+                $commande->setIsp($locationData['isp']);
+            }
         }
-
 
         $this->entityManager->persist($commande);
         $this->entityManager->flush();
