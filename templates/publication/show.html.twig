@@ -7,7 +7,7 @@
   <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
   <link href="{{ asset('assets/css/comment-editor.css') }}" rel="stylesheet">
   <style>
-    /* 🎨 AI SUMMARY - Design intégré au site */
+    /* 🎨 AI SUMMARY STYLES */
     .ai-summary-section {
       margin: 2rem 0;
     }
@@ -89,7 +89,6 @@
       margin-bottom: 0.25rem;
     }
     
-    /* Boutons AI - Style intégré */
     .ai-buttons-container {
       background: #f8f9fa;
       border: 2px dashed #dee2e6;
@@ -143,7 +142,6 @@
       border-width: 2px;
     }
     
-    /* Bouton "Voir le résumé" */
     .reveal-summary-btn {
       background: white;
       border: 2px solid #667eea;
@@ -171,7 +169,6 @@
       font-size: 1.2rem;
     }
     
-    /* Boutons de régénération */
     .regenerate-btn {
       background: rgba(255, 255, 255, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.4);
@@ -193,7 +190,6 @@
       color: white;
     }
     
-    /* Translation buttons */
     .translate-btn {
       font-size: 0.8rem;
       padding: 0.25rem 0.6rem;
@@ -210,7 +206,12 @@
       color: white;
     }
     
-    /* Styles existants pour les likes et commentaires */
+    .translate-btn.translating {
+      opacity: 0.7;
+      cursor: wait;
+    }
+    
+    /* LIKE BUTTONS */
     .publication-like-btn,
     .comment-like-btn {
       background: none;
@@ -276,10 +277,9 @@
         </ol>
       </nav>
 
-      {# 🤖 SECTION RÉSUMÉ IA #}
+      {# 🤖 AI SUMMARY SECTION #}
       <div class="ai-summary-section">
         {% if publication.resume %}
-          {# Résumé existant - avec bouton pour le révéler #}
           <div style="text-align: center;">
             <button class="reveal-summary-btn" id="reveal-summary-btn">
               <span class="icon">🤖</span>
@@ -308,7 +308,6 @@
             {% endif %}
           </div>
         {% elseif app.user %}
-          {# Pas de résumé - montrer les boutons de génération #}
           <div class="ai-buttons-container" id="ai-generate-container">
             <div class="ai-buttons-title">
               <i class="bi bi-stars"></i>
@@ -343,13 +342,14 @@
             <button class="btn btn-sm btn-outline-primary translate-btn" 
                     data-translate-publication="{{ publication.id }}"
                     title="Traduire ce contenu">
-              <i class="bi bi-translate"></i> <span class="d-none d-sm-inline">Traduire</span>
+              <i class="bi bi-translate"></i> 
+              <span class="d-none d-sm-inline">Traduire</span>
             </button>
           </div>
         </header>
         {% if publication.imageUrl %}
           <div class="forum-article-image mb-4">
-            <img src="{{ asset('uploads/forum/' ~ publication.imageUrl) }}" alt="{{ publication.titre }}" class="img-fluid rounded">
+            <img src="{{ asset('uploads/forum/' ~ publication.imageUrl) }}" alt="{{ publication.titre }}" class="img-fluid rounded" style="max-width: 100%; height: auto;">
           </div>
         {% endif %}
         <div class="forum-article-body" data-publication-content="{{ publication.id }}">
@@ -364,7 +364,6 @@
         </div>
         <div class="forum-article-actions">
           <a href="{{ path('publication_index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Retour au forum</a>
-          {# ✅ FIX: Show edit/delete buttons only if user is author OR has admin/coach role #}
           {% if app.user and (publication.auteur and publication.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
             <a href="{{ path('publication_edit', {id: publication.id}) }}" class="btn btn-outline-primary">Modifier</a>
             <form method="post" action="{{ path('publication_delete', {id: publication.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette publication ?');">
@@ -390,23 +389,26 @@
         {% elseif can_comment and app.user %}
           <div class="forum-comment-form-wrap comment-editor-wrapper">
             <h6 class="mb-3"><i class="bi bi-chat-dots me-1"></i> Ajouter un commentaire</h6>
-            <p class="text-muted small mb-3">Partagez votre avis ou posez une question.</p>
+            <p class="text-muted small mb-3">Partagez votre avis ou posez une question. En tant que patient, vous pouvez commenter les publications des coachs.</p>
             <form method="post" action="{{ path('commentaire_add', {publicationId: publication.id}) }}" id="commentaire_form">
               <input type="hidden" name="_token" value="{{ csrf_token('commentaire_add') }}">
+              
               <textarea name="contenu" class="form-control mb-3" rows="4" placeholder="Écrivez votre commentaire..." required minlength="3"></textarea>
               
               <div class="comment-toolbar">
                 <div class="toolbar-group">
-                  <label for="fontStyle">Style</label>
+                  <label for="fontStyle">Style de texte</label>
                   <select name="fontStyle" id="fontStyle" class="form-select">
                     <option value="normal">Normal</option>
                     <option value="bold">Gras</option>
                     <option value="italic">Italique</option>
+                    <option value="underline">Souligné</option>
+                    <option value="strikethrough">Barré</option>
                   </select>
                 </div>
                 
                 <div class="toolbar-group">
-                  <label for="fontSize">Taille</label>
+                  <label for="fontSize">Taille de police</label>
                   <select name="fontSize" id="fontSize" class="form-select">
                     <option value="medium" selected>Moyen</option>
                     <option value="small">Petit</option>
@@ -415,9 +417,19 @@
                 </div>
                 
                 <div class="toolbar-group">
-                  <label for="textColor">Couleur</label>
+                  <label for="textColor">Couleur du texte</label>
                   <input type="color" name="textColor" id="textColor" class="form-control" style="height: 38px;">
                 </div>
+                
+                <div class="toolbar-group">
+                  <button type="button" class="emoji-picker-button" data-emoji-toggle>
+                    <i class="bi bi-emoji-smile me-1"></i> Emojis
+                  </button>
+                </div>
+              </div>
+              
+              <div class="emoji-picker-container" id="emoji-picker-container">
+                <div class="emoji-grid" id="emoji-grid"></div>
               </div>
               
               <div class="comment-preview-wrapper">
@@ -430,12 +442,12 @@
                 <label class="form-check-label" for="is_anonymous">Publier en anonyme</label>
               </div>
               
-              <button type="submit" class="btn btn-primary">Publier</button>
+              <button type="submit" class="btn btn-primary">Publier le commentaire</button>
             </form>
           </div>
         {% elseif can_comment and not app.user %}
           <div class="forum-comment-form-wrap text-center py-4">
-            <p class="text-muted mb-0"><a href="{{ path('connexion') }}" class="fw-semibold">Connectez-vous</a> pour commenter.</p>
+            <p class="text-muted mb-0"><a href="{{ path('connexion') }}" class="fw-semibold">Connectez-vous</a> pour participer et commenter.</p>
           </div>
         {% endif %}
 
@@ -449,52 +461,175 @@
                 <div class="forum-comment-head">
                   <span class="forum-comment-author">{{ commentaire.nomAuteur }}</span>
                   <span class="forum-comment-date">{{ commentaire.createdAt|date('d/m/Y à H:i') }}</span>
+                  {% if commentaire.updatedAt and commentaire.updatedAt != commentaire.createdAt %}
+                    <span class="forum-comment-edited text-muted small">(modifié)</span>
+                  {% endif %}
                 </div>
                 
                 {% set commentStyle = '' %}
-                {% if commentaire.fontStyle == 'bold' %}
-                  {% set commentStyle = commentStyle ~ 'font-weight: bold;' %}
-                {% elseif commentaire.fontStyle == 'italic' %}
-                  {% set commentStyle = commentStyle ~ 'font-style: italic;' %}
+                {% if commentaire.fontStyle %}
+                  {% if commentaire.fontStyle == 'bold' %}
+                    {% set commentStyle = commentStyle ~ 'font-weight: bold;' %}
+                  {% elseif commentaire.fontStyle == 'italic' %}
+                    {% set commentStyle = commentStyle ~ 'font-style: italic;' %}
+                  {% elseif commentaire.fontStyle == 'underline' %}
+                    {% set commentStyle = commentStyle ~ 'text-decoration: underline;' %}
+                  {% elseif commentaire.fontStyle == 'strikethrough' %}
+                    {% set commentStyle = commentStyle ~ 'text-decoration: line-through;' %}
+                  {% endif %}
                 {% endif %}
                 
-                {% if commentaire.fontSize == 'small' %}
-                  {% set commentStyle = commentStyle ~ 'font-size: 0.85rem;' %}
-                {% elseif commentaire.fontSize == 'large' %}
-                  {% set commentStyle = commentStyle ~ 'font-size: 1.15rem;' %}
+                {% if commentaire.fontSize %}
+                  {% if commentaire.fontSize == 'small' %}
+                    {% set commentStyle = commentStyle ~ 'font-size: 0.85rem;' %}
+                  {% elseif commentaire.fontSize == 'large' %}
+                    {% set commentStyle = commentStyle ~ 'font-size: 1.15rem;' %}
+                  {% else %}
+                    {% set commentStyle = commentStyle ~ 'font-size: 0.95rem;' %}
+                  {% endif %}
                 {% endif %}
                 
                 {% if commentaire.textColor %}
                   {% set commentStyle = commentStyle ~ 'color: ' ~ commentaire.textColor ~ ';' %}
                 {% endif %}
                 
-                <div class="forum-comment-text" {% if commentStyle %}style="{{ commentStyle }}"{% endif %}>
+                <div class="forum-comment-text" 
+                     data-comment-content="{{ commentaire.id }}"
+                     {% if commentStyle %}style="{{ commentStyle }}"{% endif %}>
                   {{ commentaire.contenu|nl2br }}
                 </div>
                 
                 <div class="forum-comment-actions">
-                  <button class="comment-like-btn" data-comment-id="{{ commentaire.id }}">
+                  <button class="comment-like-btn" data-comment-id="{{ commentaire.id }}" title="J'aime ce commentaire">
                     <i class="bi bi-heart"></i> <span class="like-count">{{ commentaire.likeCount }}</span>
                   </button>
                   
-                  {# ✅ COMMENT PERMISSIONS: Already correct - checks authorship #}
-                  {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_ADMIN')) %}
+                  <button class="btn btn-sm btn-outline-primary translate-btn" 
+                          data-translate-comment="{{ commentaire.id }}"
+                          title="Traduire ce commentaire">
+                    <i class="bi bi-translate"></i> 
+                    <span class="d-none d-sm-inline">Traduire</span>
+                  </button>
+                  
+                  {% if app.user and can_comment %}
+                    <button class="btn btn-sm btn-link reply-btn" data-comment-id="{{ commentaire.id }}">
+                      <i class="bi bi-reply"></i> Répondre
+                    </button>
+                  {% endif %}
+                  
+                  {% if commentaire.hasReplies %}
+                    <span class="text-muted small">
+                      <i class="bi bi-chat-dots"></i> {{ commentaire.replyCount }} réponse(s)
+                    </span>
+                  {% endif %}
+                  
+                  {% if app.user and (commentaire.auteur and commentaire.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
                     <a href="{{ path('commentaire_edit', {id: commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
-                    <form method="post" action="{{ path('commentaire_delete', {id: commentaire.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ?');">
+                    <form method="post" action="{{ path('commentaire_delete', {id: commentaire.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce commentaire ?');">
                       <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ commentaire.id) }}">
                       <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
                     </form>
                   {% endif %}
                 </div>
+
+                {% if app.user and can_comment %}
+                  <div class="reply-form-wrapper" id="reply-form-{{ commentaire.id }}" style="display: none;">
+                    <form method="post" action="{{ path('commentaire_reply', {parentId: commentaire.id}) }}" class="reply-form">
+                      <input type="hidden" name="_token" value="{{ csrf_token('commentaire_reply') }}">
+                      <textarea name="contenu" class="form-control mb-2" rows="3" placeholder="Écrivez votre réponse..." required minlength="3"></textarea>
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="is_anonymous" id="reply_anonymous_{{ commentaire.id }}" value="1">
+                        <label class="form-check-label" for="reply_anonymous_{{ commentaire.id }}">Publier en anonyme</label>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary">Envoyer</button>
+                        <button type="button" class="btn btn-sm btn-secondary cancel-reply">Annuler</button>
+                      </div>
+                    </form>
+                  </div>
+                {% endif %}
+
+                {% if commentaire.hasReplies %}
+                  <div class="comment-replies">
+                    {% for reply in commentaire.replies %}
+                      <div class="forum-comment-item reply-item reply-level-{{ reply.nestingLevel }}">
+                        <div class="forum-comment-avatar" title="{{ reply.nomAuteur }}">
+                          {{ reply.nomAuteur|slice(0, 1)|upper }}
+                        </div>
+                        <div class="forum-comment-body">
+                          <div class="forum-comment-head">
+                            <span class="forum-comment-author">{{ reply.nomAuteur }}</span>
+                            <span class="forum-comment-date">{{ reply.createdAt|date('d/m/Y à H:i') }}</span>
+                            <span class="text-muted small">
+                              <i class="bi bi-reply"></i> Réponse à {{ reply.parent.nomAuteur }}
+                            </span>
+                          </div>
+                          
+                          {% set replyStyle = '' %}
+                          {% if reply.fontStyle %}
+                            {% if reply.fontStyle == 'bold' %}
+                              {% set replyStyle = replyStyle ~ 'font-weight: bold;' %}
+                            {% elseif reply.fontStyle == 'italic' %}
+                              {% set replyStyle = replyStyle ~ 'font-style: italic;' %}
+                            {% elseif reply.fontStyle == 'underline' %}
+                              {% set replyStyle = replyStyle ~ 'text-decoration: underline;' %}
+                            {% elseif reply.fontStyle == 'strikethrough' %}
+                              {% set replyStyle = replyStyle ~ 'text-decoration: line-through;' %}
+                            {% endif %}
+                          {% endif %}
+                          
+                          {% if reply.fontSize %}
+                            {% if reply.fontSize == 'small' %}
+                              {% set replyStyle = replyStyle ~ 'font-size: 0.85rem;' %}
+                            {% elseif reply.fontSize == 'large' %}
+                              {% set replyStyle = replyStyle ~ 'font-size: 1.15rem;' %}
+                            {% endif %}
+                          {% endif %}
+                          
+                          {% if reply.textColor %}
+                            {% set replyStyle = replyStyle ~ 'color: ' ~ reply.textColor ~ ';' %}
+                          {% endif %}
+                          
+                          <div class="forum-comment-text" 
+                               data-comment-content="{{ reply.id }}"
+                               {% if replyStyle %}style="{{ replyStyle }}"{% endif %}>
+                            {{ reply.contenu|nl2br }}
+                          </div>
+                          
+                          <div class="forum-comment-actions">
+                            <button class="comment-like-btn" data-comment-id="{{ reply.id }}">
+                              <i class="bi bi-heart"></i> <span class="like-count">{{ reply.likeCount }}</span>
+                            </button>
+                            
+                            <button class="btn btn-sm btn-outline-primary translate-btn" 
+                                    data-translate-comment="{{ reply.id }}"
+                                    title="Traduire cette réponse">
+                              <i class="bi bi-translate"></i> 
+                              <span class="d-none d-sm-inline">Traduire</span>
+                            </button>
+                            
+                            {% if app.user and (reply.auteur and reply.auteur.id == app.user.id or is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN')) %}
+                              <a href="{{ path('commentaire_edit', {id: reply.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                              <form method="post" action="{{ path('commentaire_delete', {id: reply.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette réponse ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_commentaire_' ~ reply.id) }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                              </form>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               </div>
             </div>
           {% else %}
-            <p class="forum-comments-empty">Aucun commentaire. Soyez le premier à réagir.</p>
+            <p class="forum-comments-empty">Aucun commentaire pour le moment. Soyez le premier à réagir.</p>
           {% endfor %}
         </div>
 
         {% if totalPages > 1 %}
-          <nav class="forum-comment-pagination">
+          <nav class="forum-comment-pagination" aria-label="Pagination commentaires">
             <ul class="pagination justify-content-center mb-0">
               {% if currentPage > 1 %}
                 <li class="page-item">
@@ -520,9 +655,9 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 Script AI Summary chargé');
+      console.log('🚀 Script complet chargé');
       
-      // Bouton reveal
+      // ===== AI SUMMARY REVEAL BUTTON =====
       const revealBtn = document.getElementById('reveal-summary-btn');
       const summaryCard = document.getElementById('ai-summary-display');
       
@@ -533,7 +668,7 @@
         });
       }
       
-      // Likes localStorage
+      // ===== LIKES LOCALSTORAGE =====
       const likedPublications = JSON.parse(localStorage.getItem('likedPublications') || '{}');
       const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
 
@@ -547,7 +682,7 @@
         if (btn && likedComments[comId]) btn.classList.add('liked');
       });
 
-      // Publication like
+      // ===== PUBLICATION LIKE =====
       document.querySelectorAll('.publication-like-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const publicationId = this.dataset.publicationId;
@@ -568,11 +703,11 @@
               this.classList.toggle('liked', !isLiked);
             }
           })
-          .catch(err => console.error('❌ Error:', err));
+          .catch(err => console.error('Error:', err));
         });
       });
 
-      // Comment like
+      // ===== COMMENT LIKE =====
       document.querySelectorAll('.comment-like-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const commentId = this.dataset.commentId;
@@ -593,11 +728,38 @@
               this.classList.toggle('liked', !isLiked);
             }
           })
-          .catch(err => console.error('❌ Error:', err));
+          .catch(err => console.error('Error:', err));
         });
       });
 
-      // 🤖 GÉNÉRATION RÉSUMÉ IA
+      // ===== REPLY BUTTON HANDLERS =====
+      document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const commentId = this.dataset.commentId;
+          const replyForm = document.getElementById('reply-form-' + commentId);
+          
+          document.querySelectorAll('.reply-form-wrapper').forEach(form => {
+            if (form.id !== 'reply-form-' + commentId) {
+              form.style.display = 'none';
+            }
+          });
+          
+          replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+          
+          if (replyForm.style.display === 'block') {
+            replyForm.querySelector('textarea').focus();
+          }
+        });
+      });
+
+      // ===== CANCEL REPLY BUTTON =====
+      document.querySelectorAll('.cancel-reply').forEach(btn => {
+        btn.addEventListener('click', function() {
+          this.closest('.reply-form-wrapper').style.display = 'none';
+        });
+      });
+
+      // ===== AI SUMMARY GENERATION =====
       function generateSummary(button, language) {
         console.log(`🤖 Génération résumé (${language})`);
         
@@ -617,13 +779,8 @@
             'X-Requested-With': 'XMLHttpRequest'
           }
         })
-        .then(response => {
-          console.log(`📡 Status: ${response.status}`);
-          return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-          console.log('✅ Réponse:', data);
-          
           if (data.success) {
             let summaryCard = document.getElementById('ai-summary-display');
             const container = document.getElementById('ai-generate-container');
@@ -667,7 +824,6 @@
             
             if (container) container.remove();
             
-            // Re-attach events
             document.querySelectorAll('.regenerate-btn').forEach(btn => {
               btn.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -675,7 +831,6 @@
               });
             });
             
-            // Success message
             const alert = document.createElement('div');
             alert.className = 'alert alert-success alert-dismissible fade show';
             alert.innerHTML = `
@@ -686,9 +841,7 @@
             setTimeout(() => alert.remove(), 5000);
             
           } else {
-            console.error('❌ Erreur:', data.error);
             alert(`Erreur : ${data.error || 'Impossible de générer le résumé'}`);
-            
             document.querySelectorAll('[data-language]').forEach(btn => {
               btn.disabled = false;
               if (btn === button) btn.innerHTML = originalHTML;
@@ -696,9 +849,8 @@
           }
         })
         .catch(error => {
-          console.error('❌ Exception:', error);
+          console.error('Erreur:', error);
           alert('Erreur réseau. Vérifiez votre connexion.');
-          
           document.querySelectorAll('[data-language]').forEach(btn => {
             btn.disabled = false;
             if (btn === button) btn.innerHTML = originalHTML;
@@ -706,29 +858,23 @@
         });
       }
       
-      // Attach events
       const generateBtnFr = document.getElementById('generate-summary-fr-btn');
       const generateBtnEn = document.getElementById('generate-summary-en-btn');
       
       if (generateBtnFr) {
-        console.log('✅ Bouton FR trouvé');
         generateBtnFr.addEventListener('click', function(e) {
           e.preventDefault();
-          console.log('🖱️ Clic FR');
           generateSummary(this, 'fr');
         });
       }
       
       if (generateBtnEn) {
-        console.log('✅ Bouton EN trouvé');
         generateBtnEn.addEventListener('click', function(e) {
           e.preventDefault();
-          console.log('🖱️ Clic EN');
           generateSummary(this, 'en');
         });
       }
       
-      // Regenerate buttons
       document.querySelectorAll('.regenerate-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
           e.preventDefault();
