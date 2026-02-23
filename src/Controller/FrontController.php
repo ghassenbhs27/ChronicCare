@@ -51,7 +51,7 @@ final class FrontController extends AbstractController
     #[Route('/connexion', name: 'connexion')]
     public function connexion(): Response
     {
-        return $this->render('front/connexion.html.twig');
+        return $this->redirectToRoute('app_login');
     }
 
     #[Route('/inscription', name: 'inscription')]

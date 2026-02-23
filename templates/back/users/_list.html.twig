@@ -72,6 +72,9 @@
               {% else %}
                 <span class="badge bg-secondary">Inactif</span>
               {% endif %}
+              {% if user.securityBlockedUntil and user.securityBlockedUntil > date() %}
+                <span class="badge bg-danger mt-1">Bloque jusqu'au {{ user.securityBlockedUntil|date('d/m/Y H:i') }}</span>
+              {% endif %}
               {% if approvalStatus == 'pending' %}
                 <span class="badge bg-warning text-dark mt-1">En attente</span>
               {% elseif approvalStatus == 'approved' %}
@@ -93,17 +96,37 @@
                   <i class="bi bi-three-dots-vertical"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" data-no-ajax="1" href="{{ path('app_user_details', { id: user.id }) }}"><i class="bi bi-person-vcard me-2"></i> Details</a></li>
+                  <li><hr class="dropdown-divider"></li>
                   {% if approvalStatus == 'pending' %}
                     <li>
-                      <form method="post" action="{{ path('app_user_approve', { id: user.id }) }}" class="d-inline">
+                      <form method="post" action="{{ path('app_user_approve', { id: user.id }) }}" class="d-inline js-user-post-action">
                         <input type="hidden" name="_token" value="{{ csrf_token('approve' ~ user.id) }}">
                         <button type="submit" class="dropdown-item text-success"><i class="bi bi-check-circle me-2"></i> Approuver</button>
                       </form>
                     </li>
                     <li>
-                      <form method="post" action="{{ path('app_user_reject', { id: user.id }) }}" class="d-inline" onsubmit="return confirm('Refuser cette demande ?');">
+                      <form method="post" action="{{ path('app_user_reject', { id: user.id }) }}" class="d-inline js-user-post-action" data-confirm="Refuser cette demande ?">
                         <input type="hidden" name="_token" value="{{ csrf_token('reject' ~ user.id) }}">
                         <button type="submit" class="dropdown-item text-warning"><i class="bi bi-x-circle me-2"></i> Refuser</button>
+                      </form>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                  {% endif %}
+                  {% if user.securityBlockedUntil and user.securityBlockedUntil > date() %}
+                    <li>
+                      <form method="post" action="{{ path('app_user_unblock', { id: user.id }) }}" class="d-inline js-user-post-action">
+                        <input type="hidden" name="_token" value="{{ csrf_token('unblock' ~ user.id) }}">
+                        <button type="submit" class="dropdown-item text-success"><i class="bi bi-unlock me-2"></i> Debloquer</button>
+                      </form>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                  {% endif %}
+                  {% if mainRole in ['ROLE_PATIENT', 'ROLE_COACH', 'ROLE_NUTRITIONNISTE'] %}
+                    <li>
+                      <form method="post" action="{{ path('app_user_assign_badge_to_user', { id: user.id }) }}" class="d-inline js-user-post-action">
+                        <input type="hidden" name="_token" value="{{ csrf_token('assign_badge_user_' ~ user.id) }}">
+                        <button type="submit" class="dropdown-item text-warning"><i class="bi bi-award me-2"></i> Attribuer badge + recompense</button>
                       </form>
                     </li>
                     <li><hr class="dropdown-divider"></li>
@@ -111,7 +134,7 @@
                   <li><a class="dropdown-item" href="{{ path('app_user_edit', { id: user.id }) }}"><i class="bi bi-pencil me-2"></i> Modifier</a></li>
                   <li><hr class="dropdown-divider"></li>
                   <li>
-                    <form method="post" action="{{ path('app_user_delete', { id: user.id }) }}" class="d-inline" onsubmit="return confirm('Supprimer cet utilisateur ?');">
+                    <form method="post" action="{{ path('app_user_delete', { id: user.id }) }}" class="d-inline js-user-post-action" data-confirm="Supprimer cet utilisateur ?">
                       <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
                       <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i> Supprimer</button>
                     </form>
@@ -139,7 +162,7 @@
   </span>
   {% if users.getTotalItemCount > 0 %}
     <div class="d-flex align-items-center gap-1">
-      {{ knp_pagination_render(users, null, {}, {
+      {{ knp_pagination_render(users, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig', {}, {
         'align': 'right',
         'size': 'small',
         'routeParams': { q: search ?? '', role: roleFilter ?? '', status: statusFilter ?? '', sort: currentSort ?? 'createdAt', order: currentOrder ?? 'DESC' }

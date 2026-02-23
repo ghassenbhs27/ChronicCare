@@ -37,6 +37,15 @@ class UserChecker implements UserCheckerInterface
             );
         }
 
+        if ($user->isTemporarilyBlocked()) {
+            throw new CustomUserMessageAccountStatusException(
+                sprintf(
+                    'Compte temporairement bloque jusqu a %s suite a une activite suspecte.',
+                    $user->getSecurityBlockedUntil()?->format('d/m/Y H:i')
+                )
+            );
+        }
+
         if ($user->getRoles() === []) {
             throw new CustomUserMessageAccountStatusException(
                 'Votre compte n a pas encore de role attribue. Un administrateur doit valider votre inscription.'

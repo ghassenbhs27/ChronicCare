@@ -164,9 +164,71 @@
         margin-top: 10px;
       }
 
-      .cc-filter-loading {
+    .cc-filter-loading {
         opacity: .75;
         transition: opacity .12s ease;
+      }
+
+      .badge-energy-modal .modal-content {
+        border: 0;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 28px 70px rgba(15, 23, 42, .28);
+        background: linear-gradient(150deg, #0f172a 0%, #1e293b 55%, #334155 100%);
+        color: #f8fafc;
+      }
+
+      .badge-energy-modal .modal-header {
+        border: 0;
+        background: linear-gradient(90deg, #f59e0b 0%, #f97316 50%, #ef4444 100%);
+        color: #fff;
+        padding: 16px 18px;
+      }
+
+      .badge-energy-modal .modal-title {
+        font-weight: 900;
+        letter-spacing: .4px;
+      }
+
+      .badge-energy-modal .modal-body {
+        padding: 20px 18px 12px;
+      }
+
+      .badge-energy-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(245, 158, 11, .18);
+        color: #fde68a;
+        border: 1px solid rgba(245, 158, 11, .45);
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: .85rem;
+        padding: 6px 12px;
+        margin-bottom: 12px;
+      }
+
+      .badge-energy-highlight {
+        color: #facc15;
+        font-weight: 800;
+      }
+
+      .badge-energy-modal .modal-footer {
+        border: 0;
+        padding: 14px 18px 18px;
+      }
+
+      .badge-energy-modal .btn-energy {
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+        color: #fff;
+        font-weight: 800;
+        padding: 9px 18px;
+      }
+
+      .badge-energy-modal .btn-energy:hover {
+        filter: brightness(1.06);
       }
     </style>
 
@@ -289,6 +351,41 @@
 </div>
 
 <script src="{{ asset('assets/js/profile-modal.js') }}"></script>
+
+{% if app.user and app.user.mostActive and app.request.query.get('badge') == '1' %}
+<div class="modal fade badge-energy-modal" id="activityBadgeCongratsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-award-fill me-2"></i>Felicitations
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="badge-energy-chip">
+          <i class="bi bi-lightning-charge-fill"></i>
+          Performance exceptionnelle
+        </div>
+        <p class="mb-2">Bravo <span class="badge-energy-highlight">{{ app.user.prenom }}</span> !</p>
+        <p class="mb-2">Vous etes <span class="badge-energy-highlight">{{ app.user.activityBadge ?: 'Utilisateur le plus actif' }}</span>.</p>
+        <p class="mb-0">Votre recompense: <span class="badge-energy-highlight">{{ app.user.activityReward ?: 'Bon d achat de 50 DT sur la boutique Chronic Care' }}</span>.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-energy" data-bs-dismiss="modal">Super</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('activityBadgeCongratsModal');
+    if (!el || typeof bootstrap === 'undefined') return;
+    var modal = new bootstrap.Modal(el);
+    modal.show();
+  });
+</script>
+{% endif %}
 
 </body>
 </html>

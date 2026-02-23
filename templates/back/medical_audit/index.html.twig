@@ -1,0 +1,163 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Audit medical - Chronic Care{% endblock %}
+{% block page_title %}Audit medical{% endblock %}
+{% block page_subtitle %}Consultations et modifications des dossiers patients{% endblock %}
+
+{% block body %}
+{% set base_params = { q: search|default(''), action: action|default(''), actor_role: actor_role|default(''), patient_role: patient_role|default('') } %}
+<div class="container-fluid">
+  <form method="get" action="{{ path('admin_medical_audit_index') }}" class="row g-2 mb-3">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="hidden" name="dir" value="{{ dir }}">
+    <div class="col-sm-12 col-md-3">
+      <input
+        type="text"
+        name="q"
+        class="form-control form-control-sm"
+        placeholder="Rechercher patient, acteur, IP, action..."
+        value="{{ search|default('') }}"
+      >
+    </div>
+    <div class="col-auto">
+      <select name="action" class="form-select form-select-sm">
+        <option value="" {{ action == '' ? 'selected' : '' }}>Toutes actions</option>
+        <option value="consultation" {{ action == 'consultation' ? 'selected' : '' }}>Consultation</option>
+        <option value="creation" {{ action == 'creation' ? 'selected' : '' }}>Creation</option>
+        <option value="modification" {{ action == 'modification' ? 'selected' : '' }}>Modification</option>
+        <option value="ajout_maladie" {{ action == 'ajout_maladie' ? 'selected' : '' }}>Ajout maladie</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="actor_role" class="form-select form-select-sm">
+        <option value="" {{ actor_role == '' ? 'selected' : '' }}>Tous roles acteur</option>
+        <option value="ROLE_ADMIN" {{ actor_role == 'ROLE_ADMIN' ? 'selected' : '' }}>Acteur Admin</option>
+        <option value="ROLE_PATIENT" {{ actor_role == 'ROLE_PATIENT' ? 'selected' : '' }}>Acteur Patient</option>
+        <option value="ROLE_COACH" {{ actor_role == 'ROLE_COACH' ? 'selected' : '' }}>Acteur Coach</option>
+        <option value="ROLE_NUTRITIONNISTE" {{ actor_role == 'ROLE_NUTRITIONNISTE' ? 'selected' : '' }}>Acteur Nutritionniste</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="patient_role" class="form-select form-select-sm">
+        <option value="" {{ patient_role == '' ? 'selected' : '' }}>Tous roles patient</option>
+        <option value="ROLE_ADMIN" {{ patient_role == 'ROLE_ADMIN' ? 'selected' : '' }}>Patient Admin</option>
+        <option value="ROLE_PATIENT" {{ patient_role == 'ROLE_PATIENT' ? 'selected' : '' }}>Patient Patient</option>
+        <option value="ROLE_COACH" {{ patient_role == 'ROLE_COACH' ? 'selected' : '' }}>Patient Coach</option>
+        <option value="ROLE_NUTRITIONNISTE" {{ patient_role == 'ROLE_NUTRITIONNISTE' ? 'selected' : '' }}>Patient Nutritionniste</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+    </div>
+    <div class="col-auto">
+      <a href="{{ path('admin_medical_audit_index') }}" class="btn btn-outline-secondary btn-sm">Reinitialiser</a>
+    </div>
+  </form>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              {% set next_dir_date = sort == 'createdAt' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_medical_audit_index', base_params|merge({ sort: 'createdAt', dir: next_dir_date, page: 1 })) }}">
+                  Date {% if sort == 'createdAt' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_action = sort == 'action' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_medical_audit_index', base_params|merge({ sort: 'action', dir: next_dir_action, page: 1 })) }}">
+                  Action {% if sort == 'action' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_patient = sort == 'patientEmail' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_medical_audit_index', base_params|merge({ sort: 'patientEmail', dir: next_dir_patient, page: 1 })) }}">
+                  Patient {% if sort == 'patientEmail' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_actor = sort == 'actorEmail' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_medical_audit_index', base_params|merge({ sort: 'actorEmail', dir: next_dir_actor, page: 1 })) }}">
+                  Acteur {% if sort == 'actorEmail' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_role = sort == 'actorRole' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_medical_audit_index', base_params|merge({ sort: 'actorRole', dir: next_dir_role, page: 1 })) }}">
+                  Profil {% if sort == 'actorRole' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_disease = sort == 'targetDisease' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_medical_audit_index', base_params|merge({ sort: 'targetDisease', dir: next_dir_disease, page: 1 })) }}">
+                  Maladie cible {% if sort == 'targetDisease' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              <th>IP</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+              {% set patient = log.dossier and log.dossier.user ? log.dossier.user : null %}
+              <tr>
+                <td class="small">{{ log.createdAt|date('d/m/Y H:i') }}</td>
+                <td><span class="badge bg-secondary">{{ log.action|upper }}</span></td>
+                <td class="small">
+                  {% if patient %}
+                    {{ patient.email }}<br>
+                    <span class="text-muted">{{ patient.prenom }} {{ patient.nom }}</span>
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td class="small">{{ log.actorEmail ?: (log.actor ? log.actor.email : 'N/A') }}</td>
+                <td class="small">{{ log.actorRole ?: '-' }}</td>
+                <td class="small">{{ log.targetDisease ?: '-' }}</td>
+                <td class="small">{{ log.ipAddress ?: '-' }}</td>
+                <td class="small">
+                  {% if log.changedFields %}
+                    <details>
+                      <summary>Champs modifies</summary>
+                      <pre class="mb-0">{{ log.changedFields|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                    </details>
+                  {% endif %}
+                  {% if log.context %}
+                    <details class="mt-1">
+                      <summary>Contexte</summary>
+                      <pre class="mb-0">{{ log.context|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                    </details>
+                  {% endif %}
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="8" class="text-center text-muted py-4">Aucun audit trouve.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer bg-white border-0 d-flex flex-wrap justify-content-between align-items-center py-2 px-3">
+      <span class="small text-muted">
+        {% if logs.getTotalItemCount > 0 %}
+          Affichage {{ logs.getItemNumberPerPage * (logs.getCurrentPageNumber - 1) + 1 }}
+          a {{ min(logs.getItemNumberPerPage * logs.getCurrentPageNumber, logs.getTotalItemCount) }}
+          sur {{ logs.getTotalItemCount }} audit(s)
+        {% else %}
+          0 audit
+        {% endif %}
+      </span>
+      {% if logs.getTotalItemCount > 0 %}
+        {{ knp_pagination_render(logs, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig', {}, {
+          routeParams: { q: search|default(''), action: action|default(''), actor_role: actor_role|default(''), patient_role: patient_role|default(''), sort: sort, dir: dir }
+        }) }}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

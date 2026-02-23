@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\RDV;
+use App\Entity\SecurityAlert;
 use App\Entity\User;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -137,4 +138,50 @@ class NotificationService
             // Ne pas bloquer l'inscription si l'email admin echoue.
         }
     }
+
+    /**
+     * @param string[] $adminEmails
+     */
+    public function sendAdminSecurityAlert(SecurityAlert $alert, array $adminEmails): void
+    {
+        $adminEmails = array_values(array_unique(array_filter($adminEmails)));
+        if ($adminEmails === []) {
+            return;
+        }
+
+        $subject = sprintf(
+            '[SECURITY][%s][%s] %s',
+            strtoupper($alert->getSeverity()),
+            strtoupper($alert->getAlertType()),
+            $alert->getEventType()
+        );
+
+        $userEmail = (string) ($alert->getUser()?->getEmail() ?? 'unknown');
+        $text = sprintf(
+            "Alerte de securite detectee.\n\nEvenement: %s\nCategorie: %s\nStatut: %s\nSeverite: %s\nRisk score: %d\nUtilisateur: %s\nIP: %s\nDate: %s\nMessage: %s\n\nContexte: %s",
+            $alert->getEventType(),
+            $alert->getAlertType(),
+            $alert->getAlertStatus(),
+            $alert->getSeverity(),
+            $alert->getRiskScore(),
+            $userEmail,
+            (string) ($alert->getIpAddress() ?? 'n/a'),
+            $alert->getCreatedAt()->format('Y-m-d H:i:s'),
+            $alert->getMessage(),
+            json_encode($alert->getContext(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}'
+        );
+
+        $email = (new Email())
+            ->from('no-reply@chroniccare.local')
+            ->to(...$adminEmails)
+            ->subject($subject)
+            ->text($text);
+
+        try {
+            $this->mailer->send($email);
+        } catch (TransportExceptionInterface) {
+            // Ne pas bloquer le flux en cas d'echec mail.
+        }
+    }
+
 }
