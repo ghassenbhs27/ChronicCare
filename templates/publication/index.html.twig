@@ -5,6 +5,37 @@
 {% block stylesheets %}
   {{ parent() }}
   <link href="{{ asset('assets/css/forum.css') }}" rel="stylesheet">
+  <style>
+    /* Translation button styles */
+    .translate-btn {
+      font-size: 0.8rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    
+    .translate-btn.translated {
+      background: #10b981;
+      border-color: #10b981;
+      color: white;
+    }
+    
+    .translate-btn.translating {
+      opacity: 0.7;
+      cursor: wait;
+    }
+    
+    .translate-lang-badge {
+      background: rgba(255,255,255,0.25);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+  </style>
 {% endblock %}
 
 {% block body %}
@@ -80,14 +111,19 @@
         {% for publication in publications %}
           <div class="col-lg-6">
             <article class="card forum-pub-card">
+              {% if publication.imageUrl %}
+                <div class="forum-pub-image-wrap" style="height: 200px; overflow: hidden; background: #f0f0f0;">
+                  <img src="{{ asset('uploads/forum/' ~ publication.imageUrl) }}" alt="{{ publication.titre }}" class="w-100 h-100 object-fit-cover" style="object-fit: cover;">
+                </div>
+              {% endif %}
               <div class="card-body">
                 <div class="forum-pub-header">
-                  <h2 class="forum-pub-title">{{ publication.titre }}</h2>
+                  <h2 class="forum-pub-title" data-publication-title="{{ publication.id }}">{{ publication.titre }}</h2>
                   <span class="forum-pub-badge badge bg-{{ publication.statut == 'publie' ? 'success' : 'warning' }} text-dark">
                     {{ publication.statut == 'publie' ? 'Publié' : 'Brouillon' }}
                   </span>
                 </div>
-                <p class="forum-pub-excerpt">{{ publication.contenu|striptags|length > 160 ? (publication.contenu|striptags|slice(0, 160) ~ '…') : publication.contenu|striptags }}</p>
+                <p class="forum-pub-excerpt" data-publication-content="{{ publication.id }}">{{ publication.contenu|striptags|length > 160 ? (publication.contenu|striptags|slice(0, 160) ~ '…') : publication.contenu|striptags }}</p>
                 <div class="forum-pub-categ">
                   <span class="forum-categ-badge">
                     {% if publication.categorie == 'nutrition' %}Nutrition
@@ -104,6 +140,11 @@
                   <span><i class="bi bi-chat-dots"></i> {{ publication.commentaires|length }}</span>
                 </div>
                 <div class="forum-pub-actions">
+                  <button class="btn btn-sm btn-outline-secondary translate-btn" 
+                          data-translate-publication="{{ publication.id }}"
+                          title="Traduire ce contenu">
+                    <i class="bi bi-translate"></i> <span class="d-none d-sm-inline">Traduire</span>
+                  </button>
                   <a href="{{ path('publication_show', {id: publication.id}) }}" class="btn btn-primary btn-sm">Lire et commenter</a>
                   {% if is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE') or is_granted('ROLE_ADMIN') %}
                     <a href="{{ path('publication_edit', {id: publication.id}) }}" class="btn btn-outline-secondary btn-sm">Modifier</a>
@@ -137,4 +178,6 @@
       {% endif %}
     </div>
   </main>
+
+  <script src="{{ asset('assets/js/translation.js') }}"></script>
 {% endblock %}

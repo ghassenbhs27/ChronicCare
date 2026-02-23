@@ -69,24 +69,23 @@ class Publication
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $imageUrl = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $resume = null;
+
     /**
      * @var Collection<int, Commentaire>
      */
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'publication', orphanRemoval: true)]
     private Collection $commentaires;
 
-    /**
-     * @var Collection<int, PublicationLike>
-     */
-    #[ORM\OneToMany(targetEntity: PublicationLike::class, mappedBy: 'publication', orphanRemoval: true)]
-    private Collection $likes;
-
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->statut = self::STATUT_PUBLIE;
         $this->commentaires = new ArrayCollection();
-        $this->likes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -158,6 +157,14 @@ class Publication
         $this->nbLikes++;
     }
 
+    public function decrementLikes(): self
+    {
+        if ($this->nbLikes > 0) {
+            $this->nbLikes--;
+        }
+        return $this;
+    }
+
     public function setNbVues(int $nbVues): self
     {
         $this->nbVues = $nbVues;
@@ -211,26 +218,25 @@ class Publication
         return $this;
     }
 
-    /**
-     * @return Collection<int, PublicationLike>
-     */
-    public function getLikes(): Collection
+    public function getImageUrl(): ?string
     {
-        return $this->likes;
+        return $this->imageUrl;
     }
 
-    public function isLikedByUser(?User $user): bool
+    public function setImageUrl(?string $imageUrl): self
     {
-        if ($user === null) {
-            return false;
-        }
+        $this->imageUrl = $imageUrl;
+        return $this;
+    }
 
-        foreach ($this->likes as $like) {
-            if ($like->getUser() === $user) {
-                return true;
-            }
-        }
+    public function getResume(): ?string
+    {
+        return $this->resume;
+    }
 
-        return false;
+    public function setResume(?string $resume): self
+    {
+        $this->resume = $resume;
+        return $this;
     }
 }

@@ -3,11 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Commentaire;
-use App\Entity\CommentaireLike;
 use App\Entity\Publication;
+use App\Form\CommentaireFormType;
 use App\Repository\CommentaireRepository;
-use App\Repository\CommentaireLikeRepository;
 use App\Repository\PublicationRepository;
+use App\Service\CommentTextFormatterService;
+use App\Service\ForumNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,13 +20,19 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[Route('/commentaire')]
 class CommentaireController extends AbstractController
 {
+    public function __construct(
+        private ForumNotificationService $forumNotificationService
+    ) {
+    }
+
     #[Route('/add/{publicationId}', name: 'commentaire_add', requirements: ['publicationId' => '\\d+'], methods: ['POST'])]
     public function add(
         int $publicationId,
         Request $request,
         PublicationRepository $publicationRepository,
         EntityManagerInterface $em,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        CommentTextFormatterService $formatterService
     ): Response {
         $publication = $publicationRepository->find($publicationId);
 
@@ -48,6 +55,22 @@ class CommentaireController extends AbstractController
         $commentaire->setPublication($publication);
         $commentaire->setIsAnonymous($request->request->getBoolean('is_anonymous'));
 
+        // Set rich text formatting
+        $fontStyle = $request->request->get('fontStyle');
+        if ($fontStyle && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
+            $commentaire->setFontStyle($fontStyle);
+        }
+
+        $fontSize = $request->request->get('fontSize');
+        if ($fontSize && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
+            $commentaire->setFontSize($fontSize);
+        }
+
+        $textColor = $request->request->get('textColor');
+        if ($textColor) {
+            $commentaire->setTextColor($textColor);
+        }
+
         if ($this->getUser()) {
             $commentaire->setAuteur($this->getUser());
         }
@@ -63,8 +86,13 @@ class CommentaireController extends AbstractController
         $em->persist($commentaire);
         $em->flush();
 
+        // 🔔 Créer une notification pour l'auteur de la publication
+        $this->forumNotificationService->notifyNewCommentaire($commentaire);
+
         $this->addFlash('success', 'Commentaire ajoute avec succes !');
-        return $this->redirectToRoute('publication_show', ['id' => $publicationId]);
+        return $this->redirect(
+            $this->generateUrl('publication_show', ['id' => $publicationId]) . '#comments'
+        );
     }
 
     #[Route('/edit/{id}', name: 'commentaire_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
@@ -81,8 +109,7 @@ class CommentaireController extends AbstractController
             throw $this->createNotFoundException('Commentaire non trouve');
         }
 
-        // Seul l'auteur peut modifier son propre commentaire (pas le coach, pas l'admin)
-        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur()->getId() === $this->getUser()->getId();
+        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur() === $this->getUser();
         if (!$isAuthor && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Vous ne pouvez modifier que vos propres commentaires.');
         }
@@ -100,6 +127,25 @@ class CommentaireController extends AbstractController
             }
 
             $commentaire->setContenu(trim((string) $request->request->get('contenu', '')));
+            
+            // Update rich text formatting
+            $fontStyle = $request->request->get('fontStyle');
+            if ($fontStyle && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
+                $commentaire->setFontStyle($fontStyle);
+            }
+
+            $fontSize = $request->request->get('fontSize');
+            if ($fontSize && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
+                $commentaire->setFontSize($fontSize);
+            }
+
+            $textColor = $request->request->get('textColor');
+            if ($textColor) {
+                $commentaire->setTextColor($textColor);
+            }
+
+            // Update edit timestamp
+            $commentaire->setUpdatedAt(new \DateTimeImmutable());
 
             $violations = $validator->validate($commentaire);
             if (count($violations) > 0) {
@@ -112,7 +158,7 @@ class CommentaireController extends AbstractController
             $em->flush();
             $this->addFlash('success', 'Commentaire modifie avec succes !');
             return $this->redirect(
-                $this->generateUrl('publication_show', ['id' => $publication->getId()]) . '#comments'
+                $this->generateUrl('publication_show', ['id' => $publication->getId()]) . '#comment-' . $commentaire->getId()
             );
         }
 
@@ -132,60 +178,71 @@ class CommentaireController extends AbstractController
         $commentaire = $repository->find($id);
 
         if (!$commentaire) {
-            throw $this->createNotFoundException('Commentaire non trouve');
+            $this->addFlash('error', 'Ce commentaire n\'existe plus ou a déjà été supprimé.');
+            
+            // Try to get publication ID from referer
+            $referer = $request->headers->get('referer');
+            if ($referer && preg_match('/\/publication\/show\/(\d+)/', $referer, $matches)) {
+                return $this->redirectToRoute('publication_show', ['id' => (int)$matches[1]]);
+            }
+            
+            // Fallback to publication list
+            return $this->redirectToRoute('publication_index');
         }
 
-        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur()->getId() === $this->getUser()->getId();
+        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur() === $this->getUser();
         if (!$isAuthor && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Vous ne pouvez supprimer que vos propres commentaires.');
         }
 
+        $publicationId = $commentaire->getPublication()->getId();
+
         if (!$this->isCsrfTokenValid('delete_commentaire_' . $commentaire->getId(), (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Jeton de securite invalide.');
-            return $this->redirectToRoute('publication_show', ['id' => $commentaire->getPublication()->getId()]);
+            return $this->redirectToRoute('publication_show', ['id' => $publicationId]);
         }
-
-        $publicationId = $commentaire->getPublication()->getId();
 
         $em->remove($commentaire);
         $em->flush();
 
         $this->addFlash('success', 'Commentaire supprime avec succes !');
-        return $this->redirectToRoute('publication_show', ['id' => $publicationId]);
+        return $this->redirect(
+            $this->generateUrl('publication_show', ['id' => $publicationId]) . '#comments'
+        );
     }
 
     #[Route('/like/{id}', name: 'commentaire_like', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function like(
         int $id,
+        Request $request,
         CommentaireRepository $repository,
-        CommentaireLikeRepository $likeRepository,
         EntityManagerInterface $em
     ): Response {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->json(['success' => false, 'error' => 'Vous devez être connecté pour liker.'], 403);
-        }
-
         $commentaire = $repository->find($id);
+
         if (!$commentaire) {
             return $this->json(['success' => false, 'error' => 'Commentaire non trouve'], 404);
         }
 
-        $existingLike = $likeRepository->findByUserAndCommentaire($user, $commentaire);
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['success' => false, 'error' => 'Requete invalide'], 400);
+        }
 
-        if ($existingLike) {
-            // Unlike: remove the like
-            $em->remove($existingLike);
-            $commentaire->decrementLikes();
-            $action = 'unliked';
-        } else {
-            // Like: add a new like
-            $like = new CommentaireLike();
-            $like->setUser($user);
-            $like->setCommentaire($commentaire);
-            $em->persist($like);
+        $action = $data['action'] ?? 'like';
+        if (!in_array($action, ['like', 'unlike'], true)) {
+            return $this->json(['success' => false, 'error' => 'Action invalide'], 400);
+        }
+
+        if ($action === 'like') {
             $commentaire->incrementLikes();
-            $action = 'liked';
+            
+            // 🔔 Créer une notification pour l'auteur du commentaire
+            if ($this->getUser()) {
+                $this->forumNotificationService->notifyCommentaireLike($commentaire, $this->getUser());
+            }
+        } else {
+            $commentaire->decrementLikes();
         }
 
         $em->flush();
@@ -194,7 +251,87 @@ class CommentaireController extends AbstractController
             'success' => true,
             'likes' => $commentaire->getLikeCount(),
             'action' => $action,
-            'hasLiked' => $action === 'liked',
         ]);
+    }
+
+    /**
+     * Add a reply to an existing comment
+     */
+    #[Route('/reply/{parentId}', name: 'commentaire_reply', requirements: ['parentId' => '\\d+'], methods: ['POST'])]
+    public function reply(
+        int $parentId,
+        Request $request,
+        CommentaireRepository $commentaireRepo,
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
+    ): Response {
+        $parent = $commentaireRepo->find($parentId);
+        
+        if (!$parent) {
+            throw $this->createNotFoundException('Commentaire parent non trouvé');
+        }
+
+        // Verify CSRF token
+        if (!$this->isCsrfTokenValid('commentaire_reply', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide');
+            return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
+        }
+
+        // Check if publication is published
+        if ($parent->getPublication()->getStatut() !== Publication::STATUT_PUBLIE) {
+            $this->addFlash('error', 'Les réponses sont désactivées pour les publications en brouillon.');
+            return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
+        }
+
+        $contenu = trim((string) $request->request->get('contenu', ''));
+        
+        if (strlen($contenu) < 3) {
+            $this->addFlash('error', 'Le commentaire doit contenir au moins 3 caractères');
+            return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
+        }
+
+        $reply = new Commentaire();
+        $reply->setPublication($parent->getPublication());
+        $reply->setParent($parent);
+        $reply->setContenu($contenu);
+        $reply->setAuteur($this->getUser());
+        $reply->setIsAnonymous($request->request->getBoolean('is_anonymous'));
+
+        // Handle rich text formatting if present
+        $fontStyle = $request->request->get('fontStyle');
+        if ($fontStyle && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
+            $reply->setFontStyle($fontStyle);
+        }
+
+        $fontSize = $request->request->get('fontSize');
+        if ($fontSize && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
+            $reply->setFontSize($fontSize);
+        }
+
+        $textColor = $request->request->get('textColor');
+        if ($textColor) {
+            $reply->setTextColor($textColor);
+        }
+
+        // Validate the reply
+        $violations = $validator->validate($reply);
+        if (count($violations) > 0) {
+            foreach ($violations as $violation) {
+                $this->addFlash('error', $violation->getMessage());
+            }
+            return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
+        }
+
+        $em->persist($reply);
+        $em->flush();
+
+        // Notify parent comment author
+        $this->forumNotificationService->notifyNewCommentaire($reply);
+
+        $this->addFlash('success', 'Réponse ajoutée avec succès');
+        return $this->redirect(
+            $this->generateUrl('publication_show', ['id' => $parent->getPublication()->getId()]) 
+            . '#comment-' . $parent->getId()
+        );
     }
 }

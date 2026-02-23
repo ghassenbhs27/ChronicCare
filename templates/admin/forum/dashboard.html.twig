@@ -1,0 +1,424 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Forum Dashboard - Chronic Care{% endblock %}
+{% block page_title %}Forum Dashboard{% endblock %}
+{% block page_subtitle %}Statistiques et gestion du forum{% endblock %}
+
+{% block body %}
+<div class="forum-dashboard">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="dashboard-title mb-1">Forum Dashboard</h1>
+      <p class="dashboard-subtitle text-muted mb-0">Vue d'ensemble des publications et commentaires</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ path('publication_index') }}" class="btn btn-outline-primary" target="_blank">
+        <i class="bi bi-eye me-1"></i> Voir le forum
+      </a>
+      <button type="button" class="btn btn-light border btn-dashboard-refresh" title="Actualiser" aria-label="Actualiser">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+    </div>
+  </div>
+
+  {# 4 KPI Cards #}
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 dashboard-kpi" data-kpi="total_publications">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Publications</p>
+              <h3 class="mb-0 fw-bold kpi-value">{{ totalPublications|number_format(0, '', ' ') }}</h3>
+              <small class="text-muted kpi-change">Total</small>
+            </div>
+            <div class="kpi-icon bg-primary bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-file-text text-primary"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 dashboard-kpi" data-kpi="total_comments">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Commentaires</p>
+              <h3 class="mb-0 fw-bold kpi-value">{{ totalComments|number_format(0, '', ' ') }}</h3>
+              <small class="text-muted kpi-change">Total</small>
+            </div>
+            <div class="kpi-icon bg-success bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-chat-left-text text-success"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 dashboard-kpi" data-kpi="published">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Publiées</p>
+              <h3 class="mb-0 fw-bold kpi-value">{{ publishedCount|number_format(0, '', ' ') }}</h3>
+              <small class="text-success kpi-change"><i class="bi bi-check-circle"></i> Actives</small>
+            </div>
+            <div class="kpi-icon bg-info bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-eye text-info"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100 dashboard-kpi" data-kpi="drafts">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted small mb-1">Brouillons</p>
+              <h3 class="mb-0 fw-bold kpi-value">{{ draftCount|number_format(0, '', ' ') }}</h3>
+              <small class="text-warning kpi-change"><i class="bi bi-eye-slash"></i> Cachées</small>
+            </div>
+            <div class="kpi-icon bg-warning bg-opacity-10 rounded-3 p-3">
+              <i class="bi bi-file-earmark text-warning"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Activity Stats Cards #}
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Activité quotidienne</h5>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="d-flex align-items-center gap-2">
+                <div class="activity-icon activity-blue rounded-circle flex-shrink-0">
+                  <i class="bi bi-file-text"></i>
+                </div>
+                <div>
+                  <div class="small text-muted">Publications</div>
+                  <div class="fw-bold fs-4">{{ statsDaily.publications }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="d-flex align-items-center gap-2">
+                <div class="activity-icon activity-green rounded-circle flex-shrink-0">
+                  <i class="bi bi-chat-left-text"></i>
+                </div>
+                <div>
+                  <div class="small text-muted">Commentaires</div>
+                  <div class="fw-bold fs-4">{{ statsDaily.comments }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <small class="text-muted mt-2 d-block">Dernières 24 heures</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Activité hebdomadaire</h5>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="d-flex align-items-center gap-2">
+                <div class="activity-icon activity-purple rounded-circle flex-shrink-0">
+                  <i class="bi bi-file-text"></i>
+                </div>
+                <div>
+                  <div class="small text-muted">Publications</div>
+                  <div class="fw-bold fs-4">{{ statsWeekly.publications }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="d-flex align-items-center gap-2">
+                <div class="activity-icon activity-orange rounded-circle flex-shrink-0">
+                  <i class="bi bi-chat-left-text"></i>
+                </div>
+                <div>
+                  <div class="small text-muted">Commentaires</div>
+                  <div class="fw-bold fs-4">{{ statsWeekly.comments }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <small class="text-muted mt-2 d-block">7 derniers jours</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Charts #}
+  <div class="row g-3 mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Activité du forum (7 derniers jours)</h5>
+          <div class="chart-container" style="height: 280px;">
+            <canvas id="chartForumActivity"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Top publications</h5>
+          <div class="list-group list-group-flush overflow-auto" style="max-height: 280px;">
+            {% for pub in topByViews|slice(0, 5) %}
+              <div class="list-group-item border-0 px-0 py-2">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="fw-medium text-truncate">{{ pub.titre }}</div>
+                    <small class="text-muted">
+                      <i class="bi bi-eye me-1"></i>{{ pub.nbVues }} vues
+                      <i class="bi bi-heart ms-2 me-1"></i>{{ pub.nbLikes }}
+                      <i class="bi bi-chat ms-2 me-1"></i>{{ pub.commentaires|length }}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <p class="text-muted small mb-0">Aucune publication.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Recent content #}
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">Dernières publications</h5>
+            <a href="{{ path('admin_forum_publications') }}" class="btn btn-sm btn-outline-primary">
+              Voir tout
+            </a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Titre</th>
+                  <th>Auteur</th>
+                  <th>Date</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pub in recentPublications %}
+                <tr>
+                  <td class="fw-semibold">
+                    <a href="{{ path('admin_forum_publication_show', {id: pub.id}) }}" class="text-decoration-none">
+                      {{ pub.titre|length > 40 ? pub.titre|slice(0, 40) ~ '...' : pub.titre }}
+                    </a>
+                  </td>
+                  <td>{{ pub.auteur ? pub.auteur.fullName : 'Anonyme' }}</td>
+                  <td>{{ pub.createdAt|date('d/m/Y H:i') }}</td>
+                  <td>
+                    <span class="badge {{ pub.statut == 'publie' ? 'bg-success' : 'bg-secondary' }}">
+                      {{ pub.statut }}
+                    </span>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-muted text-center py-4">Aucune publication.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">Derniers commentaires</h5>
+            <a href="{{ path('admin_forum_comments') }}" class="btn btn-sm btn-outline-primary">
+              Voir tout
+            </a>
+          </div>
+          <div class="list-group list-group-flush overflow-auto" style="max-height: 260px;">
+            {% for comment in recentComments %}
+              <div class="list-group-item border-0 px-0 py-2">
+                <div class="d-flex align-items-start gap-2">
+                  <span class="activity-icon activity-green rounded-circle flex-shrink-0">
+                    <i class="bi bi-chat-left-text"></i>
+                  </span>
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="fw-medium">{{ comment.nomAuteur }}</div>
+                    <small class="text-muted d-block text-truncate">
+                      {{ comment.contenu|length > 60 ? comment.contenu|slice(0, 60) ~ '...' : comment.contenu }}
+                    </small>
+                    <div class="small text-muted">
+                      Sur: {{ comment.publication.titre|slice(0, 30) }}{% if comment.publication.titre|length > 30 %}...{% endif %}
+                      - {{ comment.createdAt|date('d/m/Y H:i') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <p class="text-muted small mb-0">Aucun commentaire.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Quick actions #}
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="mb-3">Accès rapides</h6>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{{ path('admin_forum_publications') }}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-file-text me-1"></i> Gérer les publications
+            </a>
+            <a href="{{ path('admin_forum_comments') }}" class="btn btn-outline-success btn-sm">
+              <i class="bi bi-chat-left-text me-1"></i> Gérer les commentaires
+            </a>
+            <a href="{{ path('admin_forum_ranking') }}" class="btn btn-outline-warning btn-sm">
+              <i class="bi bi-trophy me-1"></i> Classement publications
+            </a>
+            <a href="{{ path('publication_index') }}" class="btn btn-outline-info btn-sm" target="_blank">
+              <i class="bi bi-eye me-1"></i> Voir le forum public
+            </a>
+            <a href="{{ path('admin_dashboard') }}" class="btn btn-outline-dark btn-sm">
+              <i class="bi bi-speedometer2 me-1"></i> Dashboard principal
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+  const DATA = {
+    chartLabels: {{ chartLabels|json_encode|raw }},
+    chartPublications: {{ chartPublications|json_encode|raw }},
+    chartComments: {{ chartComments|json_encode|raw }},
+    totalPublications: {{ totalPublications }},
+    totalComments: {{ totalComments }}
+  };
+
+  const API_URL = '{{ path('admin_forum_api_stats') }}';
+  const REFRESH_INTERVAL = 60000;
+
+  let chartForumActivity;
+
+  function initCharts() {
+    const opts = { responsive: true, maintainAspectRatio: false };
+
+    chartForumActivity = new Chart(document.getElementById('chartForumActivity'), {
+      type: 'line',
+      data: {
+        labels: DATA.chartLabels,
+        datasets: [
+          {
+            label: 'Publications',
+            data: DATA.chartPublications,
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderColor: 'rgba(59, 130, 246, 0.8)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true
+          },
+          {
+            label: 'Commentaires',
+            data: DATA.chartComments,
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderColor: 'rgba(34, 197, 94, 0.8)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        ...opts,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1 }
+          }
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          }
+        }
+      }
+    });
+  }
+
+  function updateFromApi(json) {
+    if (json.totalPublications != null) {
+      document.querySelector('[data-kpi="total_publications"] .kpi-value').textContent = 
+        Number(json.totalPublications).toLocaleString('fr-FR');
+    }
+    if (json.totalComments != null) {
+      document.querySelector('[data-kpi="total_comments"] .kpi-value').textContent = 
+        Number(json.totalComments).toLocaleString('fr-FR');
+    }
+    if (json.chartPublications && json.chartComments && chartForumActivity) {
+      chartForumActivity.data.datasets[0].data = json.chartPublications;
+      chartForumActivity.data.datasets[1].data = json.chartComments;
+      chartForumActivity.data.labels = json.chartLabels;
+      chartForumActivity.update();
+    }
+  }
+
+  function refreshDashboard() {
+    fetch(API_URL)
+      .then(r => r.json())
+      .then(updateFromApi)
+      .catch(() => {});
+  }
+
+  document.querySelector('.btn-dashboard-refresh')?.addEventListener('click', function() {
+    this.querySelector('i')?.classList.add('spin');
+    refreshDashboard();
+    setTimeout(() => this.querySelector('i')?.classList.remove('spin'), 500);
+  });
+
+  initCharts();
+  setInterval(refreshDashboard, REFRESH_INTERVAL);
+})();
+</script>
+{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .dashboard-title { font-size: 1.5rem; font-weight: 700; color: #111827; }
+    .dashboard-subtitle { font-size: 0.9rem; }
+    .forum-dashboard .card { border-radius: 12px; }
+    .kpi-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+    .activity-icon { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #fff; }
+    .activity-purple { background: #8b5cf6; }
+    .activity-green { background: #22c55e; }
+    .activity-orange { background: #f59e0b; }
+    .activity-blue { background: #3b82f6; }
+    .bi-arrow-clockwise.spin { animation: spin 0.5s linear; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+{% endblock %}

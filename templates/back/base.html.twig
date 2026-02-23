@@ -224,6 +224,10 @@
           <i class="bi bi-calendar-event"></i>
           <span class="back-nav-link-text">Événements</span>
         </a>
+        <a href="{{ path('admin_forum_dashboard') }}" title="Forum" class="{% if app.request.get('_route') starts with 'admin_forum' %}active{% endif %}">
+          <i class="bi bi-chat-square-text"></i>
+          <span class="back-nav-link-text">Forum</span>
+        </a>
 
         <p class="back-nav-label">Boutique</p>
         <a href="{{ path('admin_produit_list') }}" title="Produits" class="{% if app.request.get('_route') starts with 'admin_produit' %}active{% endif %}">

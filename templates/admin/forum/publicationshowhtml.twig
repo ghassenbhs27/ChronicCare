@@ -1,0 +1,215 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}{{ publication.titre }} - Forum{% endblock %}
+{% block page_title %}Détails de la publication{% endblock %}
+{% block page_subtitle %}{{ publication.titre }}{% endblock %}
+
+{% block body %}
+<div class="publication-details">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <a href="{{ path('admin_forum_publications') }}" class="text-decoration-none text-muted small mb-2 d-inline-block">
+        <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+      </a>
+      <h2 class="h4 mb-0">{{ publication.titre }}</h2>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ path('publication_show', {id: publication.id}) }}" class="btn btn-outline-primary" target="_blank">
+        <i class="bi bi-eye me-1"></i> Voir sur le site
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    {# Main content #}
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+            {% if publication.auteur %}
+              <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="bi bi-person text-primary fs-5"></i>
+              </div>
+              <div>
+                <div class="fw-semibold">{{ publication.auteur.fullName }}</div>
+                <small class="text-muted">{{ publication.auteur.email }}</small>
+              </div>
+            {% else %}
+              <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="bi bi-person-x text-secondary fs-5"></i>
+              </div>
+              <div>
+                <div class="fw-semibold">Auteur anonyme</div>
+                <small class="text-muted">Utilisateur supprimé</small>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <h5 class="mb-3">Contenu</h5>
+            <div class="publication-content">
+              {{ publication.contenu|nl2br }}
+            </div>
+          </div>
+
+          {% if publication.imageUrl %}
+          <div class="mb-4">
+            <h5 class="mb-3">Image</h5>
+            <img src="{{ publication.imageUrl }}" alt="{{ publication.titre }}" class="img-fluid rounded">
+          </div>
+          {% endif %}
+
+          <div class="d-flex flex-wrap gap-2">
+            {% if publication.categorie %}
+              <span class="badge bg-secondary fs-6">
+                <i class="bi bi-tag me-1"></i>{{ publication.categorie|replace({'_': ' '})|capitalize }}
+              </span>
+            {% endif %}
+            <span class="badge bg-info fs-6">
+              <i class="bi bi-eye me-1"></i>{{ publication.nbVues }} vues
+            </span>
+            <span class="badge bg-danger fs-6">
+              <i class="bi bi-heart me-1"></i>{{ publication.nbLikes }} likes
+            </span>
+            <span class="badge bg-success fs-6">
+              <i class="bi bi-chat me-1"></i>{{ publication.commentaires|length }} commentaires
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {# Comments section #}
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Commentaires ({{ publication.commentaires|length }})</h5>
+          
+          {% if publication.commentaires is empty %}
+            <p class="text-muted text-center py-4">
+              <i class="bi bi-chat-left-text display-4 d-block mb-2"></i>
+              Aucun commentaire pour le moment
+            </p>
+          {% else %}
+            <div class="comments-list">
+              {% for comment in publication.commentaires %}
+                <div class="comment-item border-bottom pb-3 mb-3">
+                  <div class="d-flex align-items-start gap-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                      <i class="bi bi-person text-success"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                          <div class="fw-semibold">{{ comment.nomAuteur }}</div>
+                          <small class="text-muted">{{ comment.createdAt|date('d/m/Y à H:i') }}</small>
+                        </div>
+                        <form method="post" action="{{ path('admin_forum_comment_delete', {id: comment.id}) }}" 
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?');">
+                          <input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ comment.id) }}">
+                          <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </form>
+                      </div>
+                      <div class="comment-content">
+                        {{ comment.contenu }}
+                      </div>
+                      <div class="mt-2">
+                        <small class="text-muted">
+                          <i class="bi bi-heart text-danger me-1"></i>{{ comment.likeCount }} likes
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# Sidebar #}
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Informations</h5>
+          <dl class="row mb-0">
+            <dt class="col-sm-5 small text-muted">Statut</dt>
+            <dd class="col-sm-7">
+              <span class="badge {{ publication.statut == 'publie' ? 'bg-success' : 'bg-secondary' }}">
+                {{ publication.statut == 'publie' ? 'Publiée' : 'Brouillon' }}
+              </span>
+            </dd>
+
+            <dt class="col-sm-5 small text-muted">Date création</dt>
+            <dd class="col-sm-7">{{ publication.createdAt|date('d/m/Y à H:i') }}</dd>
+
+            <dt class="col-sm-5 small text-muted">Catégorie</dt>
+            <dd class="col-sm-7">
+              {% if publication.categorie %}
+                {{ publication.categorie|replace({'_': ' '})|capitalize }}
+              {% else %}
+                <span class="text-muted">Non définie</span>
+              {% endif %}
+            </dd>
+
+            <dt class="col-sm-5 small text-muted">Vues</dt>
+            <dd class="col-sm-7">{{ publication.nbVues }}</dd>
+
+            <dt class="col-sm-5 small text-muted">Likes</dt>
+            <dd class="col-sm-7">{{ publication.nbLikes }}</dd>
+
+            <dt class="col-sm-5 small text-muted">Commentaires</dt>
+            <dd class="col-sm-7">{{ publication.commentaires|length }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Actions</h5>
+          <div class="d-grid gap-2">
+            <form method="post" action="{{ path('admin_forum_publication_toggle', {id: publication.id}) }}">
+              <input type="hidden" name="_token" value="{{ csrf_token('toggle_publication_' ~ publication.id) }}">
+              <button type="submit" class="btn btn-{{ publication.statut == 'publie' ? 'warning' : 'success' }} w-100">
+                <i class="bi bi-eye{{ publication.statut == 'publie' ? '-slash' : '' }} me-1"></i>
+                {{ publication.statut == 'publie' ? 'Masquer la publication' : 'Publier la publication' }}
+              </button>
+            </form>
+            
+            <button type="button" class="btn btn-danger" 
+                    onclick="if(confirm('Êtes-vous sûr de vouloir supprimer cette publication ? Tous les commentaires seront également supprimés.')) { document.getElementById('deleteForm').submit(); }">
+              <i class="bi bi-trash me-1"></i> Supprimer la publication
+            </button>
+            
+            <form method="post" action="{{ path('admin_forum_publication_delete', {id: publication.id}) }}" id="deleteForm" class="d-none">
+              <input type="hidden" name="_token" value="{{ csrf_token('delete_publication_' ~ publication.id) }}">
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .publication-content {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #374151;
+    }
+    .comment-content {
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      color: #4b5563;
+    }
+    .comment-item:last-child {
+      border-bottom: none !important;
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
+  </style>
+{% endblock %}

@@ -25,39 +25,52 @@
           <h1 class="forum-form-title">{{ publication.id ? 'Modifier la publication' : 'Nouvelle publication' }}</h1>
         </header>
         <div class="forum-form-body">
-          <form method="post">
-            <input type="hidden" name="_token" value="{{ csrf_token('publication_form') }}">
+          {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+            {{ form_errors(form) }}
+            
             <div class="mb-4">
-              <label for="titre" class="form-label">Titre <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="titre" name="titre" value="{{ publication.titre }}" placeholder="Ex. : Conseils nutrition pour l'été" required>
+              {{ form_label(form.titre, 'Titre') }}
+              {{ form_widget(form.titre, {'attr': {'class': 'form-control', 'placeholder': 'Ex. : Conseils nutrition pour l\'été'}}) }}
+              {{ form_errors(form.titre, {'attr': {'class': 'invalid-feedback'}}) }}
             </div>
+
             <div class="mb-4">
-              <label for="categorie" class="form-label">Catégorie <span class="text-danger">*</span></label>
-              <select class="form-select" id="categorie" name="categorie" required>
-                <option value="nutrition" {{ publication.categorie == 'nutrition' ? 'selected' }}>Nutrition</option>
-                <option value="exercice" {{ publication.categorie == 'exercice' ? 'selected' }}>Exercice</option>
-                <option value="sante_mentale" {{ publication.categorie == 'sante_mentale' ? 'selected' }}>Santé mentale</option>
-                <option value="bien_etre" {{ publication.categorie == 'bien_etre' ? 'selected' }}>Bien-être</option>
-                <option value="autre" {{ publication.categorie == 'autre' ? 'selected' }}>Autre</option>
-              </select>
+              {{ form_label(form.categorie, 'Catégorie') }}
+              {{ form_widget(form.categorie, {'attr': {'class': 'form-select'}}) }}
+              {{ form_errors(form.categorie, {'attr': {'class': 'invalid-feedback'}}) }}
             </div>
+
             <div class="mb-4">
-              <label for="contenu" class="form-label">Contenu <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="contenu" name="contenu" rows="10" placeholder="Rédigez le contenu de votre publication..." required>{{ publication.contenu }}</textarea>
+              {{ form_label(form.contenu, 'Contenu') }}
+              {{ form_widget(form.contenu, {'attr': {'class': 'form-control', 'rows': '10', 'placeholder': 'Rédigez le contenu de votre publication...'}}) }}
+              {{ form_errors(form.contenu, {'attr': {'class': 'invalid-feedback'}}) }}
             </div>
+
             <div class="mb-4">
-              <label for="statut" class="form-label">Statut</label>
-              <select class="form-select" id="statut" name="statut">
-                <option value="brouillon" {{ publication.statut == 'brouillon' ? 'selected' }}>Brouillon</option>
-                <option value="publie" {{ publication.statut == 'publie' ? 'selected' }}>Publié</option>
-              </select>
+              {{ form_label(form.imageFile, 'Image') }}
+              {{ form_widget(form.imageFile, {'attr': {'class': 'form-control', 'accept': 'image/jpeg,image/png'}}) }}
+              <small class="form-text text-muted">JPG ou PNG, maximum 2 Mo. Optionnel.</small>
+              {% if publication.imageUrl %}
+                <div class="mt-3">
+                  <p class="mb-2"><strong>Image actuelle :</strong></p>
+                  <img src="{{ asset('uploads/forum/' ~ publication.imageUrl) }}" alt="Image de la publication" class="img-thumbnail" style="max-width: 200px;">
+                </div>
+              {% endif %}
+              {{ form_errors(form.imageFile, {'attr': {'class': 'invalid-feedback'}}) }}
+            </div>
+
+            <div class="mb-4">
+              {{ form_label(form.statut, 'Statut') }}
+              {{ form_widget(form.statut, {'attr': {'class': 'form-select'}}) }}
               <p class="form-text text-muted small mt-1">En brouillon, la publication ne sera pas visible par les patients.</p>
+              {{ form_errors(form.statut, {'attr': {'class': 'invalid-feedback'}}) }}
             </div>
+
             <div class="forum-form-actions">
               <a href="{{ path('publication_index') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg me-1"></i> Annuler</a>
               <button type="submit" class="btn btn-primary">{{ publication.id ? 'Mettre à jour' : 'Publier' }}</button>
             </div>
-          </form>
+          {{ form_end(form) }}
         </div>
       </div>
     </div>
