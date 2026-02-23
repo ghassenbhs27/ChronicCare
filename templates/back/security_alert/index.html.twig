@@ -5,6 +5,7 @@
 {% block page_subtitle %}Surveillance des comportements suspects{% endblock %}
 
 {% block body %}
+{% set base_params = { status: status, severity: severity, type: type, q: search|default('') } %}
 <div class="container-fluid">
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
     <div class="small text-muted">
@@ -14,6 +15,17 @@
   </div>
 
   <form method="get" action="{{ path('admin_security_alert_index') }}" class="row g-2 mb-3">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="hidden" name="dir" value="{{ dir }}">
+    <div class="col-sm-12 col-md-3">
+      <input
+        type="text"
+        name="q"
+        class="form-control form-control-sm"
+        placeholder="Rechercher message, email, IP, type..."
+        value="{{ search|default('') }}"
+      >
+    </div>
     <div class="col-auto">
       <select name="status" class="form-select form-select-sm">
         <option value="en_cours" {{ status == 'en_cours' ? 'selected' : '' }}>En cours</option>
@@ -42,6 +54,9 @@
     <div class="col-auto">
       <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
     </div>
+    <div class="col-auto">
+      <a href="{{ path('admin_security_alert_index') }}" class="btn btn-outline-secondary btn-sm">Reinitialiser</a>
+    </div>
   </form>
 
   <div class="card border-0 shadow-sm">
@@ -50,15 +65,50 @@
         <table class="table table-hover mb-0">
           <thead class="table-light">
             <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Categorie</th>
-              <th>Severite</th>
-              <th>Score</th>
-              <th>Utilisateur</th>
+              {% set next_dir_date = sort == 'createdAt' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_index', base_params|merge({ sort: 'createdAt', dir: next_dir_date, page: 1 })) }}">
+                  Date {% if sort == 'createdAt' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_type = sort == 'eventType' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_index', base_params|merge({ sort: 'eventType', dir: next_dir_type, page: 1 })) }}">
+                  Type {% if sort == 'eventType' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_cat = sort == 'alertType' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_index', base_params|merge({ sort: 'alertType', dir: next_dir_cat, page: 1 })) }}">
+                  Categorie {% if sort == 'alertType' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_sev = sort == 'severity' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_index', base_params|merge({ sort: 'severity', dir: next_dir_sev, page: 1 })) }}">
+                  Severite {% if sort == 'severity' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_score = sort == 'riskScore' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_index', base_params|merge({ sort: 'riskScore', dir: next_dir_score, page: 1 })) }}">
+                  Score {% if sort == 'riskScore' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_user = sort == 'userEmail' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_index', base_params|merge({ sort: 'userEmail', dir: next_dir_user, page: 1 })) }}">
+                  Utilisateur {% if sort == 'userEmail' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
               <th>IP</th>
               <th>Message</th>
-              <th>Statut</th>
+              {% set next_dir_status = sort == 'alertStatus' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_index', base_params|merge({ sort: 'alertStatus', dir: next_dir_status, page: 1 })) }}">
+                  Statut {% if sort == 'alertStatus' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
               <th>Action</th>
             </tr>
           </thead>
@@ -111,21 +161,22 @@
                   {% endif %}
                 </td>
                 <td>
+                  {% set action_params = { id: alert.id, status: status, severity: severity, type: type, q: search|default(''), sort: sort, dir: dir, page: alerts.getCurrentPageNumber } %}
                   {% if alert.alertStatus == 'en_cours' %}
                     <div class="d-flex gap-1">
-                      <form method="post" action="{{ path('admin_security_alert_set_status', {id: alert.id, status: status, severity: severity, type: type}) }}">
+                      <form method="post" action="{{ path('admin_security_alert_set_status', action_params) }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('set_security_alert_status_' ~ alert.id) }}">
                         <input type="hidden" name="alert_status" value="traitee">
                         <button type="submit" class="btn btn-sm btn-outline-success">Traiter</button>
                       </form>
-                      <form method="post" action="{{ path('admin_security_alert_set_status', {id: alert.id, status: status, severity: severity, type: type}) }}">
+                      <form method="post" action="{{ path('admin_security_alert_set_status', action_params) }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('set_security_alert_status_' ~ alert.id) }}">
                         <input type="hidden" name="alert_status" value="ignoree">
                         <button type="submit" class="btn btn-sm btn-outline-secondary">Ignorer</button>
                       </form>
                     </div>
                   {% else %}
-                    <form method="post" action="{{ path('admin_security_alert_set_status', {id: alert.id, status: status, severity: severity, type: type}) }}">
+                    <form method="post" action="{{ path('admin_security_alert_set_status', action_params) }}">
                       <input type="hidden" name="_token" value="{{ csrf_token('set_security_alert_status_' ~ alert.id) }}">
                       <input type="hidden" name="alert_status" value="en_cours">
                       <button type="submit" class="btn btn-sm btn-outline-warning">Remettre en cours</button>
@@ -141,6 +192,22 @@
           </tbody>
         </table>
       </div>
+    </div>
+    <div class="card-footer bg-white border-0 d-flex flex-wrap justify-content-between align-items-center py-2 px-3">
+      <span class="small text-muted">
+        {% if alerts.getTotalItemCount > 0 %}
+          Affichage {{ alerts.getItemNumberPerPage * (alerts.getCurrentPageNumber - 1) + 1 }}
+          a {{ min(alerts.getItemNumberPerPage * alerts.getCurrentPageNumber, alerts.getTotalItemCount) }}
+          sur {{ alerts.getTotalItemCount }} resultat(s)
+        {% else %}
+          0 resultat
+        {% endif %}
+      </span>
+      {% if alerts.getTotalItemCount > 0 %}
+        {{ knp_pagination_render(alerts, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig', {}, {
+          routeParams: { status: status, severity: severity, type: type, q: search|default(''), sort: sort, dir: dir }
+        }) }}
+      {% endif %}
     </div>
   </div>
 </div>

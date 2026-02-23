@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\SecurityAlert;
 use App\Repository\SecurityAlertRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,15 +17,23 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class SecurityAlertController extends AbstractController
 {
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(Request $request, SecurityAlertRepository $alertRepository): Response
-    {
+    public function index(
+        Request $request,
+        SecurityAlertRepository $alertRepository,
+        PaginatorInterface $paginator
+    ): Response {
         $status = $this->normalizeStatusFilter((string) $request->query->get('status', SecurityAlert::STATUS_EN_COURS));
         $severity = (string) $request->query->get('severity', '');
         $type = $this->normalizeTypeFilter((string) $request->query->get('type', ''));
+        $search = trim((string) $request->query->get('q', ''));
+        $sort = $this->normalizeAlertSort((string) $request->query->get('sort', 'createdAt'));
+        $direction = $this->normalizeSortDirection((string) $request->query->get('dir', 'DESC'));
+        $page = max(1, (int) $request->query->get('page', 1));
 
         $qb = $alertRepository->createQueryBuilder('a')
             ->leftJoin('a.user', 'u')->addSelect('u')
-            ->orderBy('a.createdAt', 'DESC');
+            ->orderBy($this->mapAlertSortField($sort), $direction)
+            ->addOrderBy('a.id', 'DESC');
 
         if ($status !== 'all') {
             $qb->andWhere('a.alertStatus = :status')
@@ -41,7 +50,18 @@ class SecurityAlertController extends AbstractController
                 ->setParameter('type', $type);
         }
 
-        $alerts = $qb->setMaxResults(200)->getQuery()->getResult();
+        if ($search !== '') {
+            $qb->andWhere(
+                'LOWER(a.eventType) LIKE :q OR LOWER(a.message) LIKE :q OR LOWER(a.ipAddress) LIKE :q OR LOWER(u.email) LIKE :q'
+            )->setParameter('q', '%' . mb_strtolower($search) . '%');
+        }
+
+        $alerts = $paginator->paginate($qb, $page, 15, [
+            'defaultSortFieldName' => $this->mapAlertSortField($sort),
+            'defaultSortDirection' => $direction,
+            'sortFieldParameterName' => 'knp_sort',
+            'sortDirectionParameterName' => 'knp_direction',
+        ]);
 
         $openCount = (int) $alertRepository->createQueryBuilder('a')
             ->select('COUNT(a.id)')
@@ -55,24 +75,33 @@ class SecurityAlertController extends AbstractController
             'status' => $status,
             'severity' => $severity,
             'type' => $type,
+            'search' => $search,
+            'sort' => $sort,
+            'dir' => $direction,
             'open_count' => $openCount,
         ]);
     }
 
     #[Route('/history', name: 'history', methods: ['GET'])]
-    public function history(Request $request, SecurityAlertRepository $alertRepository): Response
-    {
+    public function history(
+        Request $request,
+        SecurityAlertRepository $alertRepository,
+        PaginatorInterface $paginator
+    ): Response {
         $days = max(1, min(180, (int) $request->query->get('days', 30)));
         $type = $this->normalizeTypeFilter((string) $request->query->get('type', ''));
         $status = $this->normalizeHistoryStatusFilter((string) $request->query->get('status', 'all'));
+        $search = trim((string) $request->query->get('q', ''));
+        $sort = $this->normalizeHistorySort((string) $request->query->get('sort', 'changed_at'));
+        $direction = $this->normalizeSortDirection((string) $request->query->get('dir', 'DESC'));
+        $page = max(1, (int) $request->query->get('page', 1));
         $since = (new \DateTimeImmutable())->modify(sprintf('-%d days', $days));
 
         $qb = $alertRepository->createQueryBuilder('a')
             ->leftJoin('a.user', 'u')->addSelect('u')
             ->andWhere('a.createdAt >= :since')
             ->setParameter('since', $since)
-            ->orderBy('a.createdAt', 'DESC')
-            ->setMaxResults(500);
+            ->orderBy('a.createdAt', 'DESC');
 
         if ($type !== '') {
             $qb->andWhere('a.alertType = :type')->setParameter('type', $type);
@@ -128,17 +157,53 @@ class SecurityAlertController extends AbstractController
 
         usort(
             $historyRows,
-            static fn (array $a, array $b): int => ($b['changed_at'] <=> $a['changed_at'])
+            function (array $a, array $b) use ($sort, $direction): int {
+                $left = $this->extractHistorySortValue($a, $sort);
+                $right = $this->extractHistorySortValue($b, $sort);
+
+                if ($left === $right) {
+                    return 0;
+                }
+
+                $cmp = $left <=> $right;
+
+                return $direction === 'ASC' ? $cmp : -$cmp;
+            }
         );
 
-        $historyRows = array_slice($historyRows, 0, 1000);
+        if ($search !== '') {
+            $needle = mb_strtolower($search);
+            $historyRows = array_values(array_filter($historyRows, static function (array $row) use ($needle): bool {
+                $haystack = mb_strtolower(implode(' ', [
+                    (string) ($row['status'] ?? ''),
+                    (string) ($row['source'] ?? ''),
+                    (string) ($row['note'] ?? ''),
+                    (string) ($row['event_type'] ?? ''),
+                    (string) ($row['alert_type'] ?? ''),
+                    (string) ($row['severity'] ?? ''),
+                    (string) ($row['user_email'] ?? ''),
+                    (string) ($row['ip_address'] ?? ''),
+                    (string) ($row['message'] ?? ''),
+                ]));
+
+                return str_contains($haystack, $needle);
+            }));
+        }
+
+        $historyPagination = $paginator->paginate($historyRows, $page, 20, [
+            'sortFieldParameterName' => 'knp_sort',
+            'sortDirectionParameterName' => 'knp_direction',
+        ]);
 
         return $this->render('back/security_alert/history.html.twig', [
-            'history_rows' => $historyRows,
+            'history_rows' => $historyPagination,
             'days' => $days,
             'status' => $status,
             'type' => $type,
-            'total_rows' => count($historyRows),
+            'search' => $search,
+            'sort' => $sort,
+            'dir' => $direction,
+            'total_rows' => $historyPagination->getTotalItemCount(),
         ]);
     }
 
@@ -197,6 +262,10 @@ class SecurityAlertController extends AbstractController
             'status' => $this->normalizeStatusFilter((string) $request->query->get('status', SecurityAlert::STATUS_EN_COURS)),
             'severity' => (string) $request->query->get('severity', ''),
             'type' => $this->normalizeTypeFilter((string) $request->query->get('type', '')),
+            'q' => trim((string) $request->query->get('q', '')),
+            'sort' => $this->normalizeAlertSort((string) $request->query->get('sort', 'createdAt')),
+            'dir' => $this->normalizeSortDirection((string) $request->query->get('dir', 'DESC')),
+            'page' => max(1, (int) $request->query->get('page', 1)),
         ]);
     }
 
@@ -235,7 +304,15 @@ class SecurityAlertController extends AbstractController
                 : 'Aucune alerte ouverte a traiter pour ce cas.'
         );
 
-        return $this->redirectToRoute('admin_security_alert_index');
+        return $this->redirectToRoute('admin_security_alert_index', [
+            'status' => $this->normalizeStatusFilter((string) $request->query->get('status', SecurityAlert::STATUS_EN_COURS)),
+            'severity' => (string) $request->query->get('severity', ''),
+            'type' => $this->normalizeTypeFilter((string) $request->query->get('type', '')),
+            'q' => trim((string) $request->query->get('q', '')),
+            'sort' => $this->normalizeAlertSort((string) $request->query->get('sort', 'createdAt')),
+            'dir' => $this->normalizeSortDirection((string) $request->query->get('dir', 'DESC')),
+            'page' => max(1, (int) $request->query->get('page', 1)),
+        ]);
     }
 
     private function closeOpenAlertsForCase(
@@ -344,5 +421,51 @@ class SecurityAlertController extends AbstractController
         }
 
         return $fallback;
+    }
+
+    private function normalizeAlertSort(string $sort): string
+    {
+        $allowed = ['createdAt', 'eventType', 'alertType', 'severity', 'riskScore', 'alertStatus', 'userEmail'];
+
+        return in_array($sort, $allowed, true) ? $sort : 'createdAt';
+    }
+
+    private function mapAlertSortField(string $sort): string
+    {
+        return match ($sort) {
+            'eventType' => 'a.eventType',
+            'alertType' => 'a.alertType',
+            'severity' => 'a.severity',
+            'riskScore' => 'a.riskScore',
+            'alertStatus' => 'a.alertStatus',
+            'userEmail' => 'u.email',
+            default => 'a.createdAt',
+        };
+    }
+
+    private function normalizeHistorySort(string $sort): string
+    {
+        $allowed = ['changed_at', 'status', 'alert_type', 'severity', 'event_type', 'user_email', 'source'];
+
+        return in_array($sort, $allowed, true) ? $sort : 'changed_at';
+    }
+
+    private function normalizeSortDirection(string $direction): string
+    {
+        return strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
+    }
+
+    private function extractHistorySortValue(array $row, string $sort): int|string
+    {
+        $value = $row[$sort] ?? null;
+        if ($value instanceof \DateTimeInterface) {
+            return (int) $value->format('U');
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return mb_strtolower((string) $value);
     }
 }

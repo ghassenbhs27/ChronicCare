@@ -341,7 +341,11 @@
       }
 
       const url = buildUrlFromForm(form);
-      const hasList = document.querySelector('main.main table, main.main .table-responsive, main.main .pagination, main.main [data-list-container]');
+      const hasList = document.querySelector(
+        'main.main table, main.main .table-responsive, main.main .pagination, main.main [data-list-container], ' +
+        'main.flex-grow-1 table, main.flex-grow-1 .table-responsive, main.flex-grow-1 .pagination, main.flex-grow-1 [data-list-container], ' +
+        'table, .table-responsive, .pagination, [data-list-container]'
+      );
 
       if (hasList) {
         applyInstantRowFilter(form);
@@ -354,8 +358,7 @@
         return;
       }
 
-      if (typeof form.requestSubmit === 'function') form.requestSubmit();
-      else form.submit();
+      window.location.assign(url.toString());
     };
 
     const isFilterForm = (form) => {

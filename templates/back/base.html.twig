@@ -197,6 +197,48 @@
       align-items: center;
       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
+    .back-content .pagination {
+      margin: 0;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .back-content .pagination .page-item .page-link {
+      min-width: 40px;
+      height: 40px;
+      border: 1px solid #d6dce5;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #1f2937;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+    .back-content .pagination .page-item .page-link:hover {
+      background: #eef4ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.18);
+    }
+    .back-content .pagination .page-item.active .page-link {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-color: #1d4ed8;
+      color: #ffffff;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+    }
+    .back-content .pagination .page-item.disabled .page-link {
+      background: #f3f4f6;
+      border-color: #e5e7eb;
+      color: #9ca3af;
+      box-shadow: none;
+    }
+    .back-content .pagination .page-item .page-link:focus {
+      box-shadow: 0 0 0 0.18rem rgba(37, 99, 235, 0.25);
+    }
   </style>
 
   {% block stylesheets %}{% endblock %}
@@ -244,6 +286,9 @@
         </a>
         <a href="{{ path('admin_security_alert_index') }}" title="Alertes de securite" class="back-nav-alert {% if app.request.get('_route') starts with 'admin_security_alert_' %}active{% endif %}">
           <span class="back-nav-link-text">Alertes securite</span>
+        </a>
+        <a href="{{ path('admin_medical_audit_index') }}" title="Audit medical" class="{% if app.request.get('_route') starts with 'admin_medical_audit_' %}active{% endif %}">
+          <span class="back-nav-link-text">Audit medical</span>
         </a>
 
         <p class="back-nav-label">Boutique</p>

@@ -140,7 +140,7 @@
             <button type="button" class="btn btn-outline-primary btn-sm" id="open-medical-ai-btn">
               <i class="bi bi-robot me-1"></i> Demarrer dossier IA
             </button>
-            <span class="badge bg-secondary" id="medical-dossier-status">Dossier non complete</span>
+            <span class="badge bg-secondary" id="medical-dossier-status">Dossier non complet</span>
           </div>
           <div class="text-danger">{{ form_errors(form.medicalDossierPayload) }}</div>
           {{ form_widget(form.medicalDossierPayload, {'attr': {'id': 'medical-dossier-payload'}}) }}
@@ -361,15 +361,15 @@
       const modal = typeof bootstrap !== 'undefined' ? new bootstrap.Modal(modalEl) : null;
       let activeQuestionnaire = [];
       let activeMode = 'FALLBACK';
-
+      
       const markIncomplete = function () {
         statusBadge.className = 'badge bg-secondary';
-        statusBadge.textContent = 'Dossier non complete';
+        statusBadge.textContent = 'Dossier non complet';
       };
 
       const markComplete = function () {
         statusBadge.className = 'badge bg-success';
-        statusBadge.textContent = 'Dossier complete';
+        statusBadge.textContent = 'Dossier complet';
       };
 
       const toggleMedicalSection = function () {
