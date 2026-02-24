@@ -86,7 +86,7 @@ class ProduitController extends AbstractController
     }
 
     #[Route('/{id}', name: 'show', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function show(int $id): Response
+    public function show(int $id, UserRepository $userRepository): Response
     {
         $produit = $this->produitRepository->findOneBy(['id' => $id, 'isActive' => true]);
 
@@ -95,7 +95,88 @@ class ProduitController extends AbstractController
             return $this->redirectToRoute('boutique');
         }
 
-        return $this->render('produit/show.html.twig', ['produit' => $produit]);
+        // Liste des patients pour les professionnels
+        $patients = [];
+        if ($this->isGranted('ROLE_NUTRITIONNISTE') || $this->isGranted('ROLE_COACH')) {
+            $patients = $userRepository->findByRole('ROLE_PATIENT');
+        }
+
+        return $this->render('produit/show.html.twig', [
+            'produit' => $produit,
+            'patients' => $patients,
+        ]);
+    }
+
+    /**
+     * Recommander un produit à un patient (pour nutritionnistes/coachs)
+     */
+    #[Route('/{id}/recommend', name: 'recommend_to_patient', methods: ['POST'])]
+    public function recommendToPatient(
+        int $id, 
+        Request $request, 
+        UserRepository $userRepository,
+        \Doctrine\ORM\EntityManagerInterface $em,
+        \Symfony\Component\Mailer\MailerInterface $mailer
+    ): Response {
+        if (!$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_COACH')) {
+            throw $this->createAccessDeniedException('Accès réservé aux professionnels.');
+        }
+        
+        $produit = $this->produitRepository->find($id);
+        if (!$produit) {
+            $this->addFlash('error', 'Produit non trouvé.');
+            return $this->redirectToRoute('boutique');
+        }
+
+        $patientId = $request->request->get('patient_id');
+        $message = $request->request->get('message', '');
+        
+        $patient = $userRepository->find($patientId);
+        if (!$patient) {
+            $this->addFlash('error', 'Patient non trouvé.');
+            return $this->redirectToRoute('produit_show', ['id' => $id]);
+        }
+
+        /** @var \App\Entity\User $pro */
+        $pro = $this->getUser();
+        
+        // Envoyer un email au patient
+        try {
+            $email = (new \Symfony\Component\Mime\Email())
+                ->from('noreply@chroniccare.org')
+                ->to($patient->getEmail())
+                ->subject('Recommandation de produit - ' . $produit->getNom())
+                ->html(sprintf(
+                    '<h2>Recommandation de votre %s</h2>
+                    <p>Bonjour %s,</p>
+                    <p>Votre %s <strong>%s %s</strong> vous recommande le produit suivant :</p>
+                    <div style="border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 8px;">
+                        <h3>%s</h3>
+                        <p>Prix: %.2f €</p>
+                        <p>%s</p>
+                    </div>
+                    %s
+                    <p><a href="http://localhost:8000/products/%d" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir le produit</a></p>
+                    <p>Cordialement,<br>L\'équipe ChronicCare</p>',
+                    in_array('ROLE_NUTRITIONNISTE', $pro->getRoles()) ? 'nutritionniste' : 'coach',
+                    $patient->getPrenom(),
+                    in_array('ROLE_NUTRITIONNISTE', $pro->getRoles()) ? 'nutritionniste' : 'coach',
+                    $pro->getPrenom(),
+                    $pro->getNom(),
+                    $produit->getNom(),
+                    $produit->getPrix(),
+                    $produit->getDescription() ?? '',
+                    $message ? '<p><strong>Message personnalisé :</strong> ' . htmlspecialchars($message) . '</p>' : '',
+                    $produit->getId()
+                ));
+            
+            $mailer->send($email);
+            $this->addFlash('success', 'Recommandation envoyée à ' . $patient->getPrenom() . ' ' . $patient->getNom() . ' avec succès !');
+        } catch (\Exception $e) {
+            $this->addFlash('warning', 'La recommandation a été enregistrée mais l\'email n\'a pas pu être envoyé.');
+        }
+
+        return $this->redirectToRoute('produit_show', ['id' => $id]);
     }
 
     #[Route('/search', name: 'search', methods: ['GET'])]

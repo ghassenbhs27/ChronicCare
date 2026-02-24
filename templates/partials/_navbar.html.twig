@@ -63,6 +63,7 @@
             <li><a href="{{ path('front_evenements') }}" class="{{ current_route == 'front_evenements' or current_route == 'front_evenement_show' ? 'active' : '' }}">Événements</a></li>
             <li><a href="{{ path('front_mes_inscriptions') }}" class="{{ current_route == 'front_mes_inscriptions' ? 'active' : '' }}">Mes inscriptions</a></li>
             <li><a href="{{ path('commande_history') }}" class="{{ current_route starts with 'commande_' ? 'active' : '' }}">Mes commandes</a></li>
+            <li><a href="{{ path('patient_recommendations') }}" class="{{ current_route starts with 'patient_recommendation' ? 'active' : '' }}">Recommandations</a></li>
           {% endif %}
           {% if is_coach_or_nutritionniste and not is_granted('ROLE_ADMIN') %}
             <li><a href="{{ path('pro_rdv_list') }}" class="{{ current_route == 'pro_rdv_list' ? 'active' : '' }}">Mes RDV pro</a></li>

@@ -41,7 +41,8 @@ class LoginRedirectSubscriber implements EventSubscriberInterface
 
         if ($route !== null) {
             $params = [];
-            if ($user->isMostActive()) {
+            // Badge pour utilisateurs actifs (désactivé si méthode non disponible)
+            if (method_exists($user, 'isMostActive') && $user->isMostActive()) {
                 $params['badge'] = 1;
             }
             $event->setResponse(new RedirectResponse($this->urlGenerator->generate($route, $params)));

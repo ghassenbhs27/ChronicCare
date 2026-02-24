@@ -13,6 +13,16 @@ parameters:
     stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
     stripe_public_key: '%env(STRIPE_PUBLIC_KEY)%'
     stripe_webhook_secret: '%env(STRIPE_WEBHOOK_SECRET)%'
+    # AI Assistant parameters
+    ai_provider: 'openai'
+    ai_openai_api_key: '%env(default::OPENAI_API_KEY)%'
+    ai_openai_model: 'gpt-3.5-turbo'
+    ai_openrouter_api_key: '%env(default::OPENROUTER_API_KEY)%'
+    ai_openrouter_model: 'openai/gpt-3.5-turbo'
+    ai_openrouter_site_url: ''
+    ai_openrouter_app_name: 'ChronicCare'
+    ai_gemini_api_key: '%env(default::GEMINI_API_KEY)%'
+    ai_gemini_model: 'gemini-pro'
 
 services:
     # default configuration for services in *this* file

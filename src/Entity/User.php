@@ -95,6 +95,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $profileImage = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $securityBlockedUntil = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $medicalCondition = null;
+
     /**
      * @var Collection<int, Evenement>
      */
@@ -501,5 +507,47 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function hasProfilMedical(): bool
     {
         return $this->profilMedical !== null;
+    }
+
+    /**
+     * Vérifie si le compte est temporairement bloqué
+     */
+    public function isTemporarilyBlocked(): bool
+    {
+        if ($this->securityBlockedUntil === null) {
+            return false;
+        }
+        return $this->securityBlockedUntil > new \DateTimeImmutable();
+    }
+
+    public function getSecurityBlockedUntil(): ?\DateTimeImmutable
+    {
+        return $this->securityBlockedUntil;
+    }
+
+    public function setSecurityBlockedUntil(?\DateTimeImmutable $securityBlockedUntil): self
+    {
+        $this->securityBlockedUntil = $securityBlockedUntil;
+        return $this;
+    }
+
+    /**
+     * Vérifie si l'utilisateur est très actif (pour badge)
+     * TODO: Implémenter la logique basée sur les publications/commentaires
+     */
+    public function isMostActive(): bool
+    {
+        return false; // Par défaut, à implémenter selon les critères métier
+    }
+
+    public function getMedicalCondition(): ?string
+    {
+        return $this->medicalCondition;
+    }
+
+    public function setMedicalCondition(?string $medicalCondition): self
+    {
+        $this->medicalCondition = $medicalCondition;
+        return $this;
     }
 }

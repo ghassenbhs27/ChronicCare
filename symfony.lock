@@ -47,6 +47,9 @@
             "./migrations/.gitignore"
         ]
     },
+    "endroid/qr-code-bundle": {
+        "version": "6.0.0"
+    },
     "knplabs/knp-paginator-bundle": {
         "version": "v6.10.0"
     },
@@ -58,6 +61,18 @@
             "version": "1.20",
             "ref": "1ff300d8c030f55c99219cc55050b97a695af3f6"
         }
+    },
+    "php-http/discovery": {
+        "version": "1.20",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.18",
+            "ref": "f45b5dd173a27873ab19f5e3180b2f661c21de02"
+        },
+        "files": [
+            "./config/packages/http_discovery.yaml"
+        ]
     },
     "phpunit/phpunit": {
         "version": "11.5",
@@ -86,6 +101,15 @@
             "./config/packages/scheb_2fa.yaml",
             "./config/routes/scheb_2fa.yaml"
         ]
+    },
+    "stripe/stripe-php": {
+        "version": "19.3",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "19.0",
+            "ref": "d6829c693e3927a8972c7671d74a1a5c505712b0"
+        }
     },
     "symfony/asset-mapper": {
         "version": "6.4",
@@ -325,6 +349,18 @@
         },
         "files": [
             "./config/packages/messenger.yaml"
+        ]
+    },
+    "symfony/workflow": {
+        "version": "6.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "3.3",
+            "ref": "3b2f8ca32a07fcb00f899649053943fa3d8bbfb6"
+        },
+        "files": [
+            "./config/packages/workflow.yaml"
         ]
     },
     "symfonycasts/reset-password-bundle": {

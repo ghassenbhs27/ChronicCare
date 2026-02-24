@@ -109,10 +109,18 @@ class Commentaire
     #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent', cascade: ['remove'])]
     private Collection $replies;
 
+    /**
+     * Likes on this comment
+     * @var Collection<int, CommentaireLike>
+     */
+    #[ORM\OneToMany(targetEntity: CommentaireLike::class, mappedBy: 'commentaire', cascade: ['remove'])]
+    private Collection $likes;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->replies = new ArrayCollection();
+        $this->likes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -180,6 +188,14 @@ class Commentaire
             $this->likeCount--;
         }
         return $this;
+    }
+
+    /**
+     * @return Collection<int, CommentaireLike>
+     */
+    public function getLikes(): Collection
+    {
+        return $this->likes;
     }
 
     public function getNomAuteur(): string

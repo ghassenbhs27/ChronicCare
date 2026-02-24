@@ -154,14 +154,7 @@
                     {% else %}
                       {% set iconClass = 'bi-box-seam' %}
                     {% endif %}
-                    <img id="img-{{ produit.id }}" src="{{ asset('assets/img/products/' ~ produit.nom|lower|replace({' ': '-', 'é': 'e', 'è': 'e', 'ê': 'e', 'à': 'a'}) ~ '.jpg') }}" alt="{{ produit.nom }}" style="display:none;">
-                    <i id="icon-{{ produit.id }}" class="bi {{ iconClass }}" style="font-size:40px; color:#0bcf99;"></i>
-                    <script>
-                      document.getElementById('img-{{ produit.id }}').onload = function() {
-                        this.style.display = 'block';
-                        document.getElementById('icon-{{ produit.id }}').style.display = 'none';
-                      };
-                    </script>
+                    <i class="bi {{ iconClass }}" style="font-size:40px; color:#0bcf99;"></i>
                   </a>
                   <div class="service-details">
                     <h5>{{ produit.nom }}</h5>
