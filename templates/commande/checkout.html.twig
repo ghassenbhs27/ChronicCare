@@ -454,28 +454,31 @@
         }
         
         const infoCont = document.querySelector(INFO_CONT);
-        if (infoCont && data.data) {
-            const d = data.data;
-            const city = d.city || 'N/A';
-            const region = d.region ? d.region + ', ' : '';
-            const country = d.country || 'N/A';
-            const lat = typeof d.latitude === 'number' ? d.latitude.toFixed(4) : '--';
-            const lon = typeof d.longitude === 'number' ? d.longitude.toFixed(4) : '--';
-            
-            infoCont.innerHTML = `
-                <div class="alert alert-success">
-                    <strong>✓ Localisation détectée</strong><br>
-                    📍 ${city}, ${region}${country}<br>
-                    ${lat}°N, ${lon}°E
-                </div>
-            `;
-            console.log('📍 [INLINE] Infos affichées');
-        }
-        
         const loadDiv = document.querySelector(LOAD_DIV);
+        // Toujours masquer le bloc loading dès qu'on affiche la localisation
         if (loadDiv) {
-            loadDiv.style.display = 'none';
-            console.log('✅ [INLINE] Loading masqué');
+          loadDiv.style.display = 'none';
+          console.log('✅ [INLINE] Loading masqué');
+        }
+        // Toujours vider le conteneur info avant d'afficher
+        if (infoCont) {
+          infoCont.innerHTML = '';
+        }
+        if (infoCont && data.data) {
+          const d = data.data;
+          const city = d.city || 'N/A';
+          const region = d.region ? d.region + ', ' : '';
+          const country = d.country || 'N/A';
+          const lat = typeof d.latitude === 'number' ? d.latitude.toFixed(4) : '--';
+          const lon = typeof d.longitude === 'number' ? d.longitude.toFixed(4) : '--';
+          infoCont.innerHTML = `
+            <div class="alert alert-success">
+              <strong>✓ Localisation détectée</strong><br>
+              📍 ${city}, ${region}${country}<br>
+              ${lat}°N, ${lon}°E
+            </div>
+          `;
+          console.log('📍 [INLINE] Infos affichées');
         }
     }
     

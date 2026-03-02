@@ -39,6 +39,12 @@ class GeoLocationService
     public function getLocationByIp(string $ipAddress): ?array
     {
         try {
+            // En mode dev, retourner des données simulées pour localhost/IP privées
+            if ($this->isDevMode && $this->isLocalOrPrivateIp($ipAddress)) {
+                $this->logger->info('GeoLocationService: IP locale détectée, utilisation données simulées', ['ip' => $ipAddress]);
+                return $this->getMockLocationData($ipAddress);
+            }
+
             // Valider que c'est une adresse IP valide
             if (!$this->isValidIp($ipAddress)) {
                 $this->logger->warning('GeoLocationService: IP invalide', ['ip' => $ipAddress]);
@@ -160,5 +166,82 @@ class GeoLocationService
         $distance = $earthRadius * $c;
 
         return round($distance, 2);
+    }
+
+    /**
+     * Vérifie si l'IP est une IP locale ou privée (non routable sur Internet)
+     * 
+     * @param string $ip L'adresse IP à vérifier
+     * @return bool True si c'est une IP locale/privée
+     */
+    private function isLocalOrPrivateIp(string $ip): bool
+    {
+        // IPs locales et réservées
+        $localPatterns = [
+            '127.',      // Localhost IPv4
+            '::1',       // Localhost IPv6
+            '10.',       // Classe A privée
+            '172.16.',   // Classe B privée (172.16.x.x - 172.31.x.x)
+            '172.17.',
+            '172.18.',
+            '172.19.',
+            '172.20.',
+            '172.21.',
+            '172.22.',
+            '172.23.',
+            '172.24.',
+            '172.25.',
+            '172.26.',
+            '172.27.',
+            '172.28.',
+            '172.29.',
+            '172.30.',
+            '172.31.',
+            '192.168.',  // Classe C privée
+            'fe80:',     // Link-local IPv6
+            'fc00:',     // Unique local address IPv6
+            'fd00:',     // Unique local address IPv6
+        ];
+
+        foreach ($localPatterns as $pattern) {
+            if (str_starts_with($ip, $pattern)) {
+                return true;
+            }
+        }
+
+        // Vérification spéciale pour localhost
+        if ($ip === 'localhost' || empty($ip)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Retourne des données de géolocalisation simulées pour le développement local
+     * Simule une localisation à Tunis, Tunisie
+     * 
+     * @param string $ip L'adresse IP (pour logging)
+     * @return array Données de géolocalisation simulées
+     */
+    private function getMockLocationData(string $ip): array
+    {
+        return [
+            'ip' => $ip ?: '127.0.0.1',
+            'country' => 'Tunisia',
+            'countryCode' => 'TN',
+            'city' => 'Tunis',
+            'region' => 'Tunis',
+            'regionName' => 'Tunis Governorate',
+            'latitude' => 36.8065,
+            'longitude' => 10.1815,
+            'timezone' => 'Africa/Tunis',
+            'isp' => 'Localhost (Dev Mode)',
+            'org' => 'Development Environment',
+            'as' => 'AS0 Mock Provider',
+            'zip' => '1000',
+            'status' => 'success',
+            'message' => 'Mock data for local development'
+        ];
     }
 }

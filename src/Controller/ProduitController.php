@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Repository\ProduitRepository;
 use App\Repository\UserRepository;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,8 +13,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/products', name: 'produit_')]
 class ProduitController extends AbstractController
 {
-    public function __construct(private readonly ProduitRepository $produitRepository)
-    {
+    public function __construct(
+        private readonly ProduitRepository $produitRepository,
+        private readonly PaginatorInterface $paginator
+    ) {
     }
 
     /**
@@ -74,13 +77,22 @@ class ProduitController extends AbstractController
     }
 
     #[Route('', name: 'list', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
-        $produits = $this->produitRepository->findAllActive();
+        $queryBuilder = $this->produitRepository->createQueryBuilder('p')
+            ->where('p.isActive = true')
+            ->orderBy('p.id', 'DESC');
+        
+        $pagination = $this->paginator->paginate(
+            $queryBuilder,
+            $request->query->getInt('page', 1),
+            9 // 9 produits par page (grille 3x3)
+        );
+        
         $categories = $this->produitRepository->findAllCategories();
 
         return $this->render('produit/list.html.twig', [
-            'produits' => $produits,
+            'produits' => $pagination,
             'categories' => $categories,
         ]);
     }

@@ -111,7 +111,8 @@
     },
     "require-dev": {
         "doctrine/doctrine-fixtures-bundle": "^4.3",
-        "phpunit/phpunit": "^11.5",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "*",
         "symfony/browser-kit": "6.4.*",
         "symfony/css-selector": "6.4.*",
         "symfony/debug-bundle": "6.4.*",

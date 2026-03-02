@@ -298,6 +298,7 @@ class ProductRecommendationService
                     }
                 }
             }
+            
 
             $patientCount = count($similarPatients);
             $result['message'] = "{$patientCount} patient(s) avec un profil similaire ont aussi acheté ces produits";

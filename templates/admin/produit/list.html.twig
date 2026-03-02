@@ -73,6 +73,20 @@
         </table>
       </div>
     </div>
+    
+    {# Pagination #}
+    {% if produits.getTotalItemCount > 10 %}
+    <div class="card-footer bg-white border-top">
+      <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+          Affichage {{ produits.currentPageNumber == 1 ? 1 : ((produits.currentPageNumber - 1) * 10) + 1 }}-{{ min(produits.currentPageNumber * 10, produits.getTotalItemCount) }} sur {{ produits.getTotalItemCount }} produits
+        </small>
+        <nav>
+          {{ knp_pagination_render(produits) }}
+        </nav>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
