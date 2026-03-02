@@ -161,4 +161,25 @@ class CommentaireRepository extends ServiceEntityRepository
             'replies' => (int) $replies,
         ];
     }
+    /**
+ * Count top-level comments and total comments (including replies) for a publication in ONE query.
+ *
+ * @return array{topLevel: int, total: int}
+ */
+public function countTopLevelAndTotalByPublication(int $publicationId): array
+{
+    /** @var array<string, string|int|null> $row */
+    $row = $this->createQueryBuilder('c')
+        ->select('COUNT(c.id) AS total')
+        ->addSelect('SUM(CASE WHEN c.parent IS NULL THEN 1 ELSE 0 END) AS topLevel')
+        ->where('c.publication = :publication')
+        ->setParameter('publication', $publicationId)
+        ->getQuery()
+        ->getSingleResult();
+
+    return [
+        'topLevel' => (int) ($row['topLevel'] ?? 0),
+        'total' => (int) ($row['total'] ?? 0),
+    ];
+}
 }

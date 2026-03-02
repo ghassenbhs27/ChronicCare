@@ -133,8 +133,10 @@ class PublicationController extends AbstractController
 
         $commentaires = $commentaireRepository->findByPublicationWithReplies($id, $page, $limit);
 
-        $totalTopLevelComments = $commentaireRepository->countByPublication($id);
-        $totalCommentaires = $commentaireRepository->countAllByPublication($id);
+        $counts = $commentaireRepository->countTopLevelAndTotalByPublication($id);
+$totalTopLevelComments = $counts['topLevel'];
+$totalCommentaires = $counts['total'];
+
 
         $totalPages = max(1, (int) ceil($totalTopLevelComments / $limit));
         $canComment = $publication->getStatut() === Publication::STATUT_PUBLIE;
