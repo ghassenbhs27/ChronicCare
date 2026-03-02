@@ -12,6 +12,27 @@ function Write-Info([string]$message) {
     Write-Host "[INFO] $message"
 }
 
+function Resolve-NgrokPath() {
+    $cmd = Get-Command "ngrok" -ErrorAction SilentlyContinue
+    if ($cmd -and $cmd.Source) {
+        return $cmd.Source
+    }
+
+    $candidates = @(
+        "$env:LOCALAPPDATA\ngrok\ngrok.exe",
+        "$env:USERPROFILE\ngrok.exe",
+        "$env:USERPROFILE\Downloads\ngrok-v3-stable-windows-amd64\ngrok.exe",
+        "C:\ProgramData\chocolatey\bin\ngrok.exe"
+    )
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
 function Is-PortListening([int]$localPort) {
     try {
         $conn = Get-NetTCPConnection -LocalPort $localPort -State Listen -ErrorAction Stop
@@ -36,13 +57,18 @@ if ($existingNgrok) {
     Start-Sleep -Milliseconds 800
 }
 
+$ngrokExe = Resolve-NgrokPath
+if (-not $ngrokExe) {
+    throw "ngrok introuvable. Ajoutez ngrok au PATH ou placez ngrok.exe dans un emplacement standard."
+}
+
 $ngrokArgs = @("http", "127.0.0.1:$Port")
 if ($NgrokDomain -ne "") {
     $ngrokArgs += "--domain=$NgrokDomain"
 }
 
 Write-Info "Demarrage de ngrok..."
-Start-Process -FilePath "ngrok" -ArgumentList $ngrokArgs | Out-Null
+Start-Process -FilePath $ngrokExe -ArgumentList $ngrokArgs | Out-Null
 
 $publicUrl = $null
 for ($i = 0; $i -lt 25; $i++) {

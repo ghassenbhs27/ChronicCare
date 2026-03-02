@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>{% block title %}Back - ChronicCare{% endblock %}</title>
 
-  {# mêmes assets que le front #}
+  {# mÃªmes assets que le front #}
   <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
   <link href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
   <link href="{{ asset('assets/vendor/fontawesome-free/css/all.css') }}" rel="stylesheet">
@@ -139,6 +139,26 @@
       color: #6b7280;
     }
     .back-sidebar .back-nav a.back-nav-external:hover { color: #374151; }
+    .back-sidebar .back-nav a.back-nav-ai .back-nav-link-text {
+      color: #16a34a;
+      font-weight: 700;
+    }
+    .back-sidebar .back-nav a.back-nav-ai:hover .back-nav-link-text {
+      color: #15803d;
+    }
+    .back-sidebar .back-nav a.back-nav-ai.active .back-nav-link-text {
+      color: #16a34a;
+    }
+    .back-sidebar .back-nav a.back-nav-alert .back-nav-link-text {
+      color: #b91c1c;
+      font-weight: 700;
+    }
+    .back-sidebar .back-nav a.back-nav-alert:hover .back-nav-link-text {
+      color: #991b1b;
+    }
+    .back-sidebar .back-nav a.back-nav-alert.active .back-nav-link-text {
+      color: #b91c1c;
+    }
     .back-sidebar .back-divider {
       height: 1px;
       background: #f3f4f6;
@@ -177,6 +197,48 @@
       align-items: center;
       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
+    .back-content .pagination {
+      margin: 0;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .back-content .pagination .page-item .page-link {
+      min-width: 40px;
+      height: 40px;
+      border: 1px solid #d6dce5;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #1f2937;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+    .back-content .pagination .page-item .page-link:hover {
+      background: #eef4ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.18);
+    }
+    .back-content .pagination .page-item.active .page-link {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-color: #1d4ed8;
+      color: #ffffff;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+    }
+    .back-content .pagination .page-item.disabled .page-link {
+      background: #f3f4f6;
+      border-color: #e5e7eb;
+      color: #9ca3af;
+      box-shadow: none;
+    }
+    .back-content .pagination .page-item .page-link:focus {
+      box-shadow: 0 0 0 0.18rem rgba(37, 99, 235, 0.25);
+    }
   </style>
 
   {% block stylesheets %}{% endblock %}
@@ -190,39 +252,43 @@
   <aside class="back-sidebar d-flex flex-column" id="adminSidebar">
     <div class="back-sidebar-inner flex-grow-1 d-flex flex-column">
       <div class="back-brand">
-        <i class="bi bi-grid-3x3-gap-fill"></i>
         <span>ChronicCare Admin</span>
       </div>
 
       <p class="back-nav-label">Navigation</p>
       <nav class="back-nav">
         <a href="{{ path('admin_dashboard') }}" title="Dashboard" class="{% if app.request.get('_route') starts with 'admin_dashboard' %}active{% endif %}">
-          <i class="bi bi-speedometer2"></i>
           <span class="back-nav-link-text">Dashboard</span>
         </a>
         <a href="{{ path('app_user_index') }}" title="Utilisateurs" class="{% if app.request.get('_route') starts with 'app_user_' %}active{% endif %}">
-          <i class="bi bi-people"></i>
           <span class="back-nav-link-text">Utilisateurs</span>
         </a>
-        <a href="{{ path('admin_activite_index') }}" title="Activités" class="{% if app.request.get('_route') starts with 'admin_activite_' %}active{% endif %}">
-          <i class="bi bi-activity"></i>
-          <span class="back-nav-link-text">Activités</span>
+        <a href="{{ path('admin_activite_index') }}" title="Activites" class="{% if app.request.get('_route') starts with 'admin_activite_' %}active{% endif %}">
+          <span class="back-nav-link-text">Activites</span>
         </a>
-        <a href="{{ path('admin_etat_vue_globale') }}" title="Vue globale santé" class="{% if app.request.get('_route') == 'admin_etat_vue_globale' %}active{% endif %}">
-          <i class="bi bi-heart-pulse"></i>
-          <span class="back-nav-link-text">Vue globale santé</span>
+        <a href="{{ path('admin_etat_vue_globale') }}" title="Vue globale sante" class="{% if app.request.get('_route') == 'admin_etat_vue_globale' %}active{% endif %}">
+          <span class="back-nav-link-text">Vue globale sante</span>
         </a>
-        <a href="{{ path('admin_etat_index') }}" title="États suivi" class="{% if app.request.get('_route') == 'admin_etat_index' %}active{% endif %}">
-          <i class="bi bi-list-ul"></i>
-          <span class="back-nav-link-text">États suivi</span>
+        <a href="{{ path('admin_etat_index') }}" title="Etats suivi" class="{% if app.request.get('_route') == 'admin_etat_index' %}active{% endif %}">
+          <span class="back-nav-link-text">Etats suivi</span>
         </a>
         <a href="{{ path('admin_statistics_index') }}" title="Statistiques" class="{% if app.request.get('_route') starts with 'admin_statistics' %}active{% endif %}">
-          <i class="bi bi-bar-chart-line"></i>
           <span class="back-nav-link-text">Statistiques</span>
         </a>
-        <a href="{{ path('admin_evenement_index') }}" title="Gestion des événements" class="{% if app.request.get('_route') starts with 'admin_evenement' %}active{% endif %}">
-          <i class="bi bi-calendar-event"></i>
-          <span class="back-nav-link-text">Événements</span>
+        <a href="{{ path('admin_patient_segment_index') }}" title="Segmentation patients" class="{% if app.request.get('_route') starts with 'admin_patient_segment_' %}active{% endif %}">
+          <span class="back-nav-link-text">Segments patients</span>
+        </a>
+        <a href="{{ path('admin_evenement_index') }}" title="Gestion des evenements" class="{% if app.request.get('_route') starts with 'admin_evenement' %}active{% endif %}">
+          <span class="back-nav-link-text">Evenements</span>
+        </a>
+        <a href="{{ path('admin_ai_assistant_index') }}" title="Assistant IA interne" class="back-nav-ai {% if app.request.get('_route') starts with 'admin_ai_assistant_' %}active{% endif %}">
+          <span class="back-nav-link-text">Assistant IA</span>
+        </a>
+        <a href="{{ path('admin_security_alert_index') }}" title="Alertes de securite" class="back-nav-alert {% if app.request.get('_route') starts with 'admin_security_alert_' %}active{% endif %}">
+          <span class="back-nav-link-text">Alertes securite</span>
+        </a>
+        <a href="{{ path('admin_medical_audit_index') }}" title="Audit medical" class="{% if app.request.get('_route') starts with 'admin_medical_audit_' %}active{% endif %}">
+          <span class="back-nav-link-text">Audit medical</span>
         </a>
         <a href="{{ path('admin_forum_dashboard') }}" title="Forum" class="{% if app.request.get('_route') starts with 'admin_forum' %}active{% endif %}">
           <i class="bi bi-chat-square-text"></i>
@@ -231,19 +297,15 @@
 
         <p class="back-nav-label">Boutique</p>
         <a href="{{ path('admin_produit_list') }}" title="Produits" class="{% if app.request.get('_route') starts with 'admin_produit' %}active{% endif %}">
-          <i class="bi bi-box-seam"></i>
           <span class="back-nav-link-text">Produits</span>
         </a>
         <a href="{{ path('admin_produit_low_stock') }}" title="Stock faible" class="{% if app.request.get('_route') == 'admin_produit_low_stock' %}active{% endif %}">
-          <i class="bi bi-exclamation-triangle"></i>
           <span class="back-nav-link-text">Stock faible</span>
         </a>
         <a href="{{ path('admin_commande_list') }}" title="Commandes" class="{% if app.request.get('_route') starts with 'admin_commande' %}active{% endif %}">
-          <i class="bi bi-cart-check"></i>
           <span class="back-nav-link-text">Commandes</span>
         </a>
         <a href="{{ path('admin_commande_stats') }}" title="Stats ventes" class="{% if app.request.get('_route') == 'admin_commande_stats' %}active{% endif %}">
-          <i class="bi bi-graph-up"></i>
           <span class="back-nav-link-text">Stats ventes</span>
         </a>
       </nav>
@@ -251,8 +313,8 @@
       <div class="back-divider"></div>
 
       <div class="back-user">
-        <div class="back-user-label">Connecté</div>
-        <div class="back-user-name">{{ app.user ? app.user.fullName : '—' }}</div>
+        <div class="back-user-label">Connecte</div>
+        <div class="back-user-name">{{ app.user ? app.user.fullName : 'â€”' }}</div>
       </div>
     </div>
   </aside>
@@ -299,3 +361,5 @@
 {% block javascripts %}{% endblock %}
 </body>
 </html>
+
+

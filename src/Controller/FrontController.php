@@ -34,13 +34,18 @@ final class FrontController extends AbstractController
         return $this->render('front/index.html.twig');
     }
 
-    #[Route('/coachs', name: 'coachs')]
-    #[Route('/appointment', name: 'appointment')]
-    #[Route('/services', name: 'services')]
-    #[Route('/rendez-vous', name: 'rendez-vous')]
+    #[Route('/coachs', name: 'coachs', methods: ['GET'])]
+    #[Route('/services', name: 'services', methods: ['GET'])]
     public function coachs(): Response
     {
         return $this->render('front/coachs.html.twig');
+    }
+
+    #[Route('/appointment', name: 'appointment', methods: ['GET'])]
+    #[Route('/rendez-vous', name: 'rendez-vous', methods: ['GET'])]
+    public function appointment(): RedirectResponse
+    {
+        return $this->redirectToRoute('professionnels_list');
     }
 
     #[Route('/connexion', name: 'connexion')]

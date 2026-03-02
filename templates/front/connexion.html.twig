@@ -174,6 +174,34 @@
       text-decoration: underline;
     }
 
+    .social-auth {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .social-auth-btn {
+      width: 100%;
+      border-radius: 50px;
+      border: 1px solid rgba(100, 116, 139, 0.25);
+      padding: 0.65rem 1rem;
+      background: #ffffff;
+      color: #1a202c;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .social-auth-btn:hover {
+      color: #0d6efd;
+      border-color: rgba(13, 110, 253, 0.45);
+      background: rgba(13, 110, 253, 0.04);
+    }
+
     @media (max-width: 576px) {
       .auth-card {
         padding: 2rem;
@@ -299,6 +327,27 @@
               </form>
 
               <div class="auth-divider"><span>Chronic Care</span></div>
+
+              {% if google_enabled|default(false) %}
+                <div class="social-auth">
+                  <a href="{{ path('connect_google_start', { role: 'ROLE_PATIENT' }) }}" class="social-auth-btn">
+                    <i class="bi bi-google"></i>
+                    Continuer avec Google (Patient)
+                  </a>
+                  <a href="{{ path('connect_google_start', { role: 'ROLE_COACH' }) }}" class="social-auth-btn">
+                    <i class="bi bi-google"></i>
+                    Continuer avec Google (Coach)
+                  </a>
+                  <a href="{{ path('connect_google_start', { role: 'ROLE_NUTRITIONNISTE' }) }}" class="social-auth-btn">
+                    <i class="bi bi-google"></i>
+                    Continuer avec Google (Nutritionniste)
+                  </a>
+                </div>
+              {% else %}
+                <div class="alert alert-info mt-3 mb-0" role="alert">
+                  Connexion Google indisponible: configurez les cles OAuth Google.
+                </div>
+              {% endif %}
 
               <div class="auth-trust">
                 <div><i class="bi bi-shield-check"></i> Données sécurisées</div>

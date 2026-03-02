@@ -5,6 +5,7 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\Email\TwoFactorInterface as EmailTwoFactorInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -13,7 +14,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
 #[UniqueEntity(fields: ['email'], message: 'Il existe déjà un compte avec cet email')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, EmailTwoFactorInterface
 {
     public const APPROVAL_PENDING = 'pending';
     public const APPROVAL_APPROVED = 'approved';
@@ -73,6 +74,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 20, options: ['default' => self::APPROVAL_PENDING])]
     private string $approvalStatus = self::APPROVAL_PENDING;
 
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $activityScore = 0;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isMostActive = false;
+
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $activityBadge = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $activityReward = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $activityBadgeAwardedAt = null;
+
     #[ORM\Column(length: 64, nullable: true, unique: true)]
     private ?string $verificationToken = null;
 
@@ -81,6 +97,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoProfil = null;
+
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $medicalCondition = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $securityBlockedUntil = null;
+
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $emailAuthCode = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastSeenAt = null;
 
     /**
      * @var Collection<int, Evenement>
@@ -404,6 +432,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getMedicalCondition(): ?string
+    {
+        return $this->medicalCondition;
+    }
+
+    public function setMedicalCondition(?string $medicalCondition): self
+    {
+        $this->medicalCondition = $medicalCondition;
+        return $this;
+    }
+
+    public function getSecurityBlockedUntil(): ?\DateTimeImmutable
+    {
+        return $this->securityBlockedUntil;
+    }
+
+    public function setSecurityBlockedUntil(?\DateTimeImmutable $securityBlockedUntil): self
+    {
+        $this->securityBlockedUntil = $securityBlockedUntil;
+        return $this;
+    }
+
+    public function isTemporarilyBlocked(): bool
+    {
+        return $this->securityBlockedUntil !== null && $this->securityBlockedUntil > new \DateTimeImmutable();
+    }
+
     public function getRequestedRole(): ?string
     {
         return $this->requestedRole;
@@ -439,5 +494,104 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function isRejected(): bool
     {
         return $this->approvalStatus === self::APPROVAL_REJECTED;
+    }
+
+    public function getActivityScore(): int
+    {
+        return $this->activityScore;
+    }
+
+    public function setActivityScore(int $activityScore): self
+    {
+        $this->activityScore = max(0, $activityScore);
+        return $this;
+    }
+
+    public function isMostActive(): bool
+    {
+        return $this->isMostActive;
+    }
+
+    public function setIsMostActive(bool $isMostActive): self
+    {
+        $this->isMostActive = $isMostActive;
+        return $this;
+    }
+
+    public function getActivityBadge(): ?string
+    {
+        return $this->activityBadge;
+    }
+
+    public function setActivityBadge(?string $activityBadge): self
+    {
+        $this->activityBadge = $activityBadge;
+        return $this;
+    }
+
+    public function getActivityReward(): ?string
+    {
+        return $this->activityReward;
+    }
+
+    public function setActivityReward(?string $activityReward): self
+    {
+        $this->activityReward = $activityReward;
+        return $this;
+    }
+
+    public function getActivityBadgeAwardedAt(): ?\DateTimeImmutable
+    {
+        return $this->activityBadgeAwardedAt;
+    }
+
+    public function setActivityBadgeAwardedAt(?\DateTimeImmutable $activityBadgeAwardedAt): self
+    {
+        $this->activityBadgeAwardedAt = $activityBadgeAwardedAt;
+        return $this;
+    }
+
+    public function isEmailAuthEnabled(): bool
+    {
+        return $this->isActive() && in_array('ROLE_ADMIN', $this->getRoles(), true);
+    }
+
+    public function getEmailAuthRecipient(): string
+    {
+        if (in_array('ROLE_ADMIN', $this->getRoles(), true)) {
+            $override = (string) (
+                $_ENV['ADMIN_2FA_EMAIL_OVERRIDE']
+                ?? $_SERVER['ADMIN_2FA_EMAIL_OVERRIDE']
+                ?? getenv('ADMIN_2FA_EMAIL_OVERRIDE')
+                ?? ''
+            );
+            $override = trim($override);
+            if ($override !== '' && filter_var($override, FILTER_VALIDATE_EMAIL)) {
+                return $override;
+            }
+        }
+
+        return (string) $this->getEmail();
+    }
+
+    public function getEmailAuthCode(): ?string
+    {
+        return $this->emailAuthCode;
+    }
+
+    public function setEmailAuthCode(string $authCode): void
+    {
+        $this->emailAuthCode = trim($authCode) !== '' ? trim($authCode) : null;
+    }
+
+    public function getLastSeenAt(): ?\DateTimeImmutable
+    {
+        return $this->lastSeenAt;
+    }
+
+    public function setLastSeenAt(?\DateTimeImmutable $lastSeenAt): self
+    {
+        $this->lastSeenAt = $lastSeenAt;
+        return $this;
     }
 }

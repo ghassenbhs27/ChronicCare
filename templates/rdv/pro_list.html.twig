@@ -111,6 +111,12 @@
                             <button class="btn btn-sm btn-success rdv-actions" type="submit"><i class="bi bi-check-lg me-1"></i> Accepter</button>
                           </form>
                         {% endif %}
+                        {% if rdv.statut == 'confirme' %}
+                          <form method="post" action="{{ path('pro_rdv_complete', { id: rdv.id }) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('complete_rdv_' ~ rdv.id) }}">
+                            <button class="btn btn-sm btn-primary rdv-actions" type="submit"><i class="bi bi-flag me-1"></i> Terminer</button>
+                          </form>
+                        {% endif %}
                         {% if rdv.statut != 'annule' and rdv.statut != 'termine' %}
                           <form method="post" action="{{ path('pro_rdv_cancel', { id: rdv.id }) }}" class="d-inline" onsubmit="return confirm('Annuler ce rendez-vous ?');">
                             <input type="hidden" name="_token" value="{{ csrf_token('cancel_rdv_' ~ rdv.id) }}">

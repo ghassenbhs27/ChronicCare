@@ -28,7 +28,7 @@ class EtatRepository extends ServiceEntityRepository
 
     public function searchAndSort(?string $q, string $sort = 'dateReleve', string $dir = 'DESC', bool $patientsOnly = true): array
     {
-        $allowedSort = ['id', 'type', 'valeur', 'unite', 'dateReleve'];
+        $allowedSort = ['id', 'dateReleve', 'traitementEnCours', 'temperatureCorporelle', 'niveauHydratation'];
         if (!in_array($sort, $allowedSort, true)) {
             $sort = 'dateReleve';
         }
@@ -40,7 +40,7 @@ class EtatRepository extends ServiceEntityRepository
             $qb->andWhere('u.roles LIKE :rolePatient')->setParameter('rolePatient', self::ROLE_PATIENT_LIKE);
         }
         if ($q) {
-            $qb->andWhere('LOWER(e.type) LIKE :q OR LOWER(e.unite) LIKE :q')
+            $qb->andWhere('LOWER(e.traitementEnCours) LIKE :q OR LOWER(e.remarquesCliniques) LIKE :q')
                 ->setParameter('q', '%' . mb_strtolower(trim($q)) . '%');
         }
 
@@ -49,7 +49,7 @@ class EtatRepository extends ServiceEntityRepository
 
     public function findByUserWithSearchSort(User $user, ?string $q, string $sort = 'dateReleve', string $dir = 'DESC'): array
     {
-        $allowedSort = ['id', 'type', 'valeur', 'unite', 'dateReleve'];
+        $allowedSort = ['id', 'dateReleve', 'traitementEnCours', 'temperatureCorporelle', 'niveauHydratation'];
         if (!in_array($sort, $allowedSort, true)) {
             $sort = 'dateReleve';
         }
@@ -61,11 +61,28 @@ class EtatRepository extends ServiceEntityRepository
             ->setParameter('user', $user);
 
         if ($q) {
-            $qb->andWhere('LOWER(e.type) LIKE :q OR LOWER(e.unite) LIKE :q')
+            $qb->andWhere('LOWER(e.traitementEnCours) LIKE :q OR LOWER(e.remarquesCliniques) LIKE :q')
                 ->setParameter('q', '%' . mb_strtolower(trim($q)) . '%');
         }
 
         return $qb->orderBy('e.' . $sort, $dir)->getQuery()->getResult();
+    }
+
+    /**
+     * @return Etat[]
+     */
+    public function findLastDaysForUser(User $user, int $days = 7): array
+    {
+        $since = (new \DateTimeImmutable('today'))->modify('-' . max(1, $days - 1) . ' days');
+
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.utilisateur = :user')
+            ->andWhere('e.dateReleve >= :since')
+            ->setParameter('user', $user)
+            ->setParameter('since', $since)
+            ->orderBy('e.dateReleve', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 
     /** @return array<array{date: string, total: int}> Relevés des patients uniquement. */
@@ -87,8 +104,8 @@ class EtatRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) AS totalEtats')
-            ->addSelect('COALESCE(AVG(e.valeur), 0) AS moyenneValeur')
-            ->addSelect('COUNT(DISTINCT e.type) AS nbTypes')
+            ->addSelect('0 AS moyenneValeur')
+            ->addSelect('COUNT(DISTINCT e.traitementEnCours) AS nbTypes')
             ->leftJoin('e.utilisateur', 'u');
         $this->addPatientOnly($qb);
         $row = $qb->getQuery()->getSingleResult();
@@ -104,13 +121,13 @@ class EtatRepository extends ServiceEntityRepository
     public function getTrendByType(): array
     {
         $qb = $this->createQueryBuilder('e')
-            ->select('e.type AS type')
+            ->select("COALESCE(NULLIF(e.traitementEnCours, ''), 'Non renseigne') AS type")
             ->addSelect('COUNT(e.id) AS nb')
-            ->addSelect('COALESCE(AVG(e.valeur), 0) AS moyenne')
-            ->addSelect('MIN(e.valeur) AS minValeur')
-            ->addSelect('MAX(e.valeur) AS maxValeur')
+            ->addSelect('0 AS moyenne')
+            ->addSelect('0 AS minValeur')
+            ->addSelect('0 AS maxValeur')
             ->leftJoin('e.utilisateur', 'u')
-            ->groupBy('e.type')
+            ->groupBy('e.traitementEnCours')
             ->orderBy('nb', 'DESC');
         $this->addPatientOnly($qb);
         return $qb->getQuery()->getArrayResult();
@@ -124,7 +141,7 @@ class EtatRepository extends ServiceEntityRepository
             ->addSelect('u.nom AS nom')
             ->addSelect('u.prenom AS prenom')
             ->addSelect('COUNT(e.id) AS nb')
-            ->addSelect('COALESCE(AVG(e.valeur), 0) AS moyenneValeur')
+            ->addSelect('0 AS moyenneValeur')
             ->leftJoin('e.utilisateur', 'u')
             ->groupBy('u.id, u.nom, u.prenom')
             ->orderBy('nb', 'DESC');
@@ -156,33 +173,7 @@ class EtatRepository extends ServiceEntityRepository
     /** Anomalies de valeurs, relevés des patients uniquement. */
     public function getValueAnomalies(): array
     {
-        $qb = $this->createQueryBuilder('e')
-            ->select('e.id AS id, e.type AS type, e.valeur AS valeur, e.unite AS unite, e.dateReleve AS dateReleve')
-            ->addSelect('u.id AS userId, u.nom AS nom, u.prenom AS prenom')
-            ->leftJoin('e.utilisateur', 'u')
-            ->orderBy('e.dateReleve', 'DESC');
-        $this->addPatientOnly($qb);
-        $rows = $qb->getQuery()->getArrayResult();
-
-        $anomalies = [];
-        foreach ($rows as $row) {
-            $type = mb_strtolower((string) ($row['type'] ?? ''));
-            $value = (float) ($row['valeur'] ?? 0);
-
-            $isAnomaly = match (true) {
-                str_contains($type, 'gly') => $value < 70 || $value > 180,
-                str_contains($type, 'poids') => $value < 35 || $value > 220,
-                str_contains($type, 'tension') => $value < 8 || $value > 18,
-                str_contains($type, 'temp') => $value < 35 || $value > 39.5,
-                default => false,
-            };
-
-            if ($isAnomaly) {
-                $anomalies[] = $row;
-            }
-        }
-
-        return $anomalies;
+        return [];
     }
 
     /**
@@ -205,14 +196,14 @@ class EtatRepository extends ServiceEntityRepository
     public function getEtatsByTypeForUser(User $user): array
     {
         return $this->createQueryBuilder('e')
-            ->select('e.type AS type')
+            ->select("COALESCE(NULLIF(e.traitementEnCours, ''), 'Non renseigne') AS type")
             ->addSelect('COUNT(e.id) AS nb')
-            ->addSelect('COALESCE(AVG(e.valeur), 0) AS moyenne')
-            ->addSelect('COALESCE(MIN(e.valeur), 0) AS min')
-            ->addSelect('COALESCE(MAX(e.valeur), 0) AS max')
+            ->addSelect('0 AS moyenne')
+            ->addSelect('0 AS min')
+            ->addSelect('0 AS max')
             ->andWhere('e.utilisateur = :user')
             ->setParameter('user', $user)
-            ->groupBy('e.type')
+            ->groupBy('e.traitementEnCours')
             ->orderBy('nb', 'DESC')
             ->getQuery()
             ->getArrayResult();
@@ -227,17 +218,17 @@ class EtatRepository extends ServiceEntityRepository
         $since = (new \DateTimeImmutable())->modify("-{$days} days");
         $qb = $this->createQueryBuilder('e')
             ->select('DATE(e.dateReleve) AS date')
-            ->addSelect('e.type AS type')
-            ->addSelect('AVG(e.valeur) AS valeur')
+            ->addSelect("COALESCE(NULLIF(e.traitementEnCours, ''), 'Non renseigne') AS type")
+            ->addSelect('0 AS valeur')
             ->andWhere('e.utilisateur = :user')
             ->andWhere('e.dateReleve >= :since')
             ->setParameter('user', $user)
             ->setParameter('since', $since)
             ->groupBy('date')
-            ->addGroupBy('e.type')
+            ->addGroupBy('e.traitementEnCours')
             ->orderBy('date', 'ASC');
         if ($type !== null && $type !== '') {
-            $qb->andWhere('e.type = :type')->setParameter('type', $type);
+            $qb->andWhere('e.traitementEnCours = :type')->setParameter('type', $type);
         }
         return $qb->getQuery()->getArrayResult();
     }
@@ -262,9 +253,9 @@ class EtatRepository extends ServiceEntityRepository
                 ->getResult();
             $parType = [];
             foreach ($derniers as $e) {
-                $t = $e->getType();
+                $t = trim((string) ($e->getTraitementEnCours() ?? '')) ?: 'Non renseigne';
                 if (!isset($parType[$t])) {
-                    $parType[$t] = ['valeur' => $e->getValeur(), 'unite' => $e->getUnite(), 'date' => $e->getDateReleve()];
+                    $parType[$t] = ['valeur' => 0, 'date' => $e->getDateReleve()];
                 }
             }
             $result[] = [

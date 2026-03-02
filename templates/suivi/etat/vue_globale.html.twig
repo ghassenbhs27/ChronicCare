@@ -8,7 +8,7 @@
 
   <div class="alert alert-light border mb-4 small" role="region" aria-label="Définition">
     <strong>Qu’est-ce que l’état de santé ?</strong><br>
-    Ce sont les <strong>relevés</strong> enregistrés par les <strong>patients</strong> : indicateurs comme le poids, la glycémie, la tension artérielle, la température, etc. Chaque relevé contient un type, une valeur et une unité, avec la date du jour. Cette vue ne concerne que les patients (pas les coachs ni les admins).
+    Ce sont les <strong>relevés</strong> enregistrés par les <strong>patients</strong> : traitement en cours, remarques cliniques, température corporelle et hydratation, avec la date du jour. Cette vue ne concerne que les patients (pas les coachs ni les admins).
   </div>
 
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
@@ -121,7 +121,7 @@
           <ul class="list-unstyled mb-0 small">
             {% for a in valueAnomalies|slice(0, 8) %}
               <li class="py-1 border-bottom border-light">
-                <strong>{{ a.prenom }} {{ a.nom }}</strong> — {{ a.type }}: {{ a.valeur }} {{ a.unite }}
+                <strong>{{ a.prenom }} {{ a.nom }}</strong> — {{ a.type }}
                 <span class="text-muted">({{ a.dateReleve is defined and a.dateReleve ? a.dateReleve|date('d/m/Y') : '' }})</span>
               </li>
             {% endfor %}
@@ -172,7 +172,7 @@
             <tr>
               <th>Patient</th>
               <th>Nb relevés</th>
-              <th>Moyenne valeur</th>
+              <th>Moyenne</th>
               <th>Derniers indicateurs</th>
               <th class="text-end">Fiche</th>
             </tr>
@@ -187,7 +187,7 @@
                 <td>{{ p.moyenneValeur|number_format(1) }}</td>
                 <td class="small">
                   {% for type, val in p.derniersParType|slice(0, 4) %}
-                    <span class="badge bg-light text-dark me-1">{{ type }}: {{ val.valeur }} {{ val.unite }}</span>
+                    <span class="badge bg-light text-dark me-1">{{ type }}</span>
                   {% else %}
                     <span class="text-muted">—</span>
                   {% endfor %}
@@ -197,7 +197,7 @@
                 </td>
               </tr>
             {% else %}
-              <tr><td colspan="5" class="text-center text-muted py-4">Aucun patient avec des relevés.</td></tr>
+              <tr><td colspan="4" class="text-center text-muted py-4">Aucun patient avec des relevés.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -241,3 +241,4 @@
 })();
 </script>
 {% endblock %}
+

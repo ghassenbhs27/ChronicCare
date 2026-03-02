@@ -114,7 +114,15 @@
             <tr>
               <td>{{ a.id }}</td>
               <td>{{ a.type }}</td>
-              <td>{% if a.etat %}{{ a.etat.type }}: {{ a.etat.valeur }} {{ a.etat.unite }}{% else %}-{% endif %}</td>
+              <td>
+                {% if a.etat %}
+                  {% if a.etat.temperatureCorporelle %}🌡️ {{ a.etat.temperatureCorporelle }}°C{% endif %}
+                  {% if a.etat.niveauHydratation %} 💧 {{ a.etat.niveauHydratation }}{% endif %}
+                  {% if not a.etat.temperatureCorporelle and not a.etat.niveauHydratation %}
+                    Releve du {{ a.etat.dateReleve|date('d/m/Y') }}
+                  {% endif %}
+                {% else %}-{% endif %}
+              </td>
               <td>{{ a.duree }} min</td>
               <td>{{ a.calories }}</td>
               <td>{{ a.dateActivite ? a.dateActivite|date('d/m/Y') : '-' }}</td>

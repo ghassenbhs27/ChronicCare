@@ -25,3 +25,16 @@
     </div>
   </main>
 {% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script>
+    (function () {
+      const input = document.querySelector('input[name$="[dateRdv]"]');
+      if (!input) return;
+      const now = new Date();
+      const isoLocal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      input.min = isoLocal(now);
+    })();
+  </script>
+{% endblock %}

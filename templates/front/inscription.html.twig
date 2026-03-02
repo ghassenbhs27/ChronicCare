@@ -133,6 +133,19 @@
           <div class="text-danger">{{ form_errors(form.requestedRole) }}</div>
         </div>
 
+        <div class="col-md-12 d-none" id="medical-condition-wrapper">
+          {{ form_widget(form.medicalCondition, {'attr': {'class': 'form-select', 'id': 'medical-condition-select'}}) }}
+          <div class="text-danger">{{ form_errors(form.medicalCondition) }}</div>
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="open-medical-ai-btn">
+              <i class="bi bi-robot me-1"></i> Demarrer dossier IA
+            </button>
+            <span class="badge bg-secondary" id="medical-dossier-status">Dossier non complet</span>
+          </div>
+          <div class="text-danger">{{ form_errors(form.medicalDossierPayload) }}</div>
+          {{ form_widget(form.medicalDossierPayload, {'attr': {'id': 'medical-dossier-payload'}}) }}
+        </div>
+
         <div class="col-md-12">
           {{ form_widget(form.photoProfil, {'attr': {'class': 'form-control', 'accept': 'image/png,image/jpeg,image/webp'}}) }}
           <div class="form-text">Photo de profil optionnelle (JPG, PNG, WEBP).</div>
@@ -178,6 +191,30 @@
   </div>
 </div><!-- End Inscription Form -->
 
+        </div>
+
+        <div class="modal fade" id="medicalAiModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-robot me-2"></i>Dossier medical assiste par IA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="alert alert-info py-2" id="medical-ai-intro">
+                  Selectionnez votre maladie, puis lancez l assistant IA.
+                </div>
+                <form id="medical-ai-form" class="row gy-3"></form>
+                <p class="small text-muted mb-0 mt-2">
+                  Les informations servent uniquement a pre-remplir votre dossier et orienter l analyse de risque.
+                </p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-primary" id="save-medical-ai-btn">Valider dossier</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Process Steps -->
@@ -302,4 +339,179 @@
 
   <!-- Preloader -->
   <div id="preloader"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const roleSelect = document.querySelector('select[name$="[requestedRole]"]');
+      const diseaseSelect = document.querySelector('select[name$="[medicalCondition]"]');
+      const payloadInput = document.querySelector('input[name$="[medicalDossierPayload]"]');
+      const medicalWrapper = document.getElementById('medical-condition-wrapper');
+      const statusBadge = document.getElementById('medical-dossier-status');
+      const openBtn = document.getElementById('open-medical-ai-btn');
+      const saveBtn = document.getElementById('save-medical-ai-btn');
+      const formContainer = document.getElementById('medical-ai-form');
+      const introBox = document.getElementById('medical-ai-intro');
+      const modalEl = document.getElementById('medicalAiModal');
+      const questionnaireUrl = '{{ path('app_register_medical_questionnaire') }}';
+
+      if (!roleSelect || !diseaseSelect || !payloadInput || !medicalWrapper || !statusBadge || !openBtn || !saveBtn || !formContainer || !introBox || !modalEl) {
+        return;
+      }
+
+      const modal = typeof bootstrap !== 'undefined' ? new bootstrap.Modal(modalEl) : null;
+      let activeQuestionnaire = [];
+      let activeMode = 'FALLBACK';
+      
+      const markIncomplete = function () {
+        statusBadge.className = 'badge bg-secondary';
+        statusBadge.textContent = 'Dossier non complet';
+      };
+
+      const markComplete = function () {
+        statusBadge.className = 'badge bg-success';
+        statusBadge.textContent = 'Dossier complet';
+      };
+
+      const toggleMedicalSection = function () {
+        if (roleSelect.value === 'ROLE_PATIENT') {
+          medicalWrapper.classList.remove('d-none');
+          return;
+        }
+
+        medicalWrapper.classList.add('d-none');
+        payloadInput.value = '';
+        markIncomplete();
+      };
+
+      const renderQuestionnaire = function (questions) {
+        formContainer.innerHTML = '';
+        activeQuestionnaire = Array.isArray(questions) ? questions : [];
+
+        activeQuestionnaire.forEach(function (q, idx) {
+          const col = document.createElement('div');
+          col.className = 'col-12';
+
+          const label = document.createElement('label');
+          label.className = 'form-label fw-semibold';
+          label.textContent = q.label || ('Question ' + (idx + 1));
+          col.appendChild(label);
+
+          let field;
+          if (q.type === 'choice') {
+            field = document.createElement('select');
+            field.className = 'form-select';
+            const blank = document.createElement('option');
+            blank.value = '';
+            blank.textContent = 'Selectionnez';
+            field.appendChild(blank);
+            (q.options || []).forEach(function (opt) {
+              const option = document.createElement('option');
+              option.value = String(opt);
+              option.textContent = String(opt);
+              field.appendChild(option);
+            });
+          } else {
+            field = document.createElement('input');
+            field.type = q.type === 'number' ? 'number' : 'text';
+            field.className = 'form-control';
+            field.placeholder = q.placeholder || '';
+          }
+
+          field.setAttribute('data-question-index', String(idx));
+          col.appendChild(field);
+          formContainer.appendChild(col);
+        });
+      };
+
+      roleSelect.addEventListener('change', toggleMedicalSection);
+      diseaseSelect.addEventListener('change', function () {
+        payloadInput.value = '';
+        markIncomplete();
+      });
+
+      openBtn.addEventListener('click', async function () {
+        if (roleSelect.value !== 'ROLE_PATIENT') {
+          return;
+        }
+        const disease = (diseaseSelect.value || '').trim();
+        if (!disease) {
+          alert('Veuillez choisir votre maladie avant de lancer l assistant IA.');
+          return;
+        }
+
+        openBtn.disabled = true;
+        openBtn.textContent = 'Chargement...';
+        try {
+          const response = await fetch(questionnaireUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ disease: disease })
+          });
+          const data = await response.json();
+          if (!response.ok || !data.ok) {
+            throw new Error(data.message || 'Impossible de charger le questionnaire.');
+          }
+
+          introBox.textContent = data.intro || 'Repondez aux questions pour completer votre dossier.';
+          activeMode = data.mode || 'FALLBACK';
+          renderQuestionnaire(data.questions || []);
+
+          if (modal) {
+            modal.show();
+          }
+        } catch (error) {
+          alert(error.message || 'Erreur lors du chargement du questionnaire IA.');
+        } finally {
+          openBtn.disabled = false;
+          openBtn.innerHTML = '<i class="bi bi-robot me-1"></i> Demarrer dossier IA';
+        }
+      });
+
+      saveBtn.addEventListener('click', function () {
+        if (activeQuestionnaire.length === 0) {
+          alert('Aucune question disponible. Lancez d abord l assistant IA.');
+          return;
+        }
+
+        const answers = [];
+        let hasMissing = false;
+        formContainer.querySelectorAll('[data-question-index]').forEach(function (field) {
+          const idx = Number(field.getAttribute('data-question-index') || '-1');
+          const question = activeQuestionnaire[idx] || null;
+          const value = (field.value || '').trim();
+          if (!question) {
+            return;
+          }
+          if (value === '') {
+            hasMissing = true;
+          }
+          answers.push({
+            question: question.label || ('Question ' + (idx + 1)),
+            answer: value
+          });
+        });
+
+        if (hasMissing) {
+          alert('Veuillez remplir toutes les reponses du dossier medical.');
+          return;
+        }
+
+        const payload = {
+          disease: diseaseSelect.value,
+          mode: activeMode,
+          questions: activeQuestionnaire,
+          answers: answers,
+          generatedAt: new Date().toISOString()
+        };
+
+        payloadInput.value = JSON.stringify(payload);
+        markComplete();
+        if (modal) {
+          modal.hide();
+        }
+      });
+
+      toggleMedicalSection();
+    });
+  </script>
 {% endblock %}

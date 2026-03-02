@@ -1,0 +1,48 @@
+# Use the front controller as index file. It serves as a fallback solution when
+# every other rewrite/redirect fails (e.g. in an aliased environment served
+# by a web server that doesn't allow the "FallbackResource" directive).
+DirectoryIndex index.php
+
+# By default, Apache does not evaluate symbolic links if you did not enable this
+# temporary you can include FollowSymlinks to a source control you may want to
+# temporarily enable this.
+#Options +FollowSymLinks
+
+# Disable magic_quotes_gpc for PHP 4 (Removed in PHP 5.4.0, this option is still valid for
+# newer PHP versions)
+#php_flag magic_quotes_gpc off
+
+# Disable server signature exposure
+ServerSignature Off
+
+# Configure default charset
+# AddDefaultCharset UTF-8
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Set the base path for the subdirectory
+    RewriteBase /chroniccare-user/
+
+    # Redirect to URI without front controller to prevent duplicate content
+    RewriteCond %{ENV:REDIRECT_STATUS} =""
+    RewriteRule ^index\.php(?:/(.*)|$) /$1 [R=301,L]
+
+    # If the requested filename exists, simply serve it.
+    # We only want to let Apache serve files and not directories.
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Rewrite all other queries to the front controller.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        # When mod_rewrite is not available, we instruct a temporary redirect of
+        # the start page to the front controller explicitly so that the website
+        # and the generated links can still be used.
+        RedirectMatch 307 ^/$ /index.php/
+        # RedirectTemp cannot be used instead
+    </IfModule>
+</IfModule>

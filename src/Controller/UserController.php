@@ -3,9 +3,14 @@ namespace App\Controller;
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use App\Entity\MedicalDossierAuditLog;
 use App\Entity\User;
 use App\Form\UserType;
+use App\Repository\MedicalDossierAuditLogRepository;
+use App\Repository\MedicalDossierRepository;
 use App\Repository\UserRepository;
+use App\Service\ActivityBadgeService;
+use App\Service\MedicalDossierAuditService;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
@@ -20,6 +25,72 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class UserController extends AbstractController
 {
+    #[Route('/assign-most-active-badge', name: 'app_user_assign_most_active_badge', methods: ['POST'])]
+    public function assignMostActiveBadge(Request $request, ActivityBadgeService $activityBadgeService): Response
+    {
+        if (!$this->isCsrfTokenValid('assign_most_active_badge', (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_user_index');
+        }
+
+        $days = max(1, (int) $request->request->get('days', 30));
+        $result = $activityBadgeService->assignMostActiveBadge($days);
+        /** @var User|null $winner */
+        $winner = $result['winner'] ?? null;
+        $score = (int) ($result['score'] ?? 0);
+
+        if (!$winner || $score <= 0) {
+            $this->addFlash('warning', 'Aucun utilisateur actif trouve pour attribuer le badge.');
+            return $this->redirectToRoute('app_user_index');
+        }
+
+        $this->addFlash(
+            'success',
+            sprintf(
+                'Badge attribue a %s (%s) avec score %d. Recompense: %s',
+                $winner->getFullName(),
+                (string) $winner->getEmail(),
+                $score,
+                (string) $winner->getActivityReward()
+            )
+        );
+
+        return $this->redirectToRoute('app_user_index');
+    }
+
+    #[Route('/{id}/assign-badge', name: 'app_user_assign_badge_to_user', methods: ['POST'])]
+    public function assignBadgeToUser(Request $request, User $user, ActivityBadgeService $activityBadgeService): Response
+    {
+        if (!$this->isCsrfTokenValid('assign_badge_user_' . $user->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_user_index');
+        }
+
+        $roles = $user->getRoles();
+        $isAllowedRole = in_array('ROLE_PATIENT', $roles, true)
+            || in_array('ROLE_COACH', $roles, true)
+            || in_array('ROLE_NUTRITIONNISTE', $roles, true);
+
+        if (!$isAllowedRole) {
+            $this->addFlash('warning', 'Le badge manuel est reserve aux patients, coachs et nutritionnistes.');
+            return $this->redirectToRoute('app_user_index');
+        }
+
+        $activityBadgeService->assignBadgeToUser($user);
+
+        $this->addFlash(
+            'success',
+            sprintf(
+                'Badge attribue manuellement a %s (%s). Recompense: %s',
+                $user->getFullName(),
+                (string) $user->getEmail(),
+                (string) $user->getActivityReward()
+            )
+        );
+
+        return $this->redirectToRoute('app_user_index');
+    }
+
     #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
     public function new(
         Request $request,
@@ -169,6 +240,7 @@ class UserController extends AbstractController
             $user->setRequestedRole($role ?: $user->getRequestedRole());
             if ($user->isActive()) {
                 $user->setApprovalStatus(User::APPROVAL_APPROVED);
+                $user->setSecurityBlockedUntil(null);
             }
 
             $plainPassword = $form->get('password')->getData();
@@ -189,6 +261,40 @@ class UserController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/details', name: 'app_user_details', methods: ['GET'])]
+    public function details(
+        User $user,
+        Request $request,
+        MedicalDossierRepository $medicalDossierRepository,
+        MedicalDossierAuditLogRepository $medicalDossierAuditLogRepository,
+        MedicalDossierAuditService $medicalDossierAuditService
+    ): Response
+    {
+        $medicalDossier = $medicalDossierRepository->findOneByUser($user);
+        $medicalAuditLogs = [];
+        $actor = $this->getUser();
+        $actorUser = $actor instanceof User ? $actor : null;
+
+        if ($medicalDossier !== null) {
+            $medicalDossier->ensureDiseaseHistoryInitialized('legacy');
+            $medicalDossierAuditService->log(
+                dossier: $medicalDossier,
+                actor: $actorUser,
+                action: MedicalDossierAuditLog::ACTION_CONSULTATION,
+                request: $request,
+                targetDisease: $medicalDossier->getDisease(),
+                context: ['route' => 'app_user_details', 'channel' => 'admin']
+            );
+            $medicalAuditLogs = $medicalDossierAuditLogRepository->findRecentForDossier($medicalDossier, 150);
+        }
+
+        return $this->render('back/users/details.html.twig', [
+            'user' => $user,
+            'medicalDossier' => $medicalDossier,
+            'medicalAuditLogs' => $medicalAuditLogs,
+        ]);
+    }
+
     #[Route('/{id}/approve', name: 'app_user_approve', methods: ['POST'])]
     public function approve(
         Request $request,
@@ -205,13 +311,34 @@ class UserController extends AbstractController
         $user->setRoles([$role]);
         $user->setIsActive(true);
         $user->setApprovalStatus(User::APPROVAL_APPROVED);
+        $user->setSecurityBlockedUntil(null);
         $user->setVerificationToken(null);
         $user->setVerificationTokenExpiresAt(null);
         $user->setUpdatedAt(new \DateTimeImmutable());
         $entityManager->flush();
 
         $notificationService->sendUserApprovalDecision($user, true);
-        $this->addFlash('success', 'Compte approuve avec succes.');
+        $this->addFlash('success', 'Compte approuve avec succes et debloque.');
+
+        return $this->redirectToRoute('app_user_index');
+    }
+
+    #[Route('/{id}/unblock', name: 'app_user_unblock', methods: ['POST'])]
+    public function unblock(
+        Request $request,
+        User $user,
+        EntityManagerInterface $entityManager
+    ): Response {
+        if (!$this->isCsrfTokenValid('unblock' . $user->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_user_index');
+        }
+
+        $user->setSecurityBlockedUntil(null);
+        $user->setUpdatedAt(new \DateTimeImmutable());
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Compte debloque avec succes.');
 
         return $this->redirectToRoute('app_user_index');
     }

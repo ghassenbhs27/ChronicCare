@@ -1,0 +1,172 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Historique alertes - Chronic Care{% endblock %}
+{% block page_title %}Historique des alertes{% endblock %}
+{% block page_subtitle %}Journal global des changements de statut{% endblock %}
+
+{% block body %}
+{% set base_params = { days: days, status: status, type: type, q: search|default('') } %}
+<div class="container-fluid">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="small text-muted">
+      Entrees historiques affichees: <strong>{{ total_rows }}</strong>
+    </div>
+    <a href="{{ path('admin_security_alert_index') }}" class="btn btn-outline-secondary btn-sm">Retour alertes</a>
+  </div>
+
+  <form method="get" action="{{ path('admin_security_alert_history') }}" class="row g-2 mb-3">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="hidden" name="dir" value="{{ dir }}">
+    <div class="col-sm-12 col-md-3">
+      <input
+        type="text"
+        name="q"
+        class="form-control form-control-sm"
+        placeholder="Rechercher user, message, source, note..."
+        value="{{ search|default('') }}"
+      >
+    </div>
+    <div class="col-auto">
+      <select name="days" class="form-select form-select-sm">
+        <option value="7" {{ days == 7 ? 'selected' : '' }}>7 jours</option>
+        <option value="30" {{ days == 30 ? 'selected' : '' }}>30 jours</option>
+        <option value="90" {{ days == 90 ? 'selected' : '' }}>90 jours</option>
+        <option value="180" {{ days == 180 ? 'selected' : '' }}>180 jours</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="status" class="form-select form-select-sm">
+        <option value="all" {{ status == 'all' ? 'selected' : '' }}>Tous statuts</option>
+        <option value="en_cours" {{ status == 'en_cours' ? 'selected' : '' }}>En cours</option>
+        <option value="traitee" {{ status == 'traitee' ? 'selected' : '' }}>Traitee</option>
+        <option value="ignoree" {{ status == 'ignoree' ? 'selected' : '' }}>Ignoree</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select name="type" class="form-select form-select-sm">
+        <option value="" {{ type == '' ? 'selected' : '' }}>Tous types</option>
+        <option value="medicale" {{ type == 'medicale' ? 'selected' : '' }}>Medicale</option>
+        <option value="comportementale" {{ type == 'comportementale' ? 'selected' : '' }}>Comportementale</option>
+        <option value="securitaire" {{ type == 'securitaire' ? 'selected' : '' }}>Securitaire</option>
+        <option value="technique" {{ type == 'technique' ? 'selected' : '' }}>Technique</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+    </div>
+    <div class="col-auto">
+      <a href="{{ path('admin_security_alert_history') }}" class="btn btn-outline-secondary btn-sm">Reinitialiser</a>
+    </div>
+  </form>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              {% set next_dir_date = sort == 'changed_at' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_history', base_params|merge({ sort: 'changed_at', dir: next_dir_date, page: 1 })) }}">
+                  Date changement {% if sort == 'changed_at' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_status = sort == 'status' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_history', base_params|merge({ sort: 'status', dir: next_dir_status, page: 1 })) }}">
+                  Statut {% if sort == 'status' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_cat = sort == 'alert_type' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_history', base_params|merge({ sort: 'alert_type', dir: next_dir_cat, page: 1 })) }}">
+                  Categorie {% if sort == 'alert_type' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_sev = sort == 'severity' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_history', base_params|merge({ sort: 'severity', dir: next_dir_sev, page: 1 })) }}">
+                  Severite {% if sort == 'severity' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_event = sort == 'event_type' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_history', base_params|merge({ sort: 'event_type', dir: next_dir_event, page: 1 })) }}">
+                  Type evenement {% if sort == 'event_type' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_user = sort == 'user_email' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_history', base_params|merge({ sort: 'user_email', dir: next_dir_user, page: 1 })) }}">
+                  Utilisateur {% if sort == 'user_email' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              {% set next_dir_source = sort == 'source' and dir == 'ASC' ? 'DESC' : 'ASC' %}
+              <th>
+                <a class="text-dark text-decoration-none" href="{{ path('admin_security_alert_history', base_params|merge({ sort: 'source', dir: next_dir_source, page: 1 })) }}">
+                  Source {% if sort == 'source' %}<i class="bi {{ dir == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }}"></i>{% endif %}
+                </a>
+              </th>
+              <th>Note</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in history_rows %}
+              <tr>
+                <td class="small">{{ row.changed_at|date('d/m/Y H:i') }}</td>
+                <td>
+                  {% if row.status == 'en_cours' %}
+                    <span class="badge bg-danger">En cours</span>
+                  {% elseif row.status == 'traitee' %}
+                    <span class="badge bg-success">Traitee</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Ignoree</span>
+                  {% endif %}
+                </td>
+                <td><span class="badge bg-secondary">{{ row.alert_type|upper }}</span></td>
+                <td>
+                  <span class="badge {{ row.severity == 'critical' ? 'bg-danger' : (row.severity == 'high' ? 'bg-warning text-dark' : 'bg-info text-dark') }}">
+                    {{ row.severity }}
+                  </span>
+                </td>
+                <td>
+                  <code>#{{ row.alert_id }}</code><br>
+                  <code>{{ row.event_type }}</code>
+                </td>
+                <td class="small">
+                  {{ row.user_email }}<br>
+                  <span class="text-muted">{{ row.ip_address }}</span>
+                </td>
+                <td class="small">{{ row.source ?: 'system' }}</td>
+                <td class="small">{{ row.note ?: '-' }}</td>
+                <td class="small">{{ row.message }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="9" class="text-center text-muted py-4">Aucun historique trouve sur cette periode.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer bg-white border-0 d-flex flex-wrap justify-content-between align-items-center py-2 px-3">
+      <span class="small text-muted">
+        {% if history_rows.getTotalItemCount > 0 %}
+          Affichage {{ history_rows.getItemNumberPerPage * (history_rows.getCurrentPageNumber - 1) + 1 }}
+          a {{ min(history_rows.getItemNumberPerPage * history_rows.getCurrentPageNumber, history_rows.getTotalItemCount) }}
+          sur {{ history_rows.getTotalItemCount }} entree(s)
+        {% else %}
+          0 entree
+        {% endif %}
+      </span>
+      {% if history_rows.getTotalItemCount > 0 %}
+        {{ knp_pagination_render(history_rows, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig', {}, {
+          routeParams: { days: days, status: status, type: type, q: search|default(''), sort: sort, dir: dir }
+        }) }}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

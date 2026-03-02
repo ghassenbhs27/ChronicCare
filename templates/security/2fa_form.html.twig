@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Verification 2FA - Chronic Care{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' with { minimal_nav: true } %}
+
+  <main class="main">
+    <section class="section py-5">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-5 col-md-7">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body p-4">
+                <h4 class="mb-2">Verification en 2 etapes</h4>
+                <p class="text-muted small mb-3">
+                  Un code de verification vient d etre envoye sur votre email admin.
+                </p>
+
+                {% if authenticationError %}
+                  <div class="alert alert-danger py-2">
+                    {{ authenticationError|trans(authenticationErrorData, 'SchebTwoFactorBundle') }}
+                  </div>
+                {% endif %}
+
+                <form action="{{ checkPathUrl ? checkPathUrl : path(checkPathRoute) }}" method="post">
+                  <div class="mb-3">
+                    <label for="_auth_code" class="form-label">Code 2FA</label>
+                    <input
+                      id="_auth_code"
+                      type="text"
+                      name="{{ authCodeParameterName }}"
+                      class="form-control"
+                      autocomplete="one-time-code"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      maxlength="6"
+                      autofocus
+                      required
+                    />
+                  </div>
+
+                  {% if isCsrfProtectionEnabled %}
+                    <input type="hidden" name="{{ csrfParameterName }}" value="{{ csrf_token(csrfTokenId) }}">
+                  {% endif %}
+
+                  <button type="submit" class="btn btn-primary w-100">
+                    Valider le code
+                  </button>
+                </form>
+
+                <div class="text-center mt-3">
+                  <a href="{{ logoutPath }}" class="small text-danger text-decoration-none">
+                    Annuler et se deconnecter
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}

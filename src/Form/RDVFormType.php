@@ -28,6 +28,9 @@ class RDVFormType extends AbstractType
             ->add('dateRdv', DateTimeType::class, [
                 'label' => 'Date et heure',
                 'widget' => 'single_text',
+                'attr' => [
+                    'step' => 1800,
+                ],
             ])
             ->add('motif', TextareaType::class, [
                 'label' => 'Motif',

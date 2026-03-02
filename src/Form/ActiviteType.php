@@ -40,7 +40,28 @@ class ActiviteType extends AbstractType
                 'placeholder' => 'Selectionner un etat (optionnel)',
                 'choice_label' => static function (Etat $etat): string {
                     $date = $etat->getDateReleve()?->format('d/m/Y') ?? '';
-                    return trim(sprintf('%s %s (%s)%s', $etat->getType(), (string) ($etat->getValeur() ?? ''), $etat->getUnite(), $date ? ' - ' . $date : ''));
+                    $parts = [];
+
+                    $traitement = trim((string) ($etat->getTraitementEnCours() ?? ''));
+                    if ($traitement !== '') {
+                        $parts[] = $traitement;
+                    }
+
+                    $temperature = trim((string) ($etat->getTemperatureCorporelle() ?? ''));
+                    if ($temperature !== '') {
+                        $parts[] = 'Temp: ' . $temperature . ' C';
+                    }
+
+                    $hydratation = trim((string) ($etat->getNiveauHydratation() ?? ''));
+                    if ($hydratation !== '') {
+                        $parts[] = 'Hydratation: ' . $hydratation . ' L';
+                    }
+
+                    if ($date !== '') {
+                        $parts[] = $date;
+                    }
+
+                    return $parts !== [] ? implode(' - ', $parts) : 'Etat #' . (string) ($etat->getId() ?? '');
                 },
                 'attr' => ['class' => 'form-select'],
             ])

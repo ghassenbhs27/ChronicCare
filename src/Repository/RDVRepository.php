@@ -142,20 +142,84 @@ class RDVRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function isSlotTaken(int $professionnelId, \DateTimeInterface $dateRdv): bool
+    public function isSlotTaken(int $professionnelId, \DateTimeInterface $dateRdv, ?int $excludeRdvId = null): bool
     {
-        $count = $this->createQueryBuilder('r')
+        $qb = $this->createQueryBuilder('r')
             ->select('COUNT(r.id)')
             ->andWhere('r.professionnel = :professionnel')
             ->andWhere('r.dateRdv = :dateRdv')
             ->andWhere('r.statut != :annule')
             ->setParameter('professionnel', $professionnelId)
             ->setParameter('dateRdv', $dateRdv)
-            ->setParameter('annule', RDV::STATUT_ANNULE)
-            ->getQuery()
-            ->getSingleScalarResult();
+            ->setParameter('annule', RDV::STATUT_ANNULE);
+
+        if ($excludeRdvId !== null) {
+            $qb->andWhere('r.id != :excludeId')->setParameter('excludeId', $excludeRdvId);
+        }
+
+        $count = $qb->getQuery()->getSingleScalarResult();
 
         return (int) $count > 0;
+    }
+
+    public function isSlotTakenForPatient(int $patientId, \DateTimeInterface $dateRdv, ?int $excludeRdvId = null): bool
+    {
+        $qb = $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.patient = :patient')
+            ->andWhere('r.dateRdv = :dateRdv')
+            ->andWhere('r.statut != :annule')
+            ->setParameter('patient', $patientId)
+            ->setParameter('dateRdv', $dateRdv)
+            ->setParameter('annule', RDV::STATUT_ANNULE);
+
+        if ($excludeRdvId !== null) {
+            $qb->andWhere('r.id != :excludeId')->setParameter('excludeId', $excludeRdvId);
+        }
+
+        $count = $qb->getQuery()->getSingleScalarResult();
+
+        return (int) $count > 0;
+    }
+
+    /**
+     * @return \DateTimeInterface[]
+     */
+    public function findReservedSlotsForProfessionnel(int $professionnelId, \DateTimeInterface $start, \DateTimeInterface $end): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('r.dateRdv AS dateRdv')
+            ->andWhere('r.professionnel = :professionnel')
+            ->andWhere('r.dateRdv >= :start')
+            ->andWhere('r.dateRdv <= :end')
+            ->andWhere('r.statut != :annule')
+            ->setParameter('professionnel', $professionnelId)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->setParameter('annule', RDV::STATUT_ANNULE)
+            ->orderBy('r.dateRdv', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row) => $row['dateRdv'], $rows);
+    }
+
+    /**
+     * @return RDV[]
+     */
+    public function findUpcomingForReminder(\DateTimeImmutable $from, \DateTimeImmutable $to): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.dateRdv >= :from')
+            ->andWhere('r.dateRdv <= :to')
+            ->andWhere('r.statut != :annule')
+            ->andWhere('r.reminderSentAt IS NULL')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->setParameter('annule', RDV::STATUT_ANNULE)
+            ->orderBy('r.dateRdv', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 
     //    /**

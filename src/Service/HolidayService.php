@@ -107,4 +107,40 @@ class HolidayService
             return $map;
         });
     }
+
+    /**
+     * @return string[] Dates formatted as Y-m-d
+     */
+    public function getHolidayDatesInRange(\DateTimeInterface $start, \DateTimeInterface $end): array
+    {
+        $years = [];
+        $startYear = (int) $start->format('Y');
+        $endYear = (int) $end->format('Y');
+        for ($y = $startYear; $y <= $endYear; $y++) {
+            $years[] = $y;
+        }
+
+        $all = [];
+        $country = strtoupper($this->holidayCountry);
+        foreach ($years as $year) {
+            $holidays = $this->getHolidays($year, $country);
+            $all = array_merge($all, array_keys($holidays));
+        }
+
+        $startDate = $start->format('Y-m-d');
+        $endDate = $end->format('Y-m-d');
+
+        return array_values(array_filter($all, static function (string $date) use ($startDate, $endDate): bool {
+            return $date >= $startDate && $date <= $endDate;
+        }));
+    }
+
+    public function isHoliday(\DateTimeInterface $date): bool
+    {
+        $year = (int) $date->format('Y');
+        $country = strtoupper($this->holidayCountry);
+        $holidays = $this->getHolidays($year, $country);
+        $target = $date->format('Y-m-d');
+        return isset($holidays[$target]);
+    }
 }

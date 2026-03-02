@@ -14,6 +14,9 @@ class RescheduleRDVFormType extends AbstractType
         $builder->add('dateRdv', DateTimeType::class, [
             'label' => 'Nouvelle date et heure',
             'widget' => 'single_text',
+            'attr' => [
+                'step' => 1800,
+            ],
         ]);
     }
 

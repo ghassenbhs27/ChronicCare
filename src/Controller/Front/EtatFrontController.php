@@ -4,9 +4,17 @@ namespace App\Controller\Front;
 
 use App\Entity\Etat;
 use App\Entity\User;
+use App\Entity\Activite;
+use App\Entity\SuiviAnalyse;
 use App\Form\EtatFrontType;
+use App\Repository\DiscussionMessageRepository;
 use App\Repository\EtatRepository;
+use App\Repository\SuiviAnalyseRepository;
 use App\Repository\UserRepository;
+use App\Service\AiActiviteRecommendationService;
+use App\Service\AiEtatRemarkService;
+use App\Service\AiEtatWeeklyAnalysisService;
+use Doctrine\DBAL\Exception\TableNotFoundException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,13 +22,22 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 #[Route('/etat')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class EtatFrontController extends AbstractController
 {
     #[Route('/', name: 'front_etat_index', methods: ['GET'])]
-    public function index(Request $request, EtatRepository $repo, UserRepository $userRepository): Response
+    public function index(
+        Request $request,
+        EtatRepository $repo,
+        UserRepository $userRepository,
+        SuiviAnalyseRepository $suiviAnalyseRepository,
+        DiscussionMessageRepository $discussionMessageRepository
+    ): Response
     {
         $currentUser = $this->getAuthenticatedUser();
         $isPro = $this->isProUser($currentUser);
@@ -39,6 +56,17 @@ class EtatFrontController extends AbstractController
         if ($selectedPatient instanceof User) {
             $etats = $repo->findByUserWithSearchSort($selectedPatient, $q, $sort, $dir);
         }
+        $analyses = [];
+        if ($isPro && $selectedPatient instanceof User) {
+            try {
+                $analyses = $suiviAnalyseRepository->findByPatient($selectedPatient, 15);
+            } catch (TableNotFoundException) {
+                $analyses = [];
+            }
+        }
+
+        $onlineProfessionals = !$isPro ? $userRepository->findOnlineProfessionnelsForUrgence() : [];
+        $unreadMessagesCount = $discussionMessageRepository->countUnreadForRecipient($currentUser);
 
         return $this->render('front/etat/index.html.twig', [
             'etats' => $etats,
@@ -48,11 +76,185 @@ class EtatFrontController extends AbstractController
             'isPro' => $isPro,
             'patients' => $patients,
             'selectedPatient' => $selectedPatient,
+            'analyses' => $analyses,
+            'onlineProfessionals' => $onlineProfessionals,
+            'unreadMessagesCount' => $unreadMessagesCount,
         ]);
     }
 
+    #[Route('/analysis/generate', name: 'front_etat_analysis_generate', methods: ['POST'])]
+    public function generateAnalysis(
+        Request $request,
+        UserRepository $userRepository,
+        EtatRepository $etatRepository,
+        AiEtatWeeklyAnalysisService $aiEtatWeeklyAnalysisService,
+        EntityManagerInterface $em
+    ): Response {
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->isProUser($currentUser)) {
+            throw $this->createAccessDeniedException('Action reservee au coach/nutritionniste.');
+        }
+
+        $patientId = (int) $request->request->get('patient');
+        $patient = $patientId > 0 ? $userRepository->find($patientId) : null;
+        if (!$patient instanceof User) {
+            $this->addFlash('danger', 'Patient non valide.');
+            return $this->redirectToRoute('front_etat_index');
+        }
+
+        if (!$this->isCsrfTokenValid('analysis_generate_' . $patient->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Token CSRF invalide.');
+            return $this->redirectToRoute('front_etat_index', ['patient' => $patient->getId()]);
+        }
+
+        $etats = $etatRepository->findLastDaysForUser($patient, 7);
+        $analysisText = $aiEtatWeeklyAnalysisService->buildWeeklyAnalysis($patient, $etats);
+
+        $periodEnd = new \DateTimeImmutable('today 23:59:59');
+        $periodStart = $periodEnd->modify('-6 days')->setTime(0, 0);
+
+        $analysis = (new SuiviAnalyse())
+            ->setPatient($patient)
+            ->setAuteur($currentUser)
+            ->setPeriodStart($periodStart)
+            ->setPeriodEnd($periodEnd)
+            ->setEtatSnapshot($this->buildEtatSnapshot($etats))
+            ->setContent($analysisText)
+            ->setStatus(SuiviAnalyse::STATUS_DRAFT)
+            ->setUpdatedAt(new \DateTimeImmutable());
+
+        try {
+            $em->persist($analysis);
+            $em->flush();
+        } catch (TableNotFoundException) {
+            $this->addFlash('danger', 'La table suivi_analyse est manquante. Lancez la migration avant d utiliser cette fonctionnalite.');
+            return $this->redirectToRoute('front_etat_index', ['patient' => $patient->getId()]);
+        }
+
+        $this->addFlash('success', 'Analyse IA 7 jours creee. Vous pouvez la modifier puis l envoyer.');
+        return $this->redirectToRoute('front_etat_index', [
+            'patient' => $patient->getId(),
+            'focus' => $analysis->getId(),
+            'open' => 1,
+            '_fragment' => 'analysis-' . $analysis->getId(),
+        ]);
+    }
+
+    #[Route('/analysis/{id}/update', name: 'front_etat_analysis_update', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function updateAnalysis(Request $request, SuiviAnalyse $analysis, EntityManagerInterface $em): Response
+    {
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->isProUser($currentUser)) {
+            throw $this->createAccessDeniedException('Action reservee au coach/nutritionniste.');
+        }
+
+        if (!$this->isCsrfTokenValid('analysis_update_' . $analysis->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Token CSRF invalide.');
+            return $this->redirectToRoute('front_etat_index', ['patient' => $analysis->getPatient()?->getId()]);
+        }
+
+        $content = trim((string) $request->request->get('content', ''));
+        if ($content === '') {
+            $this->addFlash('warning', 'Le contenu de l analyse ne peut pas etre vide.');
+            return $this->redirectToRoute('front_etat_index', ['patient' => $analysis->getPatient()?->getId()]);
+        }
+
+        $analysis
+            ->setEtatSnapshot($analysis->getEtatSnapshot())
+            ->setContent($content)
+            ->setStatus(SuiviAnalyse::STATUS_DRAFT)
+            ->setUpdatedAt(new \DateTimeImmutable());
+        $em->flush();
+
+        $this->addFlash('success', 'Analyse mise a jour.');
+        return $this->redirectToRoute('front_etat_index', [
+            'patient' => $analysis->getPatient()?->getId(),
+            'focus' => $analysis->getId(),
+            'closed' => $analysis->getId(),
+            '_fragment' => 'analysis-' . $analysis->getId(),
+        ]);
+    }
+
+    #[Route('/analysis/{id}/send', name: 'front_etat_analysis_send', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function sendAnalysis(
+        Request $request,
+        SuiviAnalyse $analysis,
+        EntityManagerInterface $em,
+        MailerInterface $mailer
+    ): Response {
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->isProUser($currentUser)) {
+            throw $this->createAccessDeniedException('Action reservee au coach/nutritionniste.');
+        }
+
+        if (!$this->isCsrfTokenValid('analysis_send_' . $analysis->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Token CSRF invalide.');
+            return $this->redirectToRoute('front_etat_index', ['patient' => $analysis->getPatient()?->getId()]);
+        }
+
+        $patient = $analysis->getPatient();
+        if (!$patient instanceof User || !$patient->getEmail()) {
+            $this->addFlash('warning', 'Email patient manquant.');
+            return $this->redirectToRoute('front_etat_index', ['patient' => $patient?->getId()]);
+        }
+
+        $subject = sprintf(
+            'Analyse IA 7 jours - %s %s',
+            (string) $patient->getPrenom(),
+            (string) $patient->getNom()
+        );
+        $mail = (new Email())
+            ->from(new \Symfony\Component\Mime\Address(
+                (string) $this->getParameter('mailer_from_address'),
+                (string) $this->getParameter('mailer_from_name')
+            ))
+            ->to((string) $patient->getEmail())
+            ->subject($subject)
+            ->text($analysis->getContent());
+
+        try {
+            $mailer->send($mail);
+            $analysis
+                ->setEtatSnapshot($analysis->getEtatSnapshot())
+                ->setStatus(SuiviAnalyse::STATUS_SENT)
+                ->setSentAt(new \DateTimeImmutable())
+                ->setUpdatedAt(new \DateTimeImmutable());
+            $em->flush();
+            $this->addFlash('success', 'Analyse envoyee par email au patient.');
+        } catch (TransportExceptionInterface $e) {
+            $this->addFlash('danger', 'Echec envoi email : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('front_etat_index', ['patient' => $patient->getId()]);
+    }
+
+    #[Route('/analysis/{id}/delete', name: 'front_etat_analysis_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function deleteAnalysis(Request $request, SuiviAnalyse $analysis, EntityManagerInterface $em): Response
+    {
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->isProUser($currentUser)) {
+            throw $this->createAccessDeniedException('Action reservee au coach/nutritionniste.');
+        }
+
+        if (!$this->isCsrfTokenValid('analysis_delete_' . $analysis->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Token CSRF invalide.');
+            return $this->redirectToRoute('front_etat_index', ['patient' => $analysis->getPatient()?->getId()]);
+        }
+
+        $patientId = $analysis->getPatient()?->getId();
+        $em->remove($analysis);
+        $em->flush();
+
+        $this->addFlash('success', 'Analyse supprimee.');
+        return $this->redirectToRoute('front_etat_index', ['patient' => $patientId]);
+    }
+
     #[Route('/new', name: 'front_etat_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(
+        Request $request,
+        EntityManagerInterface $em,
+        AiActiviteRecommendationService $aiRecommendation
+    ): Response
     {
         $currentUser = $this->getAuthenticatedUser();
         if ($this->isProUser($currentUser)) {
@@ -66,9 +268,30 @@ class EtatFrontController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $etat->setUtilisateur($currentUser);
+            $recommendation = $aiRecommendation->recommendForEtat($etat);
+
+            $activite = (new Activite())
+                ->setUtilisateur($currentUser)
+                ->setEtat($etat)
+                ->setType($recommendation['type'])
+                ->setDuree($recommendation['duree'])
+                ->setDistanceKm($recommendation['distanceKm'])
+                ->setHeuresRepos($recommendation['heuresRepos'])
+                ->setCalories($recommendation['calories'])
+                ->setDateActivite(new \DateTimeImmutable())
+                ->setNotes('[Coach/Nutritionniste] ' . $recommendation['notes']);
+
             $em->persist($etat);
+            $em->persist($activite);
             $em->flush();
             $this->addFlash('success', 'Etat ajoute avec succes.');
+            $this->addFlash('info', sprintf(
+                'Activite recommandee par votre coach ou nutritionniste: %s, %d min, %.1f km, repos %d h.',
+                $recommendation['type'],
+                $recommendation['duree'],
+                $recommendation['distanceKm'],
+                $recommendation['heuresRepos']
+            ));
 
             return $this->redirectToRoute('front_etat_index');
         }
@@ -91,6 +314,23 @@ class EtatFrontController extends AbstractController
         }
 
         return $this->render('front/etat/show.html.twig', compact('etat'));
+    }
+
+    #[Route('/{id}/remarque-ia', name: 'front_etat_remarque_ia', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function remarqueIa(Etat $etat, AiEtatRemarkService $aiEtatRemarkService): Response
+    {
+        $currentUser = $this->getAuthenticatedUser();
+        if (!$this->canAccessEtat($currentUser, $etat)) {
+            throw $this->createAccessDeniedException('Acces refuse a ce releve.');
+        }
+
+        $report = $aiEtatRemarkService->buildEtatReport($etat);
+
+        return $this->render('front/etat/remarque_ia.html.twig', [
+            'etat' => $etat,
+            'report' => $report,
+            'isPro' => $this->isProUser($currentUser),
+        ]);
     }
 
     #[Route('/{id}/edit', name: 'front_etat_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
@@ -154,13 +394,14 @@ class EtatFrontController extends AbstractController
         $dir = $request->query->get('dir', 'DESC');
         $etats = $repo->findByUserWithSearchSort($selectedPatient, $q, $sort, $dir);
 
-        $rows = ['ID;Type;Valeur;Unite;Date Releve;Utilisateur'];
+        $rows = ['ID;Traitement en cours;Remarques cliniques;Temperature(C);Hydratation(L/j);Date Releve;Utilisateur'];
         foreach ($etats as $etat) {
             $rows[] = implode(';', [
                 $etat->getId(),
-                $this->csvValue($etat->getType()),
-                $etat->getValeur(),
-                $this->csvValue($etat->getUnite()),
+                $this->csvValue($etat->getTraitementEnCours()),
+                $this->csvValue($etat->getRemarquesCliniques()),
+                $this->csvValue($etat->getTemperatureCorporelle()),
+                $this->csvValue($etat->getNiveauHydratation()),
                 $etat->getDateReleve()?->format('Y-m-d') ?? '',
                 $this->csvValue($etat->getUtilisateur()?->getFullName() ?? ''),
             ]);
@@ -193,18 +434,19 @@ class EtatFrontController extends AbstractController
         $dir = $request->query->get('dir', 'DESC');
         $etats = $repo->findByUserWithSearchSort($selectedPatient, $q, $sort, $dir);
 
-        $widths = [6, 34, 14, 16, 18];
+        $widths = [6, 16, 16, 10, 12, 16];
         $lines = ['Export Etats - ' . date('Y-m-d H:i')];
         $lines[] = $this->pdfTableLine($widths);
-        $lines[] = $this->pdfTableRow(['ID', 'Type', 'Valeur', 'Unite', 'Date releve'], $widths);
+        $lines[] = $this->pdfTableRow(['ID', 'Traitement', 'Remarques', 'Temp(C)', 'Hydrat.(L/j)', 'Date'], $widths);
         $lines[] = $this->pdfTableLine($widths);
         foreach ($etats as $etat) {
             $lines[] = $this->pdfTableRow(
                 [
                     (string) ($etat->getId() ?? ''),
-                    (string) ($etat->getType() ?? ''),
-                    (string) ($etat->getValeur() ?? ''),
-                    (string) ($etat->getUnite() ?? ''),
+                    (string) ($etat->getTraitementEnCours() ?? ''),
+                    (string) ($etat->getRemarquesCliniques() ?? ''),
+                    (string) ($etat->getTemperatureCorporelle() ?? ''),
+                    (string) ($etat->getNiveauHydratation() ?? ''),
                     $etat->getDateReleve()?->format('Y-m-d') ?? '',
                 ],
                 $widths
@@ -352,4 +594,26 @@ class EtatFrontController extends AbstractController
 
         return '+' . implode('+', $segments) . '+';
     }
+
+    /**
+     * @param Etat[] $etats
+     * @return array<int,array<string,mixed>>
+     */
+    private function buildEtatSnapshot(array $etats): array
+    {
+        $rows = [];
+        foreach ($etats as $etat) {
+            $rows[] = [
+                'id' => $etat->getId(),
+                'dateReleve' => $etat->getDateReleve()?->format('Y-m-d'),
+                'temperatureCorporelle' => $etat->getTemperatureCorporelle(),
+                'niveauHydratation' => $etat->getNiveauHydratation(),
+                'traitementEnCours' => $etat->getTraitementEnCours(),
+                'remarquesCliniques' => $etat->getRemarquesCliniques(),
+            ];
+        }
+
+        return $rows;
+    }
 }
+

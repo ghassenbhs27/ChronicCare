@@ -5,14 +5,26 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     app_url: '%env(default::APP_URL)%'
+    jitsi_meet_base_url_default: 'https://meet.jit.si'
+    jitsi_meet_base_url: '%env(default:jitsi_meet_base_url_default:JITSI_MEET_BASE_URL)%'
     mailer_from_address: '%env(MAILER_FROM_ADDRESS)%'
     mailer_from_name: '%env(MAILER_FROM_NAME)%'
     holiday_country_default: 'TN'
     holiday_country: '%env(default:holiday_country_default:HOLIDAY_COUNTRY)%'
     holiday_api_base: 'https://date.nager.at/api/v3'
-    forum_upload_dir: '%kernel.project_dir%/public/uploads/forum'
-    groq_api_key: '%env(GROQ_API_KEY)%'
-
+    ai_provider_default: 'openai'
+    ai_provider: '%env(default:ai_provider_default:AI_PROVIDER)%'
+    ai_openai_model_default: 'gpt-4o-mini'
+    ai_openai_model: '%env(default:ai_openai_model_default:AI_OPENAI_MODEL)%'
+    ai_openai_api_key: '%env(default::AI_OPENAI_API_KEY)%'
+    ai_openrouter_model_default: 'openrouter/auto'
+    ai_openrouter_model: '%env(default:ai_openrouter_model_default:AI_OPENROUTER_MODEL)%'
+    ai_openrouter_api_key: '%env(default::AI_OPENROUTER_API_KEY)%'
+    ai_openrouter_site_url: '%env(default::AI_OPENROUTER_SITE_URL)%'
+    ai_openrouter_app_name: '%env(default::AI_OPENROUTER_APP_NAME)%'
+    ai_gemini_model_default: 'gemini-2.0-flash'
+    ai_gemini_model: '%env(default:ai_gemini_model_default:AI_GEMINI_MODEL)%'
+    ai_gemini_api_key: '%env(default::AI_GEMINI_API_KEY)%'
 
 services:
     # default configuration for services in *this* file
@@ -26,6 +38,24 @@ services:
          resource: '../src/*'
          exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
+    App\MeetNotificationBundle\:
+         resource: '../src/MeetNotificationBundle/*'
+         exclude: '../src/MeetNotificationBundle/{DependencyInjection,Entity,Tests}'
+
+    App\Service\NotificationService:
+        arguments:
+            $mailerFromAddress: '%mailer_from_address%'
+            $mailerFromName: '%mailer_from_name%'
+
+    App\MeetNotificationBundle\Service\NotificationManager:
+        arguments:
+            $mailerFromAddress: '%mailer_from_address%'
+            $mailerFromName: '%mailer_from_name%'
+
+    App\MeetNotificationBundle\Service\MeetRoomUrlGenerator:
+        arguments:
+            $jitsiMeetBaseUrl: '%jitsi_meet_base_url%'
+
     App\EventSubscriber\RouterContextSubscriber:
         arguments:
             $appUrl: '%app_url%'
@@ -34,13 +64,10 @@ services:
         tags:
             - { name: doctrine.event_subscriber }
 
-    App\Service\FileUploadService:
+    App\Service\AiConsultationService:
         arguments:
-            $forumUploadDir: '%forum_upload_dir%'
-
-    App\Service\AiSummaryService:
-        arguments:
-            $groqApiKey: '%groq_api_key%'
+            $apiKey: '%ai_openai_api_key%'
+            $model: '%ai_openai_model%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

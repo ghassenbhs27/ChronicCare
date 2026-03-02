@@ -18,14 +18,16 @@
     </div>
   {% endif %}
 
-  {% for label, messages in app.flashes %}
-    {% for message in messages %}
-      <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
+  <div id="user-flashes">
+    {% for label, messages in app.flashes %}
+      {% for message in messages %}
+        <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
     {% endfor %}
-  {% endfor %}
+  </div>
 
   {# En-tête + actions #}
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
@@ -34,6 +36,13 @@
       <p class="text-muted mb-0 small">Manage users, roles, and permissions</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
+      <form method="post" action="{{ path('app_user_assign_most_active_badge') }}" class="d-inline js-user-post-action">
+        <input type="hidden" name="_token" value="{{ csrf_token('assign_most_active_badge') }}">
+        <input type="hidden" name="days" value="30">
+        <button type="submit" class="btn btn-outline-warning btn-sm">
+          <i class="bi bi-award me-1"></i> Attribuer badge actif
+        </button>
+      </form>
       <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-upload me-1"></i> Import
       </a>
@@ -203,6 +212,15 @@
                 <i class="bi bi-envelope"></i> Invitations
               </button>
             </div>
+            <div class="col-6">
+              <form method="post" action="{{ path('app_user_assign_most_active_badge') }}" class="w-100 js-user-post-action">
+                <input type="hidden" name="_token" value="{{ csrf_token('assign_most_active_badge') }}">
+                <input type="hidden" name="days" value="30">
+                <button type="submit" class="btn btn-outline-warning w-100 d-flex align-items-center justify-content-center gap-2">
+                  <i class="bi bi-award"></i> Badge actif
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
@@ -253,7 +271,8 @@
 (function() {
   var container = document.getElementById('user-list-container');
   var form = document.getElementById('user-filter-form');
-  if (!container || !form) return;
+  var flashes = document.getElementById('user-flashes');
+  if (!container || !form || !flashes) return;
 
   function buildListUrl(params) {
     var base = container.getAttribute('data-list-url') || form.action;
@@ -273,6 +292,7 @@
           if (s) s.value = state.getAttribute('data-sort') || '';
           if (o) o.value = state.getAttribute('data-order') || '';
         }
+        bindAjaxPostForms(container);
         if (pushState !== false && typeof history !== 'undefined' && history.pushState) history.pushState(null, '', url);
       })
       .catch(function() { window.location.href = url; });
@@ -285,6 +305,60 @@
     });
     return p;
   }
+
+  function bindAjaxPostForms(scope) {
+    if (!scope || !scope.querySelectorAll) return;
+    [].forEach.call(scope.querySelectorAll('form.js-user-post-action'), function(postForm) {
+      if (postForm.getAttribute('data-ajax-bound') === '1') return;
+      postForm.setAttribute('data-ajax-bound', '1');
+      postForm.addEventListener('submit', function(e) {
+        var confirmText = postForm.getAttribute('data-confirm');
+        if (confirmText && !window.confirm(confirmText)) {
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        var submitButton = postForm.querySelector('button[type="submit"], input[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+
+        fetch(postForm.action, {
+          method: (postForm.getAttribute('method') || 'post').toUpperCase(),
+          body: new FormData(postForm),
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html'
+          }
+        })
+          .then(function(r) {
+            return r.text().then(function(html) {
+              return { ok: r.ok, url: r.url, html: html };
+            });
+          })
+          .then(function(result) {
+            if (!result.ok) throw new Error('Action failed');
+
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(result.html, 'text/html');
+            var nextFlashes = doc.getElementById('user-flashes');
+            if (nextFlashes) flashes.innerHTML = nextFlashes.innerHTML;
+
+            if (result.url && result.url.indexOf('/admin/users') === -1) {
+              window.location.href = result.url;
+              return;
+            }
+            loadList(buildListUrl(formToParams()), false);
+          })
+          .catch(function() {
+            postForm.submit();
+          })
+          .finally(function() {
+            if (submitButton) submitButton.disabled = false;
+          });
+      });
+    });
+  }
+
+  bindAjaxPostForms(document);
 
   [].forEach.call(form.querySelectorAll('.user-filter-select'), function(sel) {
     sel.addEventListener('change', function() {
@@ -303,6 +377,7 @@
   container.addEventListener('click', function(e) {
     var a = e.target.closest('a');
     if (!a || !a.href) return;
+    if (a.getAttribute('data-no-ajax') === '1') return;
     var listUrl = container.getAttribute('data-list-url');
     var href = a.getAttribute('href') || '';
     if (href.indexOf('/admin/users') !== -1 || (listUrl && href.indexOf(listUrl.split('?')[0]) === 0)) {

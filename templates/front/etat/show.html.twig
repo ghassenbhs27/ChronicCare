@@ -7,11 +7,16 @@
 
   <main class="main">
 <div class="container py-5">
-  <h1 class="mb-4">{{ etat.type }}</h1>
-  <p><strong>Valeur :</strong> {{ etat.valeur }} {{ etat.unite }}</p>
+  <h1 class="mb-4">Detail etat</h1>
+  <p><strong>Traitement en cours :</strong> {{ etat.traitementEnCours ?? '-' }}</p>
+  <p><strong>Remarques cliniques :</strong> {{ etat.remarquesCliniques ?? '-' }}</p>
+  <p><strong>Temperature corporelle :</strong> {{ etat.temperatureCorporelle ? etat.temperatureCorporelle ~ ' deg C' : '-' }}</p>
+  <p><strong>Niveau hydratation :</strong> {{ etat.niveauHydratation ? etat.niveauHydratation ~ ' L/jour' : '-' }}</p>
   <p><strong>Date :</strong> {{ etat.dateReleve ? etat.dateReleve|date('d/m/Y') : '' }}</p>
   <a class="btn btn-primary" href="{{ path('front_etat_edit', {id: etat.id}) }}">Éditer</a>
   <a class="btn btn-outline-secondary" href="{{ path('front_etat_index') }}">Retour</a>
 </div>
   </main>
 {% endblock %}
+
+

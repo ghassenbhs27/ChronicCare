@@ -5,8 +5,10 @@
 {% block body %}
 <div class="card shadow-sm">
   <div class="card-body">
-    <p><strong>Type :</strong> {{ etat.type }}</p>
-    <p><strong>Valeur :</strong> {{ etat.valeur }} {{ etat.unite }}</p>
+    <p><strong>Traitement en cours :</strong> {{ etat.traitementEnCours ?? '-' }}</p>
+    <p><strong>Remarques cliniques :</strong> {{ etat.remarquesCliniques ?? '-' }}</p>
+    <p><strong>Temperature corporelle :</strong> {{ etat.temperatureCorporelle ? etat.temperatureCorporelle ~ ' deg C' : '-' }}</p>
+    <p><strong>Niveau hydratation :</strong> {{ etat.niveauHydratation ? etat.niveauHydratation ~ ' L/jour' : '-' }}</p>
     <p><strong>Date relevé :</strong> {{ etat.dateReleve ? etat.dateReleve|date('d/m/Y') : '' }}</p>
     <p><strong>Utilisateur :</strong> {{ etat.utilisateur ? etat.utilisateur.fullName : '-' }}</p>
     <a class="btn btn-primary" href="{{ path('admin_etat_edit', {id: etat.id}) }}">Éditer</a>
@@ -14,3 +16,6 @@
   </div>
 </div>
 {% endblock %}
+
+
+

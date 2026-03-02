@@ -12,8 +12,11 @@
     <p><strong>Utilisateur :</strong> {{ activite.utilisateur ? activite.utilisateur.fullName : '-' }}</p>
     <p><strong>Etat lie :</strong>
       {% if activite.etat %}
-        {{ activite.etat.type }} - {{ activite.etat.valeur }} {{ activite.etat.unite }}
-        ({{ activite.etat.dateReleve ? activite.etat.dateReleve|date('d/m/Y') : '' }})
+         {% if activite.etat.temperatureCorporelle %}🌡️ {{ activite.etat.temperatureCorporelle }}°C{% endif %}
+         {% if activite.etat.niveauHydratation %} 💧 {{ activite.etat.niveauHydratation }}{% endif %}
+         {% if not activite.etat.temperatureCorporelle and not activite.etat.niveauHydratation %}
+           Releve du {{ activite.etat.dateReleve ? activite.etat.dateReleve|date('d/m/Y') : '' }}
+         {% endif %}
       {% else %}
         -
       {% endif %}

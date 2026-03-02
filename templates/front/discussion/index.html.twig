@@ -1,0 +1,366 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Discussion{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .discussion-page {
+      background:
+        radial-gradient(900px 380px at 100% -10%, rgba(6, 182, 212, .18), transparent 60%),
+        radial-gradient(900px 420px at -10% 0%, rgba(16, 185, 129, .16), transparent 55%),
+        #f5f9fc;
+      min-height: calc(100vh - 80px);
+    }
+    .discussion-title {
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: .2px;
+    }
+    .discussion-panel {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 16px 35px rgba(15, 23, 42, .08);
+    }
+    .discussion-panel .card-header,
+    .discussion-panel .card-footer {
+      background: #ffffff;
+      border-color: #e2e8f0;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    #discussionPartners {
+      max-height: 540px;
+      overflow: auto;
+    }
+    .partner-item {
+      border: 0;
+      border-bottom: 1px solid #edf2f7;
+      padding: .95rem 1rem;
+      transition: background-color .2s ease, color .2s ease;
+    }
+    .partner-item:hover {
+      background: #f8fafc;
+    }
+    .partner-item.active {
+      background: #eaf7ff;
+      color: #0f172a;
+      border-left: 4px solid #0ea5e9;
+      padding-left: calc(1rem - 4px);
+    }
+    .partner-subtitle {
+      font-size: .82rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    #discussionMessages {
+      max-height: 500px;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      padding: 1rem;
+    }
+    .message-row {
+      display: flex;
+      margin-bottom: .6rem;
+    }
+    .message-row.mine {
+      justify-content: flex-end;
+    }
+    .message-row.theirs {
+      justify-content: flex-start;
+    }
+    .message-bubble {
+      max-width: 78%;
+      border-radius: 14px;
+      padding: .55rem .75rem;
+      border: 1px solid #dbe7f3;
+      background: #ffffff;
+    }
+    .message-row.mine .message-bubble {
+      background: #0ea5e9;
+      border-color: #0284c7;
+      color: #ffffff;
+    }
+    .message-meta {
+      font-size: .74rem;
+      margin-bottom: .25rem;
+      color: #64748b;
+    }
+    .message-row.mine .message-meta {
+      color: rgba(255, 255, 255, .8);
+    }
+    .discussion-composer .form-control {
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: .7rem .9rem;
+      resize: none;
+    }
+    .discussion-composer .btn {
+      border-radius: 12px;
+      padding: .7rem 1rem;
+      font-weight: 600;
+    }
+    .online-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      margin-right: 8px;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .45);
+      animation: onlinePulse 1.8s infinite;
+      vertical-align: middle;
+    }
+    .offline-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #94a3b8;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes onlinePulse {
+      70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    @media (max-width: 991.98px) {
+      #discussionPartners {
+        max-height: 280px;
+      }
+      #discussionMessages {
+        max-height: 420px;
+      }
+      .message-bubble {
+        max-width: 88%;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+  {% include 'partials/_navbar.html.twig' %}
+  <main class="main discussion-page">
+    <div class="container py-5">
+      <h1 class="h4 mb-3 discussion-title">
+        {% if isProfessional %}
+          Discussion - patients
+        {% else %}
+          Discussion - coachs et nutritionnistes en ligne
+        {% endif %}
+      </h1>
+
+      {% for label, messagesFlash in app.flashes %}
+        {% for message in messagesFlash %}
+          <div class="alert alert-{{ label }}">{{ message }}</div>
+        {% endfor %}
+      {% endfor %}
+
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="card discussion-panel">
+            <div class="card-header bg-white">{{ isProfessional ? 'Patients' : 'En ligne' }}</div>
+            <div id="discussionPartners" class="list-group list-group-flush">
+              {% for p in partners %}
+                {% set pOnline = p.lastSeenAt and p.lastSeenAt >= date('-180 seconds') %}
+                <a class="list-group-item list-group-item-action partner-item {{ selectedPartner and selectedPartner.id == p.id ? 'active' : '' }}"
+                   href="{{ path('front_discussion_index', {with: p.id}) }}">
+                  <span class="{{ pOnline ? 'online-dot' : 'offline-dot' }}"></span>{{ p.prenom }} {{ p.nom }}
+                  <div class="partner-subtitle">
+                    {% if isProfessional %}
+                      Patient - {{ pOnline ? 'En ligne' : 'Hors ligne' }}
+                    {% else %}
+                      {{ ('ROLE_NUTRITIONNISTE' in p.roles) ? 'Nutritionniste' : 'Coach' }} - {{ pOnline ? 'En ligne' : 'Hors ligne' }}
+                    {% endif %}
+                  </div>
+                </a>
+              {% else %}
+                <div class="list-group-item text-muted">
+                  {{ isProfessional ? 'Aucun patient en discussion.' : 'Aucun coach/nutritionniste en ligne.' }}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-8">
+          <div class="card discussion-panel">
+            <div id="discussionHeader" class="card-header bg-white">
+              {% if selectedPartner %}
+                Conversation avec {{ selectedPartner.prenom }} {{ selectedPartner.nom }}
+              {% else %}
+                Selectionnez un contact
+              {% endif %}
+            </div>
+            <div id="discussionMessages" class="card-body">
+              {% if selectedPartner %}
+                {% for m in messages %}
+                  {% set mine = app.user and m.sender and m.sender.id == app.user.id %}
+                  <div class="message-row {{ mine ? 'mine' : 'theirs' }}">
+                    <div class="message-bubble">
+                      <div class="message-meta">
+                        {{ m.sender.prenom }} {{ m.sender.nom }} - {{ m.createdAt|date('d/m/Y H:i') }}
+                      </div>
+                      <div>{{ m.content|nl2br }}</div>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="text-muted">Aucun message.</div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <div id="discussionFooter" class="card-footer bg-white discussion-composer">
+              <form id="discussionForm" method="post" action="{{ path('front_discussion_index') }}" class="discussion-composer">
+                <input id="discussionWith" type="hidden" name="with" value="{{ selectedPartner ? selectedPartner.id : '' }}">
+                <input id="discussionToken" type="hidden" name="_token" value="{{ csrf_token('discussion_send') }}">
+                <div class="input-group">
+                  <textarea id="discussionContent" name="content" class="form-control" rows="2" placeholder="Tapez votre message..." {{ selectedPartner ? '' : 'disabled' }} required></textarea>
+                  <button id="discussionSendBtn" class="btn btn-primary" type="submit" {{ selectedPartner ? '' : 'disabled' }}>Envoyer</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {% if app.user %}
+    <script>
+      (function () {
+        const liveUrl = '{{ path('front_discussion_live') }}';
+        const sendUrl = '{{ path('front_discussion_send') }}';
+        const currentUserId = {{ app.user.id|default(0) }};
+        const isProfessional = {{ isProfessional ? 'true' : 'false' }};
+
+        const partnersBox = document.getElementById('discussionPartners');
+        const headerBox = document.getElementById('discussionHeader');
+        const messagesBox = document.getElementById('discussionMessages');
+        const form = document.getElementById('discussionForm');
+        const footer = document.getElementById('discussionFooter');
+        const withInput = document.getElementById('discussionWith');
+        const tokenInput = document.getElementById('discussionToken');
+        const contentInput = document.getElementById('discussionContent');
+        const sendBtn = document.getElementById('discussionSendBtn');
+        if (!partnersBox || !headerBox || !messagesBox) return;
+
+        let selectedPartnerId = withInput ? parseInt(withInput.value || '0', 10) || 0 : 0;
+        let lastMessageId = 0;
+
+        const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'}[ch]));
+
+        const renderPartners = (partners) => {
+          if (!Array.isArray(partners)) return;
+          if (partners.length === 0) {
+            partnersBox.innerHTML = '<div class=\"list-group-item text-muted\">' + (isProfessional ? 'Aucun patient en discussion.' : 'Aucun coach/nutritionniste en ligne.') + '</div>';
+            if (withInput) withInput.value = '';
+            selectedPartnerId = 0;
+            return;
+          }
+
+          if (!selectedPartnerId || !partners.some(p => Number(p.id) === Number(selectedPartnerId))) {
+            selectedPartnerId = Number(partners[0].id);
+            if (withInput) withInput.value = String(selectedPartnerId);
+          }
+
+          partnersBox.innerHTML = partners.map((p) => {
+            const active = Number(p.id) === Number(selectedPartnerId) ? ' active' : '';
+            const isOnline = !!p.online;
+            const dot = '<span class=\"' + (isOnline ? 'online-dot' : 'offline-dot') + '\"></span>';
+            const subtitle = isProfessional
+              ? ('Patient - ' + (isOnline ? 'En ligne' : 'Hors ligne'))
+              : (esc(p.roleLabel) + ' - ' + (isOnline ? 'En ligne' : 'Hors ligne'));
+            return '<a class=\"list-group-item list-group-item-action partner-item' + active + '\" href=\"#\" data-partner-id=\"' + Number(p.id) + '\">' +
+              dot + esc(p.name) +
+              '<div class=\"partner-subtitle\">' + subtitle + '</div>' +
+              '</a>';
+          }).join('');
+        };
+
+        const renderMessages = (messages, partnerName) => {
+          if (footer && contentInput && sendBtn) {
+            const hasPartner = !!selectedPartnerId;
+            contentInput.disabled = !hasPartner;
+            sendBtn.disabled = !hasPartner;
+            contentInput.placeholder = hasPartner ? 'Tapez votre message...' : 'Selectionnez un contact pour envoyer un message...';
+          }
+
+          headerBox.textContent = partnerName ? ('Conversation avec ' + partnerName) : 'Selectionnez un contact';
+          if (!Array.isArray(messages) || messages.length === 0) {
+            messagesBox.innerHTML = '<div class=\"text-muted\">Aucun message.</div>';
+            lastMessageId = 0;
+            return;
+          }
+
+          let html = '';
+          for (const m of messages) {
+            const mine = Number(m.senderId) === Number(currentUserId);
+            html += '<div class=\"message-row ' + (mine ? 'mine' : 'theirs') + '\">' +
+              '<div class=\"message-bubble\">' +
+              '<div class=\"message-meta\">' + esc(m.senderName) + ' - ' + esc(m.createdAt) + '</div>' +
+              '<div>' + esc(m.content).replace(/\\n/g, '<br>') + '</div>' +
+              '</div></div>';
+            lastMessageId = Math.max(lastMessageId, Number(m.id || 0));
+          }
+          messagesBox.innerHTML = html;
+          messagesBox.scrollTop = messagesBox.scrollHeight;
+        };
+
+        const pull = async () => {
+          const params = selectedPartnerId ? ('?with=' + encodeURIComponent(selectedPartnerId)) : '';
+          const response = await fetch(liveUrl + params, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+          if (!response.ok) return;
+          const data = await response.json();
+          if (!data || data.ok !== true) return;
+
+          const selected = Array.isArray(data.partners) ? data.partners.find(p => Number(p.id) === Number(data.selectedPartnerId)) : null;
+          selectedPartnerId = Number(data.selectedPartnerId || 0);
+          if (withInput) withInput.value = selectedPartnerId ? String(selectedPartnerId) : '';
+          renderPartners(data.partners || []);
+          renderMessages(data.messages || [], selected ? selected.name : '');
+        };
+
+        partnersBox.addEventListener('click', function (e) {
+          const link = e.target.closest('[data-partner-id]');
+          if (!link) return;
+          e.preventDefault();
+          selectedPartnerId = Number(link.getAttribute('data-partner-id') || '0');
+          if (withInput) withInput.value = selectedPartnerId ? String(selectedPartnerId) : '';
+          pull().catch(() => {});
+        });
+
+        if (form && contentInput && tokenInput) {
+          form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const content = contentInput.value.trim();
+            if (!content || !selectedPartnerId) return;
+
+            const body = new URLSearchParams();
+            body.append('with', String(selectedPartnerId));
+            body.append('content', content);
+            body.append('_token', tokenInput.value);
+
+            try {
+              const response = await fetch(sendUrl, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                body: body.toString()
+              });
+              if (!response.ok) return;
+              const data = await response.json();
+              if (data && data.ok) {
+                contentInput.value = '';
+                await pull();
+              }
+            } catch (err) {
+            }
+          });
+        }
+
+        pull().catch(() => {});
+        setInterval(() => { pull().catch(() => {}); }, 3000);
+      })();
+    </script>
+  {% endif %}
+{% endblock %}
