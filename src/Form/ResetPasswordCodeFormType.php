@@ -10,7 +10,6 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Email;
-use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 
@@ -20,7 +19,7 @@ class ResetPasswordCodeFormType extends AbstractType
     {
         $builder
             ->add('email', EmailType::class, [
-                'label' => 'Email',
+                'label' => 'Email du compte',
                 'attr' => [
                     'autocomplete' => 'email',
                     'placeholder' => 'nom@exemple.com',
@@ -30,30 +29,26 @@ class ResetPasswordCodeFormType extends AbstractType
                         'message' => 'Veuillez entrer votre email',
                     ]),
                     new Email([
-                        'message' => 'Email invalide',
+                        'message' => 'Email invalide.',
                     ]),
                 ],
             ])
             ->add('code', TextType::class, [
-                'label' => 'Code a 6 chiffres',
+                'label' => 'Code recu par email',
                 'attr' => [
                     'autocomplete' => 'one-time-code',
-                    'placeholder' => 'Ex: 123456',
-                    'maxlength' => 6,
+                    'placeholder' => 'Code a 6 chiffres',
                     'inputmode' => 'numeric',
+                    'maxlength' => 6,
+                    'pattern' => '\d{6}',
                 ],
                 'constraints' => [
                     new NotBlank([
                         'message' => 'Veuillez entrer le code recu par email',
                     ]),
-                    new Length([
-                        'min' => 6,
-                        'max' => 6,
-                        'exactMessage' => 'Le code doit contenir exactement 6 chiffres',
-                    ]),
                     new Regex([
                         'pattern' => '/^\d{6}$/',
-                        'message' => 'Le code doit contenir 6 chiffres',
+                        'message' => 'Le code doit contenir exactement 6 chiffres.',
                     ]),
                 ],
             ]);

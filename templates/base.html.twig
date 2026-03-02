@@ -164,23 +164,71 @@
         margin-top: 10px;
       }
 
-      .cc-filter-loading {
+    .cc-filter-loading {
         opacity: .75;
         transition: opacity .12s ease;
       }
 
-      .cc-urgent-toast {
-        position: fixed;
-        right: 16px;
-        bottom: 16px;
-        width: min(420px, calc(100vw - 24px));
-        z-index: 2000;
-        border: 2px solid #dc3545;
-        animation: ccUrgentPulse 1.1s infinite alternate;
+      .badge-energy-modal .modal-content {
+        border: 0;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 28px 70px rgba(15, 23, 42, .28);
+        background: linear-gradient(150deg, #0f172a 0%, #1e293b 55%, #334155 100%);
+        color: #f8fafc;
       }
-      @keyframes ccUrgentPulse {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(3px); }
+
+      .badge-energy-modal .modal-header {
+        border: 0;
+        background: linear-gradient(90deg, #f59e0b 0%, #f97316 50%, #ef4444 100%);
+        color: #fff;
+        padding: 16px 18px;
+      }
+
+      .badge-energy-modal .modal-title {
+        font-weight: 900;
+        letter-spacing: .4px;
+      }
+
+      .badge-energy-modal .modal-body {
+        padding: 20px 18px 12px;
+      }
+
+      .badge-energy-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(245, 158, 11, .18);
+        color: #fde68a;
+        border: 1px solid rgba(245, 158, 11, .45);
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: .85rem;
+        padding: 6px 12px;
+        margin-bottom: 12px;
+      }
+
+      .badge-energy-highlight {
+        color: #facc15;
+        font-weight: 800;
+      }
+
+      .badge-energy-modal .modal-footer {
+        border: 0;
+        padding: 14px 18px 18px;
+      }
+
+      .badge-energy-modal .btn-energy {
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+        color: #fff;
+        font-weight: 800;
+        padding: 9px 18px;
+      }
+
+      .badge-energy-modal .btn-energy:hover {
+        filter: brightness(1.06);
       }
     </style>
 
@@ -296,190 +344,43 @@
   </div>
 </div>
 
-{% if app.user and (is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE')) %}
-  <div id="ccUrgentGlobal" class="alert alert-danger cc-urgent-toast d-none mb-0 position-relative" role="alert">
-    <button type="button" id="ccUrgentGlobalClose" class="btn-close btn-close-white position-absolute top-0 end-0 m-2" aria-label="Fermer"></button>
-    <div class="fw-bold"><i class="bi bi-bell-fill me-1"></i> Notification urgente</div>
-    <div class="small mb-2">Un patient demande un appel immédiat.</div>
-    <ul class="mb-0" id="ccUrgentGlobalList"></ul>
-  </div>
-{% endif %}
-
 <script src="{{ asset('assets/js/profile-modal.js') }}"></script>
 
-{% if app.user %}
+{% if app.user and app.user.mostActive and app.request.query.get('badge') == '1' %}
+<div class="modal fade badge-energy-modal" id="activityBadgeCongratsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-award-fill me-2"></i>Felicitations
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="badge-energy-chip">
+          <i class="bi bi-lightning-charge-fill"></i>
+          Performance exceptionnelle
+        </div>
+        <p class="mb-2">Bravo <span class="badge-energy-highlight">{{ app.user.prenom }}</span> !</p>
+        <p class="mb-2">Vous etes <span class="badge-energy-highlight">{{ app.user.activityBadge ?: 'Utilisateur le plus actif' }}</span>.</p>
+        <p class="mb-0">Votre recompense: <span class="badge-energy-highlight">{{ app.user.activityReward ?: 'Bon d achat de 50 DT sur la boutique Chronic Care' }}</span>.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-energy" data-bs-dismiss="modal">Super</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
-  (function () {
-    const unreadUrl = '{{ path('front_discussion_unread_count') }}';
-    const getBadges = () => Array.from(document.querySelectorAll('[data-unread-messages-badge]'));
-
-    const renderUnread = (count) => {
-      const value = Number.isFinite(count) ? Math.max(0, count) : 0;
-      const badges = getBadges();
-      if (!badges.length) return;
-
-      badges.forEach((badge) => {
-        badge.textContent = String(value);
-        badge.classList.toggle('d-none', value <= 0);
-      });
-    };
-
-    const fetchUnread = async () => {
-      try {
-        const response = await fetch(unreadUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        if (!response.ok) return;
-        const data = await response.json();
-        if (!data || data.ok !== true) return;
-        renderUnread(Number(data.count || 0));
-      } catch (e) {
-      }
-    };
-
-    if (getBadges().length) {
-      fetchUnread();
-      setInterval(fetchUnread, 5000);
-    }
-  })();
+  document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('activityBadgeCongratsModal');
+    if (!el || typeof bootstrap === 'undefined') return;
+    var modal = new bootstrap.Modal(el);
+    modal.show();
+  });
 </script>
 {% endif %}
 
-{% if app.user and (is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE')) %}
-<script>
-  (function () {
-    const inboxUrl = '{{ path('front_urgence_inbox') }}';
-    const pingUrl = '{{ path('presence_ping') }}';
-    const offlineUrl = '{{ path('presence_offline') }}';
-    const csrf = '{{ csrf_token('presence_ping') }}';
-    const urgentBox = document.getElementById('ccUrgentGlobal');
-    const urgentList = document.getElementById('ccUrgentGlobalList');
-    const urgentClose = document.getElementById('ccUrgentGlobalClose');
-    let previousCount = 0;
-    let manuallyHidden = false;
-    let audioContext = null;
-
-    const ping = async () => {
-      try {
-        await fetch(pingUrl, {
-          method: 'POST',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': csrf
-          }
-        });
-      } catch (e) {
-      }
-    };
-
-    const setOffline = () => {
-      try {
-        if (navigator.sendBeacon) {
-          const body = new URLSearchParams();
-          body.append('_token', csrf);
-          navigator.sendBeacon(offlineUrl, body);
-          return;
-        }
-      } catch (e) {
-      }
-
-      fetch(offlineUrl, {
-        method: 'POST',
-        keepalive: true,
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      }).catch(() => {});
-    };
-
-    const unlockAudio = () => {
-      if (audioContext) return;
-      try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) return;
-        audioContext = new Ctx();
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
-      } catch (e) {
-      }
-    };
-
-    const playUrgentSound = () => {
-      if (!audioContext) return;
-      try {
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(880, audioContext.currentTime);
-        gain.gain.setValueAtTime(0.001, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
-        osc.connect(gain);
-        gain.connect(audioContext.destination);
-        osc.start();
-        osc.stop(audioContext.currentTime + 0.35);
-      } catch (e) {
-      }
-    };
-
-    const renderUrgences = (items) => {
-      if (!urgentBox || !urgentList) return;
-      const nowTs = Math.floor(Date.now() / 1000);
-      const validItems = Array.isArray(items)
-        ? items.filter((item) => Number(item.createdAtTs || 0) >= (nowTs - 600))
-        : [];
-
-      if (validItems.length === 0) {
-        urgentBox.classList.add('d-none');
-        urgentList.innerHTML = '';
-        previousCount = 0;
-        manuallyHidden = false;
-        return;
-      }
-
-      urgentList.innerHTML = validItems.map((item) =>
-        `<li class="d-flex justify-content-between align-items-center gap-2">
-          <a href="${item.joinUrl}" class="alert-link">${item.patient}</a>
-          <small>(${item.role}) - ${item.createdAt}</small>
-        </li>`
-      ).join('');
-
-      if (validItems.length > previousCount) {
-        playUrgentSound();
-        manuallyHidden = false;
-      }
-      previousCount = validItems.length;
-      if (!manuallyHidden) {
-        urgentBox.classList.remove('d-none');
-      }
-    };
-
-    const fetchUrgences = async () => {
-      try {
-        const response = await fetch(inboxUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        if (!response.ok) return;
-        const data = await response.json();
-        renderUrgences(data.items || []);
-      } catch (e) {
-      }
-    };
-
-    ping();
-    setInterval(ping, 15000);
-    window.addEventListener('pagehide', setOffline);
-    window.addEventListener('beforeunload', setOffline);
-    window.addEventListener('click', unlockAudio, { once: true });
-    window.addEventListener('keydown', unlockAudio, { once: true });
-
-    fetchUrgences();
-    setInterval(fetchUrgences, 7000);
-
-    if (urgentClose && urgentBox) {
-      urgentClose.addEventListener('click', function () {
-        manuallyHidden = true;
-        urgentBox.classList.add('d-none');
-      });
-    }
-  })();
-</script>
-{% endif %}
-
+    {% block javascripts %}{% endblock %}
 </body>
 </html>

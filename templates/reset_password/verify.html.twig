@@ -14,7 +14,7 @@
             <div class="auth-header text-center mb-4">
               <div class="auth-icon"><i class="bi bi-shield-lock"></i></div>
               <h2>Verifier le code</h2>
-              <p>Saisissez votre email et le code a 6 chiffres recu pour continuer.</p>
+              <p>Entrez votre email et le code recu par email pour continuer.</p>
             </div>
 
             {% for message in app.flashes('reset_password_error') %}
@@ -27,7 +27,7 @@
             {{ form_start(verifyForm, { attr: { class: 'auth-form', novalidate: 'novalidate' } }) }}
               <div class="row gy-3">
                 <div class="col-12">{{ form_row(verifyForm.email, { attr: { class: 'form-control', placeholder: 'nom@exemple.com' } }) }}</div>
-                <div class="col-12">{{ form_row(verifyForm.code, { attr: { class: 'form-control', placeholder: '123456' } }) }}</div>
+                <div class="col-12">{{ form_row(verifyForm.code, { attr: { class: 'form-control', placeholder: 'Code a 6 chiffres' } }) }}</div>
                 <div class="col-12"><button type="submit" class="btn-getstarted w-100"><i class="bi bi-check-circle me-2"></i>Verifier</button></div>
                 <div class="col-12 text-center"><a href="{{ path('app_forgot_password_request') }}" class="auth-link">Renvoyer un code</a></div>
               </div>

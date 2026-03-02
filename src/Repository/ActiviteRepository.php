@@ -116,6 +116,112 @@ class ActiviteRepository extends ServiceEntityRepository
         ];
     }
 
+    /**
+     * @param list<int> $userIds
+     * @return array<int, int> [userId => activityCount]
+     */
+    public function findActivityCountForUsersSince(array $userIds, \DateTimeImmutable $since): array
+    {
+        $userIds = array_values(array_unique(array_filter(
+            array_map(static fn (mixed $id): int => (int) $id, $userIds),
+            static fn (int $id): bool => $id > 0
+        )));
+
+        if ($userIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('a')
+            ->select('IDENTITY(a.utilisateur) AS userId')
+            ->addSelect('COUNT(a.id) AS total')
+            ->andWhere('a.utilisateur IN (:userIds)')
+            ->andWhere('a.dateActivite >= :since')
+            ->setParameter('userIds', $userIds)
+            ->setParameter('since', $since)
+            ->groupBy('a.utilisateur')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $id = (int) ($row['userId'] ?? 0);
+            if ($id > 0) {
+                $counts[$id] = (int) ($row['total'] ?? 0);
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Compare activity volume for each user on 2 consecutive windows:
+     * current window = now - $windowDays to now,
+     * previous window = now - (2 * $windowDays) to now - $windowDays.
+     *
+     * @param list<int> $userIds
+     * @return array<int, array{current_count:int,previous_count:int,drop_count:int,drop_percent:float}>
+     */
+    public function findActivityDropStatsForUsers(array $userIds, int $windowDays = 7): array
+    {
+        $userIds = array_values(array_unique(array_filter(
+            array_map(static fn (mixed $id): int => (int) $id, $userIds),
+            static fn (int $id): bool => $id > 0
+        )));
+
+        if ($userIds === []) {
+            return [];
+        }
+
+        $windowDays = max(1, $windowDays);
+        $now = new \DateTimeImmutable();
+        $currentStart = $now->modify(sprintf('-%d days', $windowDays));
+        $previousStart = $now->modify(sprintf('-%d days', $windowDays * 2));
+
+        $rows = $this->createQueryBuilder('a')
+            ->select('IDENTITY(a.utilisateur) AS userId')
+            ->addSelect('SUM(CASE WHEN a.dateActivite >= :currentStart THEN 1 ELSE 0 END) AS currentCount')
+            ->addSelect('SUM(CASE WHEN a.dateActivite >= :previousStart AND a.dateActivite < :currentStart THEN 1 ELSE 0 END) AS previousCount')
+            ->andWhere('a.utilisateur IN (:userIds)')
+            ->andWhere('a.dateActivite >= :previousStart')
+            ->setParameter('userIds', $userIds)
+            ->setParameter('currentStart', $currentStart)
+            ->setParameter('previousStart', $previousStart)
+            ->groupBy('a.utilisateur')
+            ->getQuery()
+            ->getArrayResult();
+
+        $stats = [];
+        foreach ($userIds as $userId) {
+            $stats[$userId] = [
+                'current_count' => 0,
+                'previous_count' => 0,
+                'drop_count' => 0,
+                'drop_percent' => 0.0,
+            ];
+        }
+
+        foreach ($rows as $row) {
+            $userId = (int) ($row['userId'] ?? 0);
+            if ($userId <= 0) {
+                continue;
+            }
+
+            $current = (int) ($row['currentCount'] ?? 0);
+            $previous = (int) ($row['previousCount'] ?? 0);
+            $dropCount = max(0, $previous - $current);
+            $dropPercent = $previous > 0 ? round(($dropCount / $previous) * 100, 1) : 0.0;
+
+            $stats[$userId] = [
+                'current_count' => $current,
+                'previous_count' => $previous,
+                'drop_count' => $dropCount,
+                'drop_percent' => $dropPercent,
+            ];
+        }
+
+        return $stats;
+    }
+
     public function getTrendByType(): array
     {
         return $this->createQueryBuilder('a')

@@ -25,11 +25,8 @@ class PresenceController extends AbstractController
             return new JsonResponse(['ok' => false], 401);
         }
 
-        $roles = $user->getRoles();
-        if (in_array('ROLE_COACH', $roles, true) || in_array('ROLE_NUTRITIONNISTE', $roles, true)) {
-            $user->setLastSeenAt(new \DateTimeImmutable());
-            $em->flush();
-        }
+        $user->setLastSeenAt(new \DateTimeImmutable());
+        $em->flush();
 
         return new JsonResponse(['ok' => true]);
     }
@@ -43,11 +40,8 @@ class PresenceController extends AbstractController
             return new JsonResponse(['ok' => false], 401);
         }
 
-        $roles = $user->getRoles();
-        if (in_array('ROLE_COACH', $roles, true) || in_array('ROLE_NUTRITIONNISTE', $roles, true)) {
-            $user->setLastSeenAt(null);
-            $em->flush();
-        }
+        $user->setLastSeenAt(null);
+        $em->flush();
 
         return new JsonResponse(['ok' => true]);
     }

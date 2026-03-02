@@ -13,13 +13,14 @@
       {% endif %}
       <p><strong>Duree :</strong> {{ activite.duree }} min</p>
       <p><strong>Calories :</strong> {{ activite.calories }}</p>
-      <p><strong>Distance :</strong> {{ activite.distanceKm is not null ? activite.distanceKm ~ ' km' : '-' }}</p>
-      <p><strong>Heures de repos :</strong> {{ activite.heuresRepos is not null ? activite.heuresRepos ~ ' h' : '-' }}</p>
       <p><strong>Date :</strong> {{ activite.dateActivite ? activite.dateActivite|date('d/m/Y') : '' }}</p>
       <p><strong>Etat lie :</strong>
         {% if activite.etat %}
-          Etat{% if activite.etat.traitementEnCours %} | Trait.: {{ activite.etat.traitementEnCours }}{% endif %}
-          ({{ activite.etat.dateReleve ? activite.etat.dateReleve|date('d/m/Y') : '' }})
+           {% if activite.etat.temperatureCorporelle %}🌡️ {{ activite.etat.temperatureCorporelle }}°C{% endif %}
+           {% if activite.etat.niveauHydratation %} 💧 {{ activite.etat.niveauHydratation }}{% endif %}
+           {% if not activite.etat.temperatureCorporelle and not activite.etat.niveauHydratation %}
+             Releve du {{ activite.etat.dateReleve ? activite.etat.dateReleve|date('d/m/Y') : '' }}
+           {% endif %}
         {% else %}
           -
         {% endif %}
@@ -31,4 +32,3 @@
     </div>
   </main>
 {% endblock %}
-

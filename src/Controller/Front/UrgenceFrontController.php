@@ -4,6 +4,7 @@ namespace App\Controller\Front;
 
 use App\Entity\UrgenceAlerte;
 use App\Entity\User;
+use App\MeetNotificationBundle\Service\MeetRoomUrlGenerator;
 use App\Repository\UrgenceAlerteRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,6 +20,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class UrgenceFrontController extends AbstractController
 {
+    public function __construct(
+        private readonly MeetRoomUrlGenerator $meetRoomUrlGenerator
+    ) {
+    }
+
     #[Route('/create', name: 'front_urgence_create', methods: ['POST'])]
     public function create(Request $request, UserRepository $users, EntityManagerInterface $em): RedirectResponse
     {
@@ -47,7 +53,7 @@ class UrgenceFrontController extends AbstractController
             return $this->redirectToRoute('front_etat_index');
         }
 
-        $meetingUrl = $this->buildMeetUrl($patient, $professional);
+        $meetingUrl = $this->meetRoomUrlGenerator->generateUrgenceRoomUrl($patient, $professional);
         $targetRole = in_array('ROLE_NUTRITIONNISTE', $professional->getRoles(), true) ? 'nutritionniste' : 'coach';
 
         $urgence = (new UrgenceAlerte())
@@ -192,16 +198,4 @@ class UrgenceFrontController extends AbstractController
         return in_array('ROLE_COACH', $roles, true) || in_array('ROLE_NUTRITIONNISTE', $roles, true);
     }
 
-    private function buildMeetUrl(User $patient, User $professional): string
-    {
-        $base = rtrim((string) ($_ENV['JITSI_MEET_BASE_URL'] ?? 'https://meet.jit.si'), '/');
-        $room = sprintf(
-            'chroniccare-urgence-%d-%d-%s',
-            (int) $patient->getId(),
-            (int) $professional->getId(),
-            substr(bin2hex(random_bytes(5)), 0, 10)
-        );
-
-        return $base . '/' . $room;
-    }
 }

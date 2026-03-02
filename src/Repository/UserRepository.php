@@ -140,87 +140,6 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return User[]
-     */
-    public function findOnlineProfessionnelsForUrgence(int $onlineWindowSeconds = 45): array
-    {
-        $since = (new \DateTimeImmutable())->modify(sprintf('-%d seconds', $onlineWindowSeconds));
-
-        return $this->createQueryBuilder('u')
-            ->andWhere('(u.roles LIKE :coachRole OR u.roles LIKE :nutritionRole)')
-            ->andWhere('u.lastSeenAt IS NOT NULL')
-            ->andWhere('u.lastSeenAt >= :since')
-            ->andWhere('u.isActive = true')
-            ->setParameter('coachRole', '%"ROLE_COACH"%')
-            ->setParameter('nutritionRole', '%"ROLE_NUTRITIONNISTE"%')
-            ->setParameter('since', $since)
-            ->orderBy('u.lastSeenAt', 'DESC')
-            ->addOrderBy('u.prenom', 'ASC')
-            ->addOrderBy('u.nom', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return User[]
-     */
-    public function findOnlineProfessionnelsForDiscussion(int $onlineWindowSeconds = 180, ?User $exclude = null): array
-    {
-        $since = (new \DateTimeImmutable())->modify(sprintf('-%d seconds', max(30, $onlineWindowSeconds)));
-        $qb = $this->createQueryBuilder('u')
-            ->andWhere('(u.roles LIKE :coachRole OR u.roles LIKE :nutritionRole)')
-            ->andWhere('u.lastSeenAt IS NOT NULL')
-            ->andWhere('u.lastSeenAt >= :since')
-            ->andWhere('u.isActive = true')
-            ->setParameter('coachRole', '%"ROLE_COACH"%')
-            ->setParameter('nutritionRole', '%"ROLE_NUTRITIONNISTE"%')
-            ->setParameter('since', $since)
-            ->orderBy('u.lastSeenAt', 'DESC')
-            ->addOrderBy('u.prenom', 'ASC')
-            ->addOrderBy('u.nom', 'ASC');
-
-        if ($exclude instanceof User && $exclude->getId() !== null) {
-            $qb->andWhere('u.id != :excludeId')->setParameter('excludeId', $exclude->getId());
-        }
-
-        return $qb->getQuery()->getResult();
-    }
-
-    /**
-     * @param int[] $ids
-     * @return User[]
-     */
-    public function findByIdsPreservingOrder(array $ids): array
-    {
-        $ids = array_values(array_unique(array_map('intval', $ids)));
-        if ($ids === []) {
-            return [];
-        }
-
-        $users = $this->createQueryBuilder('u')
-            ->andWhere('u.id IN (:ids)')
-            ->setParameter('ids', $ids)
-            ->getQuery()
-            ->getResult();
-
-        $byId = [];
-        foreach ($users as $user) {
-            if ($user instanceof User && $user->getId() !== null) {
-                $byId[$user->getId()] = $user;
-            }
-        }
-
-        $ordered = [];
-        foreach ($ids as $id) {
-            if (isset($byId[$id])) {
-                $ordered[] = $byId[$id];
-            }
-        }
-
-        return $ordered;
-    }
-
-    /**
      * @return string[]
      */
     public function findActiveAdminEmails(): array
@@ -395,6 +314,87 @@ class UserRepository extends ServiceEntityRepository
         usort($out, fn($a,$b) => $b['total'] <=> $a['total']);
 
         return $out;
+    }
+
+    /**
+     * @return User[]
+     */
+    public function findOnlineProfessionnelsForUrgence(int $onlineWindowSeconds = 180): array
+    {
+        $since = (new \DateTimeImmutable())->modify(sprintf('-%d seconds', $onlineWindowSeconds));
+
+        return $this->createQueryBuilder('u')
+            ->andWhere('(u.roles LIKE :coachRole OR u.roles LIKE :nutritionRole)')
+            ->andWhere('u.lastSeenAt IS NOT NULL')
+            ->andWhere('u.lastSeenAt >= :since')
+            ->andWhere('u.isActive = true')
+            ->setParameter('coachRole', '%"ROLE_COACH"%')
+            ->setParameter('nutritionRole', '%"ROLE_NUTRITIONNISTE"%')
+            ->setParameter('since', $since)
+            ->orderBy('u.lastSeenAt', 'DESC')
+            ->addOrderBy('u.prenom', 'ASC')
+            ->addOrderBy('u.nom', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return User[]
+     */
+    public function findOnlineProfessionnelsForDiscussion(int $onlineWindowSeconds = 180, ?User $exclude = null): array
+    {
+        $since = (new \DateTimeImmutable())->modify(sprintf('-%d seconds', max(30, $onlineWindowSeconds)));
+        $qb = $this->createQueryBuilder('u')
+            ->andWhere('(u.roles LIKE :coachRole OR u.roles LIKE :nutritionRole)')
+            ->andWhere('u.lastSeenAt IS NOT NULL')
+            ->andWhere('u.lastSeenAt >= :since')
+            ->andWhere('u.isActive = true')
+            ->setParameter('coachRole', '%"ROLE_COACH"%')
+            ->setParameter('nutritionRole', '%"ROLE_NUTRITIONNISTE"%')
+            ->setParameter('since', $since)
+            ->orderBy('u.lastSeenAt', 'DESC')
+            ->addOrderBy('u.prenom', 'ASC')
+            ->addOrderBy('u.nom', 'ASC');
+
+        if ($exclude instanceof User && $exclude->getId() !== null) {
+            $qb->andWhere('u.id != :excludeId')->setParameter('excludeId', $exclude->getId());
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @param int[] $ids
+     * @return User[]
+     */
+    public function findByIdsPreservingOrder(array $ids): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if ($ids === []) {
+            return [];
+        }
+
+        $users = $this->createQueryBuilder('u')
+            ->andWhere('u.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+
+        $byId = [];
+        foreach ($users as $user) {
+            if ($user instanceof User && $user->getId() !== null) {
+                $byId[$user->getId()] = $user;
+            }
+        }
+
+        $ordered = [];
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $ordered[] = $byId[$id];
+            }
+        }
+
+        return $ordered;
     }
 }
 //    /**

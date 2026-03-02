@@ -74,14 +74,14 @@
         <div class="d-flex gap-2 flex-wrap">
           {% if not isPro %}
             <a class="btn btn-primary" href="{{ path('front_etat_new') }}"><i class="bi bi-plus-lg me-1"></i> Cree mon etat</a>
-            <a class="btn btn-outline-danger" href="{{ path('front_discussion_index') }}">
-              <i class="bi bi-chat-square-text me-1"></i> Messages
-              <span
-                class="cc-badge-red {{ unreadMessagesCount|default(0) > 0 ? '' : 'd-none' }}"
-                data-unread-messages-badge
-              >{{ unreadMessagesCount|default(0) }}</span>
-            </a>
           {% endif %}
+          <a class="btn btn-outline-danger" href="{{ path('front_discussion_index') }}">
+            <i class="bi bi-chat-square-text me-1"></i> Messages
+            <span
+              class="cc-badge-red {{ unreadMessagesCount|default(0) > 0 ? '' : 'd-none' }}"
+              data-unread-messages-badge
+            >{{ unreadMessagesCount|default(0) }}</span>
+          </a>
           <a class="btn btn-outline-secondary" href="{{ path('suivi_front_dashboard') }}"><i class="bi bi-grid me-1"></i> Tableau de bord</a>
           <a class="btn btn-outline-success btn-sm" href="{{ path('front_etat_export_excel', {q: q ?? '', sort: sort ?? 'dateReleve', dir: dir ?? 'DESC', patient: selectedPatient ? selectedPatient.id : null}) }}"><i class="bi bi-file-earmark-excel me-1"></i> Export CSV</a>
         </div>

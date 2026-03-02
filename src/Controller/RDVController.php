@@ -9,6 +9,7 @@ use App\Form\RescheduleRDVFormType;
 use App\Repository\RDVRepository;
 use App\Repository\UserRepository;
 use App\Service\CalendarService;
+use App\Service\HolidayService;
 use App\Service\NotificationService;
 use App\Service\RDVService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -57,9 +58,11 @@ final class RDVController extends AbstractController
         int $id,
         Request $request,
         UserRepository $userRepository,
+        RDVRepository $rdvRepository,
         RDVService $rdvService,
         NotificationService $notificationService,
-        CalendarService $calendarService
+        CalendarService $calendarService,
+        HolidayService $holidayService
     ): Response {
         $user = $this->getUser();
         $demoMode = !$user instanceof User;
@@ -92,7 +95,8 @@ final class RDVController extends AbstractController
                     $patient,
                     $professionnel,
                     $data['dateRdv'],
-                    $data['motif'] ?? null
+                    $data['motif'] ?? null,
+                    $request->request->get('pre_advice') ?: null
                 );
                 $notificationService->sendRDVConfirmation($rdv);
 
@@ -103,12 +107,32 @@ final class RDVController extends AbstractController
             }
         }
 
-        $slots = $calendarService->getAvailableSlots($professionnel);
+        $dateParam = trim((string) $request->query->get('date', ''));
+        $selectedDate = null;
+        if ($dateParam !== '') {
+            $selectedDate = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam) ?: null;
+        }
+
+        $slotsForDate = [];
+        if ($selectedDate) {
+            $today = new \DateTimeImmutable('today');
+            $dayOfWeek = (int) $selectedDate->format('N');
+            if ($selectedDate < $today) {
+                $this->addFlash('danger', 'La date selectionnee est dans le passe.');
+            } elseif ($dayOfWeek > 5) {
+                $this->addFlash('danger', 'Les rendez-vous ne sont pas disponibles le week-end.');
+            } elseif ($holidayService->isHoliday($selectedDate)) {
+                $this->addFlash('danger', 'Les rendez-vous ne sont pas disponibles les jours feries.');
+            } else {
+                $slotsForDate = $calendarService->getAvailableSlotsForDate($professionnel, $selectedDate);
+            }
+        }
 
         return $this->render('rdv/patient_new.html.twig', [
             'form' => $form->createView(),
             'professionnel' => $professionnel,
-            'slots' => $slots,
+            'selectedDate' => $selectedDate ? $selectedDate->format('Y-m-d') : null,
+            'slotsForDate' => $slotsForDate,
         ]);
     }
 

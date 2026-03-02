@@ -14,12 +14,19 @@
             <div class="auth-header text-center mb-4">
               <div class="auth-icon"><i class="bi bi-envelope-check"></i></div>
               <h2>Verification de votre email</h2>
-              <p>Un code a 6 chiffres a ete envoye a votre adresse email. Saisissez ce code pour ouvrir le formulaire de nouveau mot de passe.</p>
+              <p>Un code de reinitialisation a ete envoye a votre adresse. Saisissez email + code pour continuer.</p>
             </div>
 
             {% for message in app.flashes('reset_password_error') %}
               <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+
+            {% for message in app.flashes('reset_password_info') %}
+              <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>
             {% endfor %}

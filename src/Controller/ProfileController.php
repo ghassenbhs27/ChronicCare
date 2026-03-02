@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Form\ProfileType;
+use App\Service\SecurityMonitoringService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,11 +31,16 @@ class ProfileController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        SecurityMonitoringService $securityMonitoringService
     ): Response {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
         $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+        $previousEmail = mb_strtolower(trim((string) $user->getEmail()));
 
         $form = $this->createForm(ProfileType::class, $user);
         $form->handleRequest($request);
@@ -63,6 +70,11 @@ class ProfileController extends AbstractController
                 }
                 $photoFile->move($uploadDir, $newFilename);
                 $user->setPhotoProfil($newFilename);
+            }
+
+            $newEmail = mb_strtolower(trim((string) $user->getEmail()));
+            if ($newEmail !== '' && $newEmail !== $previousEmail) {
+                $securityMonitoringService->trackEmailChange($request, $user, $previousEmail, $newEmail);
             }
             
             $em->flush();

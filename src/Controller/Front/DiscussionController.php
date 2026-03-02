@@ -106,7 +106,7 @@ class DiscussionController extends AbstractController
                 'id' => $u->getId(),
                 'name' => trim($u->getPrenom() . ' ' . $u->getNom()),
                 'roleLabel' => $isProfessional ? 'Patient' : (in_array('ROLE_NUTRITIONNISTE', $roles, true) ? 'Nutritionniste' : 'Coach'),
-                'online' => !$isProfessional,
+                'online' => $this->isUserOnline($u),
             ];
         }, $partners);
 
@@ -205,6 +205,16 @@ class DiscussionController extends AbstractController
         return in_array('ROLE_COACH', $roles, true) || in_array('ROLE_NUTRITIONNISTE', $roles, true);
     }
 
+    private function isUserOnline(User $user, int $windowSeconds = 180): bool
+    {
+        $lastSeenAt = $user->getLastSeenAt();
+        if (!$lastSeenAt instanceof \DateTimeImmutable) {
+            return false;
+        }
+
+        return $lastSeenAt >= (new \DateTimeImmutable())->modify(sprintf('-%d seconds', max(30, $windowSeconds)));
+    }
+
     /**
      * @return User[]
      */
@@ -214,11 +224,46 @@ class DiscussionController extends AbstractController
         UserRepository $userRepository,
         DiscussionMessageRepository $discussionMessageRepository
     ): array {
+        $partnerIds = $discussionMessageRepository->findPartnerIdsForUser($current);
+        $existingPartners = $userRepository->findByIdsPreservingOrder($partnerIds);
+
         if ($isProfessional) {
-            $partnerIds = $discussionMessageRepository->findPartnerIdsForUser($current);
-            return $userRepository->findByIdsPreservingOrder($partnerIds);
+            $allPatients = $userRepository->findPatientsForFollowup();
+            return $this->mergeUsers($existingPartners, $allPatients);
         }
 
-        return $userRepository->findOnlineProfessionnelsForDiscussion(180, $current);
+        $onlineProfessionals = $userRepository->findOnlineProfessionnelsForDiscussion(180, $current);
+        $existingProfessionalPartners = array_values(array_filter(
+            $existingPartners,
+            fn (User $user): bool => $this->isProfessional($user)
+        ));
+
+        return $this->mergeUsers($onlineProfessionals, $existingProfessionalPartners);
+    }
+
+    /**
+     * @param User[] $primary
+     * @param User[] $secondary
+     * @return User[]
+     */
+    private function mergeUsers(array $primary, array $secondary): array
+    {
+        $merged = [];
+        foreach ([$primary, $secondary] as $set) {
+            foreach ($set as $user) {
+                if (!$user instanceof User) {
+                    continue;
+                }
+
+                $id = $user->getId();
+                if ($id === null || isset($merged[$id])) {
+                    continue;
+                }
+
+                $merged[$id] = $user;
+            }
+        }
+
+        return array_values($merged);
     }
 }

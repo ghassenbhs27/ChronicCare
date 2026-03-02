@@ -1,10 +1,10 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Repository;
 
 use App\Entity\ResetPasswordCode;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -18,37 +18,34 @@ class ResetPasswordCodeRepository extends ServiceEntityRepository
         parent::__construct($registry, ResetPasswordCode::class);
     }
 
-    public function deleteForEmail(string $email): void
+    public function invalidateActiveCodesForUser(User $user): void
     {
+        $now = new \DateTimeImmutable();
+
         $this->createQueryBuilder('c')
-            ->delete()
-            ->where('c.email = :email')
-            ->setParameter('email', $email)
+            ->update()
+            ->set('c.usedAt', ':now')
+            ->where('c.user = :user')
+            ->andWhere('c.usedAt IS NULL')
+            ->setParameter('now', $now)
+            ->setParameter('user', $user)
             ->getQuery()
             ->execute();
     }
 
-    public function findLatestActiveByEmail(string $email): ?ResetPasswordCode
+    public function findValidCodeForUserAndHash(User $user, string $codeHash, \DateTimeImmutable $now): ?ResetPasswordCode
     {
         return $this->createQueryBuilder('c')
-            ->andWhere('c.email = :email')
+            ->andWhere('c.user = :user')
+            ->andWhere('c.codeHash = :codeHash')
             ->andWhere('c.usedAt IS NULL')
-            ->andWhere('c.expiresAt > :now')
-            ->setParameter('email', $email)
-            ->setParameter('now', new \DateTimeImmutable())
+            ->andWhere('c.expiresAt >= :now')
+            ->setParameter('user', $user)
+            ->setParameter('codeHash', $codeHash)
+            ->setParameter('now', $now)
             ->orderBy('c.id', 'DESC')
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-
-    public function purgeExpired(): int
-    {
-        return $this->createQueryBuilder('c')
-            ->delete()
-            ->where('c.expiresAt <= :now OR c.usedAt IS NOT NULL')
-            ->setParameter('now', new \DateTimeImmutable('-1 day'))
-            ->getQuery()
-            ->execute();
     }
 }

@@ -1,22 +1,4 @@
-<header id="header" class="header d-flex align-items-center fixed-top">
-  <style>
-    .cc-live-badge {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 6px;
-      border-radius: 999px;
-      background: #dc3545;
-      color: #fff;
-      font-size: 11px;
-      line-height: 18px;
-      font-weight: 700;
-      text-align: center;
-      box-shadow: 0 0 0 2px #fff;
-    }
-  </style>
+﻿<header id="header" class="header d-flex align-items-center fixed-top">
   <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between flex-wrap">
 
     <a href="{{ path('index') }}" class="logo d-flex align-items-center me-auto me-xl-0" title="Chronic Care">
@@ -56,41 +38,46 @@
     <nav id="navmenu" class="navmenu">
       <ul>
         {% if minimal_nav %}
-          <li><a href="{{ path('index') }}" class="{{ current_route == 'index' or current_route == 'home' ? 'active' : '' }}"><i class="bi bi-house-door"></i> Accueil</a></li>
-          <li><a href="{{ path('contact') }}" class="{{ current_route == 'contact' ? 'active' : '' }}"><i class="bi bi-envelope"></i> Contact</a></li>
+          <li><a href="{{ path('index') }}" class="{{ current_route == 'index' or current_route == 'home' ? 'active' : '' }}">Accueil</a></li>
+          <li><a href="{{ path('contact') }}" class="{{ current_route == 'contact' ? 'active' : '' }}">Contact</a></li>
         {% elseif not app.user %}
-          <li><a href="{{ path('index') }}" class="{{ current_route == 'index' or current_route == 'home' ? 'active' : '' }}"><i class="bi bi-house-door"></i> Accueil</a></li>
-          <li><a href="{{ path('nutritionnistes') }}" class="{{ current_route == 'nutritionnistes' ? 'active' : '' }}"><i class="bi bi-person-badge"></i> Nutritionnistes</a></li>
-          <li><a href="{{ path('coachs') }}" class="{{ current_route == 'coachs' ? 'active' : '' }}"><i class="bi bi-person-walking"></i> Coachs</a></li>
-          <li><a href="{{ path('front_evenements') }}" class="{{ current_route == 'front_evenements' or current_route == 'front_evenement_show' ? 'active' : '' }}"><i class="bi bi-calendar2-event"></i> Événements</a></li>
-          <li><a href="{{ path('publication_index') }}" class="{{ current_route starts with 'publication_' or current_route starts with 'commentaire_' ? 'active' : '' }}"><i class="bi bi-chat-dots"></i> Forum</a></li>
-          <li><a href="{{ path('boutique') }}" class="{{ current_route == 'boutique' or current_route starts with 'produit_' or current_route starts with 'cart_' ? 'active' : '' }}"><i class="bi bi-shop"></i> Boutique</a></li>
-          <li><a href="{{ path('contact') }}" class="{{ current_route == 'contact' ? 'active' : '' }}"><i class="bi bi-envelope"></i> Contact</a></li>
+          <li><a href="{{ path('index') }}" class="{{ current_route == 'index' or current_route == 'home' ? 'active' : '' }}">Accueil</a></li>
+          <li><a href="{{ path('nutritionnistes') }}" class="{{ current_route == 'nutritionnistes' ? 'active' : '' }}">Nutritionnistes</a></li>
+          <li><a href="{{ path('coachs') }}" class="{{ current_route == 'coachs' ? 'active' : '' }}">Coachs</a></li>
+          <li><a href="{{ path('front_evenements') }}" class="{{ current_route == 'front_evenements' or current_route == 'front_evenement_show' ? 'active' : '' }}">Événements</a></li>
+          <li><a href="{{ path('publication_index') }}" class="{{ current_route starts with 'publication_' or current_route starts with 'commentaire_' ? 'active' : '' }}">Forum</a></li>
+          <li><a href="{{ path('boutique') }}" class="{{ current_route == 'boutique' or current_route starts with 'produit_' or current_route starts with 'cart_' ? 'active' : '' }}">Boutique</a></li>
+          <li><a href="{{ path('contact') }}" class="{{ current_route == 'contact' ? 'active' : '' }}">Contact</a></li>
         {% else %}
-          {# Forum dans la nav pour coachs et visiteurs ; pour le patient tout passe par Mon suivi #}
           {% if not is_granted('ROLE_ADMIN') and not is_patient %}
-            <li><a href="{{ path('publication_index') }}" class="{{ current_route starts with 'publication_' or current_route starts with 'commentaire_' ? 'active' : '' }}"><i class="bi bi-chat-dots"></i> Forum</a></li>
+            <li><a href="{{ path('publication_index') }}" class="{{ current_route starts with 'publication_' or current_route starts with 'commentaire_' ? 'active' : '' }}">Forum</a></li>
           {% endif %}
           {% if is_coach_or_nutritionniste and not is_granted('ROLE_ADMIN') %}
-            <li><a href="{{ path('evenement_index') }}" class="{{ current_route starts with 'evenement_' or current_route starts with 'exercice_' ? 'active' : '' }}"><i class="bi bi-calendar2-event"></i> {{ pro_space_label }}</a></li>
-            <li><a href="{{ path('front_etat_index') }}" class="{{ current_route starts with 'front_etat_' ? 'active' : '' }}"><i class="bi bi-heart-pulse"></i> Etats patient</a></li>
-            <li><a href="{{ path('front_activite_index') }}" class="{{ current_route starts with 'front_activite_' ? 'active' : '' }}"><i class="bi bi-activity"></i> Activites patient</a></li>
+            <li><a href="{{ path('evenement_index') }}" class="{{ current_route starts with 'evenement_' or current_route starts with 'exercice_' ? 'active' : '' }}">{{ pro_space_label }}</a></li>
+            <li><a href="{{ path('front_etat_index') }}" class="{{ current_route starts with 'front_etat_' ? 'active' : '' }}">Etats patient</a></li>
+            <li><a href="{{ path('front_activite_index') }}" class="{{ current_route starts with 'front_activite_' ? 'active' : '' }}">Activites patient</a></li>
           {% endif %}
           {% if is_patient %}
-            <li><a href="{{ path('suivi_front_dashboard') }}" class="{{ current_route in suivi_routes or current_route starts with 'patient_rdv' ? 'active' : '' }}"><i class="bi bi-graph-up-arrow"></i> Mon suivi</a></li>
-            <li><a href="{{ path('front_evenements') }}" class="{{ current_route == 'front_evenements' or current_route == 'front_evenement_show' ? 'active' : '' }}"><i class="bi bi-calendar2-event"></i> Événements</a></li>
-            <li><a href="{{ path('front_mes_inscriptions') }}" class="{{ current_route == 'front_mes_inscriptions' ? 'active' : '' }}"><i class="bi bi-journal-check"></i> Mes inscriptions</a></li>
-            <li><a href="{{ path('commande_history') }}" class="{{ current_route starts with 'commande_' ? 'active' : '' }}"><i class="bi bi-bag-check"></i> Mes commandes</a></li>
+            <li><a href="{{ path('suivi_front_dashboard') }}" class="{{ current_route in suivi_routes or current_route starts with 'patient_rdv' ? 'active' : '' }}">Mon suivi</a></li>
+            <li><a href="{{ path('patient_medical_dossier_show') }}" class="{{ current_route starts with 'patient_medical_dossier_' ? 'active' : '' }}">Mon dossier medical</a></li>
+            <li><a href="{{ path('front_evenements') }}" class="{{ current_route == 'front_evenements' or current_route == 'front_evenement_show' ? 'active' : '' }}">Événements</a></li>
+            <li><a href="{{ path('front_mes_inscriptions') }}" class="{{ current_route == 'front_mes_inscriptions' ? 'active' : '' }}">Mes inscriptions</a></li>
+            <li><a href="{{ path('commande_history') }}" class="{{ current_route starts with 'commande_' ? 'active' : '' }}">Mes commandes</a></li>
           {% endif %}
           {% if is_coach_or_nutritionniste and not is_granted('ROLE_ADMIN') %}
-            <li><a href="{{ path('pro_rdv_list') }}" class="{{ current_route == 'pro_rdv_list' ? 'active' : '' }}"><i class="bi bi-calendar2-week"></i> Mes RDV pro</a></li>
+            <li><a href="{{ path('pro_rdv_list') }}" class="{{ current_route == 'pro_rdv_list' ? 'active' : '' }}">Mes RDV pro</a></li>
           {% endif %}
           {% if is_patient or ((is_granted('ROLE_COACH') or is_granted('ROLE_NUTRITIONNISTE')) and not is_granted('ROLE_ADMIN')) %}
-            <li><a href="{{ path('app_statistics') }}" class="{{ current_route == 'app_statistics' ? 'active' : '' }}"><i class="bi bi-bar-chart-line"></i> Statistiques</a></li>
+            <li><a href="{{ path('app_statistics') }}" class="{{ current_route == 'app_statistics' ? 'active' : '' }}">Statistiques</a></li>
           {% endif %}
-          {# Boutique et Contact pour tous les utilisateurs connectés #}
-          <li><a href="{{ path('boutique') }}" class="{{ current_route == 'boutique' or current_route starts with 'produit_' or current_route starts with 'cart_' ? 'active' : '' }}"><i class="bi bi-shop"></i> Boutique</a></li>
-          <li><a href="{{ path('contact') }}" class="{{ current_route == 'contact' ? 'active' : '' }}"><i class="bi bi-envelope"></i> Contact</a></li>
+          <li>
+            <a href="{{ path('front_discussion_index') }}" class="{{ current_route starts with 'front_discussion_' ? 'active' : '' }} d-flex align-items-center gap-1">
+              Messages
+              <span id="unread-messages-badge" class="badge bg-danger rounded-pill shadow-sm" style="display: none; font-size: 0.65rem; padding: 0.25em 0.5em;">0</span>
+            </a>
+          </li>
+          <li><a href="{{ path('boutique') }}" class="{{ current_route == 'boutique' or current_route starts with 'produit_' or current_route starts with 'cart_' ? 'active' : '' }}">Boutique</a></li>
+          <li><a href="{{ path('contact') }}" class="{{ current_route == 'contact' ? 'active' : '' }}">Contact</a></li>
         {% endif %}
       </ul>
       <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
@@ -99,34 +86,40 @@
     <div class="header-actions d-flex gap-2 align-items-center flex-nowrap">
       {% if not minimal_nav and is_patient %}
       <a href="{{ path('cart_show') }}" class="btn btn-nav-cart {{ current_route == 'cart_show' ? 'active' : '' }}" title="Panier">
-        <i class="bi bi-cart3"></i>
-        <span class="d-none d-md-inline ms-1">Panier</span>
+        <span>Panier</span>
       </a>
+      {% endif %}
+      {% if app.user and is_granted('ROLE_ADMIN') and not (current_route starts with 'admin_') %}
+        <a href="{{ path('admin_dashboard') }}" class="btn btn-getstarted btn-getstarted-outline" title="Retour au back-office">
+          Back Office
+        </a>
       {% endif %}
       {% if app.user %}
         <div class="dropdown">
-          <button class="btn btn-getstarted d-flex align-items-center gap-1 dropdown-toggle position-relative" type="button" id="navbarProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Profil">
+          <button class="btn btn-getstarted d-flex align-items-center gap-1 dropdown-toggle" type="button" id="navbarProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Profil">
             {% if app.user.photoProfil %}
               <img src="{{ asset('uploads/profile/' ~ app.user.photoProfil) }}" alt="Profil" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
             {% else %}
               <i class="bi bi-person-circle fs-5"></i>
             {% endif %}
-            <span class="cc-live-badge d-none" data-unread-messages-badge>0</span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarProfileDropdown">
             <li class="px-3 py-2 border-bottom">
               <span class="fw-semibold d-block">{{ app.user.fullName }}</span>
               <span class="small text-muted">{{ user_role_label }}</span>
+              {% if app.user.mostActive %}
+                <span class="small text-success d-block">{{ app.user.activityBadge }}</span>
+              {% endif %}
             </li>
             <li>
               <a class="dropdown-item d-flex align-items-center gap-2" href="#" data-open-profile-modal data-url="{{ path('app_profile_modal') }}">
-                <i class="bi bi-pencil-square"></i> Modifier profil
+                Modifier profil
               </a>
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
               <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="{{ path('app_logout') }}">
-                <i class="bi bi-box-arrow-right"></i> Déconnexion
+                Déconnexion
               </a>
             </li>
           </ul>
@@ -141,3 +134,202 @@
 </header>
 
 <div class="header-spacer"></div>
+
+{# Message Notification Tray (Toast-like) #}
+<div id="message-notification-container" class="position-fixed bottom-0 start-0 p-3" style="z-index: 9999; display: none;">
+  <div class="card border-primary shadow-lg" style="width: 280px; border-radius: 12px; overflow: hidden;">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2 px-3">
+      <span class="small fw-bold"><i class="bi bi-chat-dots-fill me-2"></i>Nouveau message</span>
+      <button type="button" class="btn-close btn-close-white" style="font-size: 0.7rem;" onclick="document.getElementById('message-notification-container').style.display='none'"></button>
+    </div>
+    <div class="card-body p-3">
+      <p class="mb-0 small" id="message-notification-text">Vous avez reçu un nouveau message.</p>
+      <div class="mt-2 text-end">
+        <a href="{{ path('front_discussion_index') }}" class="btn btn-primary btn-sm px-3 rounded-pill" style="font-size: 0.75rem;">Voir</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    {% if app.user %}
+    const UNREAD_COUNT_URL = '{{ path('front_discussion_unread_count') }}';
+    const PING_INTERVAL = 60000;
+    const PING_URL = '{{ path('presence_ping') }}';
+    const CSRF_TOKEN = '{{ csrf_token('presence_ping') }}';
+    const POLL_INTERVAL = 7000; // 7 seconds
+    const badge = document.getElementById('unread-messages-badge');
+    const msgContainer = document.getElementById('message-notification-container');
+    const msgText = document.getElementById('message-notification-text');
+    let lastCount = -1;
+    let audioMsg = null;
+
+    async function checkMessages() {
+      try {
+        const response = await fetch(UNREAD_COUNT_URL, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        if (data.ok) {
+          const count = parseInt(data.count) || 0;
+          
+          // Update Badge
+          if (badge) {
+            if (count > 0) {
+              badge.textContent = count > 99 ? '99+' : count;
+              badge.style.display = 'inline-block';
+            } else {
+              badge.style.display = 'none';
+            }
+          }
+
+          // Trigger Notification if count increased
+          if (lastCount !== -1 && count > lastCount) {
+             // Only show toast if NOT on discussion page
+             if (!window.location.pathname.includes('/discussion')) {
+                if (msgContainer) {
+                  msgContainer.style.display = 'block';
+                  playMessageSound();
+                }
+             }
+          }
+          lastCount = count;
+        }
+      } catch (err) {
+        console.debug('Message check failed', err);
+      }
+    }
+
+    function playMessageSound() {
+      if (!audioMsg) {
+        audioMsg = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'); // Subtle pop sound
+      }
+      audioMsg.play().catch(() => {});
+    }
+
+    function sendPresencePing() {
+      fetch(PING_URL, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': CSRF_TOKEN,
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      }).catch(err => console.debug('Presence ping failed', err));
+    }
+
+    setInterval(checkMessages, POLL_INTERVAL);
+    checkMessages();
+    setInterval(sendPresencePing, PING_INTERVAL);
+    sendPresencePing();
+
+    // Re-check on visibility
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        checkMessages();
+        sendPresencePing();
+      }
+    });
+    {% endif %}
+  })();
+</script>
+
+{% if app.user and (('ROLE_COACH' in app.user.roles) or ('ROLE_NUTRITIONNISTE' in app.user.roles)) %}
+<div id="urgence-notification-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999; display: none;">
+  <div class="card border-danger shadow-lg" style="width: 300px;">
+    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+      <strong class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>APPEL URGENT</strong>
+      <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('urgence-notification-container').style.display='none'"></button>
+    </div>
+    <div class="card-body">
+      <p id="urgence-notification-text" class="mb-3 small fw-bold text-danger Pulsing">Un patient demande un appel en urgence !</p>
+      <div id="urgence-notification-list"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes dangerFlash {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  .Pulsing {
+    animation: dangerFlash 1s infinite;
+  }
+</style>
+
+<script>
+  (function() {
+    // Urgence Inbox Polling
+    const INBOX_URL = '{{ path('front_urgence_inbox') }}';
+    const INBOX_INTERVAL = 5000; // Check every 5 seconds
+    const container = document.getElementById('urgence-notification-container');
+    const list = document.getElementById('urgence-notification-list');
+    let knownUrgenceIds = new Set();
+    let audioNotify = null;
+
+    async function checkUrgenceInbox() {
+      try {
+        const response = await fetch(INBOX_URL, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+          list.innerHTML = '';
+          let hasNew = false;
+          data.items.forEach(item => {
+            if (!knownUrgenceIds.has(item.id)) {
+              hasNew = true;
+              knownUrgenceIds.add(item.id);
+            }
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between align-items-center mb-2 p-2 border rounded bg-light';
+            div.innerHTML = `
+              <div class="small">
+                <strong>${item.patient}</strong><br>
+                <span class="text-muted">${item.createdAt}</span>
+              </div>
+              <a href="${item.joinUrl}" class="btn btn-sm btn-danger">Rejoindre</a>
+            `;
+            list.appendChild(div);
+          });
+
+          container.style.display = 'block';
+          if (hasNew) {
+            playUrgenceSound();
+          }
+        } else {
+          container.style.display = 'none';
+          knownUrgenceIds.clear();
+        }
+      } catch (err) {
+        console.debug('Urgence inbox check failed', err);
+      }
+    }
+
+    function playUrgenceSound() {
+      if (!audioNotify) {
+        audioNotify = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+      }
+      audioNotify.play().catch(() => {
+        // Browser might block autoplay without interaction
+        console.debug('Audio playback blocked');
+      });
+    }
+
+    setInterval(checkUrgenceInbox, INBOX_INTERVAL);
+    checkUrgenceInbox();
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        checkUrgenceInbox();
+      }
+    });
+  })();
+</script>
+{% endif %}

@@ -204,7 +204,10 @@ class EtatFrontController extends AbstractController
             (string) $patient->getNom()
         );
         $mail = (new Email())
-            ->from((string) $this->getParameter('mailer_from_address'))
+            ->from(new \Symfony\Component\Mime\Address(
+                (string) $this->getParameter('mailer_from_address'),
+                (string) $this->getParameter('mailer_from_name')
+            ))
             ->to((string) $patient->getEmail())
             ->subject($subject)
             ->text($analysis->getContent());
@@ -218,8 +221,8 @@ class EtatFrontController extends AbstractController
                 ->setUpdatedAt(new \DateTimeImmutable());
             $em->flush();
             $this->addFlash('success', 'Analyse envoyee par email au patient.');
-        } catch (TransportExceptionInterface) {
-            $this->addFlash('danger', 'Echec envoi email. Verifiez MAILER_DSN.');
+        } catch (TransportExceptionInterface $e) {
+            $this->addFlash('danger', 'Echec envoi email : ' . $e->getMessage());
         }
 
         return $this->redirectToRoute('front_etat_index', ['patient' => $patient->getId()]);
