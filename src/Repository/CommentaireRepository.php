@@ -131,20 +131,25 @@ class CommentaireRepository extends ServiceEntityRepository
 
     /**
      * Get statistics about comments and replies for admin
+     *
+     * @return array{total: int, topLevel: int, replies: int}
      */
     public function getCommentStats(): array
     {
         $qb = $this->createQueryBuilder('c');
-        
+
+        /** @var string|int $total */
         $total = $qb->select('COUNT(c.id)')
             ->getQuery()
             ->getSingleScalarResult();
 
+        /** @var string|int $topLevel */
         $topLevel = $qb->select('COUNT(c.id)')
             ->where('c.parent IS NULL')
             ->getQuery()
             ->getSingleScalarResult();
 
+        /** @var string|int $replies */
         $replies = $qb->select('COUNT(c.id)')
             ->where('c.parent IS NOT NULL')
             ->getQuery()
@@ -156,29 +161,4 @@ class CommentaireRepository extends ServiceEntityRepository
             'replies' => (int) $replies,
         ];
     }
-
-    //    /**
-    //     * @return Commentaire[] Returns an array of Commentaire objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('c.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?Commentaire
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
 }

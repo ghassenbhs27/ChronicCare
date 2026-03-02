@@ -4,6 +4,11 @@ namespace App\Service;
 
 class StickerService
 {
+    /**
+     * Tableau associatif : nom du pack => liste de stickers (emojis)
+     *
+     * @var array<string, list<string>>
+     */
     private array $stickerPacks = [
         'emoji' => ['😀', '😊', '😍', '🤣', '😂', '😘', '😌', '😎', '😢', '😭', '😴', '🤔'],
         'nature' => ['🌸', '🌺', '🌻', '🌷', '🌹', '🍀', '🌼', '🌿', '☀️', '🌤️', '⛅', '🌈'],
@@ -13,6 +18,8 @@ class StickerService
 
     /**
      * Get all sticker packs
+     *
+     * @return array<string, list<string>>
      */
     public function getAllStickerPacks(): array
     {
@@ -21,6 +28,8 @@ class StickerService
 
     /**
      * Get stickers by pack name
+     *
+     * @return list<string>
      */
     public function getStickersByPack(string $pack): array
     {
@@ -55,21 +64,22 @@ class StickerService
     public function generateStickerPickerHtml(): string
     {
         $html = '<div class="sticker-picker-modal">';
-        
+
         foreach ($this->stickerPacks as $packName => $stickers) {
             $html .= '<div class="sticker-pack" data-pack="' . htmlspecialchars($packName) . '">';
             $html .= '<h6 class="pack-name">' . ucfirst($packName) . '</h6>';
             $html .= '<div class="sticker-grid">';
-            
+
             foreach ($stickers as $sticker) {
-                $html .= '<button type="button" class="sticker-item" data-sticker="' . htmlspecialchars($sticker) . '">' . $sticker . '</button>';
+                $html .= '<button type="button" class="sticker-item" data-sticker="' .
+                    htmlspecialchars($sticker) . '">' . $sticker . '</button>';
             }
-            
+
             $html .= '</div></div>';
         }
-        
+
         $html .= '</div>';
-        
+
         return $html;
     }
 }

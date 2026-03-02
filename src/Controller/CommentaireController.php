@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Commentaire;
 use App\Entity\Publication;
-use App\Form\CommentaireFormType;
+use App\Entity\User;
 use App\Repository\CommentaireRepository;
 use App\Repository\PublicationRepository;
 use App\Service\CommentTextFormatterService;
@@ -25,7 +25,7 @@ class CommentaireController extends AbstractController
     ) {
     }
 
-    #[Route('/add/{publicationId}', name: 'commentaire_add', requirements: ['publicationId' => '\\d+'], methods: ['POST'])]
+    #[Route('/add/{publicationId}', name: 'commentaire_add', requirements: ['publicationId' => '\d+'], methods: ['POST'])]
     public function add(
         int $publicationId,
         Request $request,
@@ -55,24 +55,26 @@ class CommentaireController extends AbstractController
         $commentaire->setPublication($publication);
         $commentaire->setIsAnonymous($request->request->getBoolean('is_anonymous'));
 
-        // Set rich text formatting
+        // Rich text formatting
         $fontStyle = $request->request->get('fontStyle');
-        if ($fontStyle && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
+        if (is_string($fontStyle) && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
             $commentaire->setFontStyle($fontStyle);
         }
 
         $fontSize = $request->request->get('fontSize');
-        if ($fontSize && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
+        if (is_string($fontSize) && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
             $commentaire->setFontSize($fontSize);
         }
 
         $textColor = $request->request->get('textColor');
-        if ($textColor) {
+        if (is_string($textColor) && $textColor !== '') {
             $commentaire->setTextColor($textColor);
         }
 
-        if ($this->getUser()) {
-            $commentaire->setAuteur($this->getUser());
+        // ✅ PHPStan fix: setAuteur() attend App\Entity\User|null
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $commentaire->setAuteur($user);
         }
 
         $violations = $validator->validate($commentaire);
@@ -86,7 +88,7 @@ class CommentaireController extends AbstractController
         $em->persist($commentaire);
         $em->flush();
 
-        // 🔔 Créer une notification pour l'auteur de la publication
+        // 🔔 Notifier l’auteur de la publication
         $this->forumNotificationService->notifyNewCommentaire($commentaire);
 
         $this->addFlash('success', 'Commentaire ajoute avec succes !');
@@ -95,7 +97,7 @@ class CommentaireController extends AbstractController
         );
     }
 
-    #[Route('/edit/{id}', name: 'commentaire_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
+    #[Route('/edit/{id}', name: 'commentaire_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function edit(
         int $id,
         Request $request,
@@ -109,8 +111,23 @@ class CommentaireController extends AbstractController
             throw $this->createNotFoundException('Commentaire non trouve');
         }
 
-        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur() === $this->getUser();
-        if (!$isAuthor && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
+        // ✅ PHPStan-safe author check
+        $user = $this->getUser();
+        $author = $commentaire->getAuteur();
+
+        $isAuthor =
+            ($user instanceof User)
+            && ($author instanceof User)
+            && ($user->getId() !== null)
+            && ($author->getId() !== null)
+            && ($user->getId() === $author->getId());
+
+        $hasAdminRole =
+            $this->isGranted('ROLE_COACH')
+            || $this->isGranted('ROLE_NUTRITIONNISTE')
+            || $this->isGranted('ROLE_ADMIN');
+
+        if (!$isAuthor && !$hasAdminRole) {
             throw new AccessDeniedException('Vous ne pouvez modifier que vos propres commentaires.');
         }
 
@@ -127,24 +144,23 @@ class CommentaireController extends AbstractController
             }
 
             $commentaire->setContenu(trim((string) $request->request->get('contenu', '')));
-            
+
             // Update rich text formatting
             $fontStyle = $request->request->get('fontStyle');
-            if ($fontStyle && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
+            if (is_string($fontStyle) && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
                 $commentaire->setFontStyle($fontStyle);
             }
 
             $fontSize = $request->request->get('fontSize');
-            if ($fontSize && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
+            if (is_string($fontSize) && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
                 $commentaire->setFontSize($fontSize);
             }
 
             $textColor = $request->request->get('textColor');
-            if ($textColor) {
+            if (is_string($textColor) && $textColor !== '') {
                 $commentaire->setTextColor($textColor);
             }
 
-            // Update edit timestamp
             $commentaire->setUpdatedAt(new \DateTimeImmutable());
 
             $violations = $validator->validate($commentaire);
@@ -157,6 +173,7 @@ class CommentaireController extends AbstractController
 
             $em->flush();
             $this->addFlash('success', 'Commentaire modifie avec succes !');
+
             return $this->redirect(
                 $this->generateUrl('publication_show', ['id' => $publication->getId()]) . '#comment-' . $commentaire->getId()
             );
@@ -168,7 +185,7 @@ class CommentaireController extends AbstractController
         ]);
     }
 
-    #[Route('/delete/{id}', name: 'commentaire_delete', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[Route('/delete/{id}', name: 'commentaire_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(
         int $id,
         Request $request,
@@ -179,19 +196,32 @@ class CommentaireController extends AbstractController
 
         if (!$commentaire) {
             $this->addFlash('error', 'Ce commentaire n\'existe plus ou a déjà été supprimé.');
-            
-            // Try to get publication ID from referer
+
             $referer = $request->headers->get('referer');
-            if ($referer && preg_match('/\/publication\/show\/(\d+)/', $referer, $matches)) {
-                return $this->redirectToRoute('publication_show', ['id' => (int)$matches[1]]);
+            if (is_string($referer) && preg_match('/\/publication\/show\/(\d+)/', $referer, $matches)) {
+                return $this->redirectToRoute('publication_show', ['id' => (int) $matches[1]]);
             }
-            
-            // Fallback to publication list
+
             return $this->redirectToRoute('publication_index');
         }
 
-        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur() === $this->getUser();
-        if (!$isAuthor && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
+        // ✅ PHPStan-safe author check
+        $user = $this->getUser();
+        $author = $commentaire->getAuteur();
+
+        $isAuthor =
+            ($user instanceof User)
+            && ($author instanceof User)
+            && ($user->getId() !== null)
+            && ($author->getId() !== null)
+            && ($user->getId() === $author->getId());
+
+        $hasAdminRole =
+            $this->isGranted('ROLE_COACH')
+            || $this->isGranted('ROLE_NUTRITIONNISTE')
+            || $this->isGranted('ROLE_ADMIN');
+
+        if (!$isAuthor && !$hasAdminRole) {
             throw new AccessDeniedException('Vous ne pouvez supprimer que vos propres commentaires.');
         }
 
@@ -211,7 +241,7 @@ class CommentaireController extends AbstractController
         );
     }
 
-    #[Route('/like/{id}', name: 'commentaire_like', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[Route('/like/{id}', name: 'commentaire_like', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function like(
         int $id,
         Request $request,
@@ -236,10 +266,11 @@ class CommentaireController extends AbstractController
 
         if ($action === 'like') {
             $commentaire->incrementLikes();
-            
-            // 🔔 Créer une notification pour l'auteur du commentaire
-            if ($this->getUser()) {
-                $this->forumNotificationService->notifyCommentaireLike($commentaire, $this->getUser());
+
+            // ✅ PHPStan fix: notifyCommentaireLike attend App\Entity\User
+            $user = $this->getUser();
+            if ($user instanceof User) {
+                $this->forumNotificationService->notifyCommentaireLike($commentaire, $user);
             }
         } else {
             $commentaire->decrementLikes();
@@ -257,7 +288,7 @@ class CommentaireController extends AbstractController
     /**
      * Add a reply to an existing comment
      */
-    #[Route('/reply/{parentId}', name: 'commentaire_reply', requirements: ['parentId' => '\\d+'], methods: ['POST'])]
+    #[Route('/reply/{parentId}', name: 'commentaire_reply', requirements: ['parentId' => '\d+'], methods: ['POST'])]
     public function reply(
         int $parentId,
         Request $request,
@@ -266,25 +297,24 @@ class CommentaireController extends AbstractController
         ValidatorInterface $validator
     ): Response {
         $parent = $commentaireRepo->find($parentId);
-        
+
         if (!$parent) {
             throw $this->createNotFoundException('Commentaire parent non trouvé');
         }
 
         // Verify CSRF token
-        if (!$this->isCsrfTokenValid('commentaire_reply', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('commentaire_reply', (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide');
             return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
         }
 
-        // Check if publication is published
         if ($parent->getPublication()->getStatut() !== Publication::STATUT_PUBLIE) {
             $this->addFlash('error', 'Les réponses sont désactivées pour les publications en brouillon.');
             return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
         }
 
         $contenu = trim((string) $request->request->get('contenu', ''));
-        
+
         if (strlen($contenu) < 3) {
             $this->addFlash('error', 'Le commentaire doit contenir au moins 3 caractères');
             return $this->redirectToRoute('publication_show', ['id' => $parent->getPublication()->getId()]);
@@ -294,26 +324,29 @@ class CommentaireController extends AbstractController
         $reply->setPublication($parent->getPublication());
         $reply->setParent($parent);
         $reply->setContenu($contenu);
-        $reply->setAuteur($this->getUser());
         $reply->setIsAnonymous($request->request->getBoolean('is_anonymous'));
 
-        // Handle rich text formatting if present
+        // ✅ PHPStan fix: setAuteur attend App\Entity\User|null
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $reply->setAuteur($user);
+        }
+
         $fontStyle = $request->request->get('fontStyle');
-        if ($fontStyle && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
+        if (is_string($fontStyle) && in_array($fontStyle, Commentaire::FONT_STYLES, true)) {
             $reply->setFontStyle($fontStyle);
         }
 
         $fontSize = $request->request->get('fontSize');
-        if ($fontSize && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
+        if (is_string($fontSize) && in_array($fontSize, Commentaire::FONT_SIZES, true)) {
             $reply->setFontSize($fontSize);
         }
 
         $textColor = $request->request->get('textColor');
-        if ($textColor) {
+        if (is_string($textColor) && $textColor !== '') {
             $reply->setTextColor($textColor);
         }
 
-        // Validate the reply
         $violations = $validator->validate($reply);
         if (count($violations) > 0) {
             foreach ($violations as $violation) {
@@ -325,12 +358,11 @@ class CommentaireController extends AbstractController
         $em->persist($reply);
         $em->flush();
 
-        // Notify parent comment author
         $this->forumNotificationService->notifyNewCommentaire($reply);
 
         $this->addFlash('success', 'Réponse ajoutée avec succès');
         return $this->redirect(
-            $this->generateUrl('publication_show', ['id' => $parent->getPublication()->getId()]) 
+            $this->generateUrl('publication_show', ['id' => $parent->getPublication()->getId()])
             . '#comment-' . $parent->getId()
         );
     }

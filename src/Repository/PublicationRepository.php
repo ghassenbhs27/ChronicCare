@@ -38,7 +38,9 @@ class PublicationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /** @return array<string, int> */
+    /**
+     * @return array<string, int>
+     */
     public function countByStatut(): array
     {
         $rows = $this->createQueryBuilder('p')
@@ -46,15 +48,18 @@ class PublicationRepository extends ServiceEntityRepository
             ->groupBy('p.statut')
             ->getQuery()
             ->getArrayResult();
+
         $out = [];
         foreach ($rows as $row) {
-            $out[$row['statut']] = (int) $row['total'];
+            $out[(string) $row['statut']] = (int) $row['total'];
         }
+
         return $out;
     }
 
     /**
      * Find most popular publications by views
+     *
      * @return Publication[]
      */
     public function findMostViewed(int $limit = 10, ?\DateTimeImmutable $since = null): array
@@ -79,6 +84,7 @@ class PublicationRepository extends ServiceEntityRepository
 
     /**
      * Find most liked publications
+     *
      * @return Publication[]
      */
     public function findMostLiked(int $limit = 10, ?\DateTimeImmutable $since = null): array
@@ -103,6 +109,7 @@ class PublicationRepository extends ServiceEntityRepository
 
     /**
      * Find most commented publications
+     *
      * @return Publication[]
      */
     public function findMostCommented(int $limit = 10, ?\DateTimeImmutable $since = null): array
@@ -129,6 +136,7 @@ class PublicationRepository extends ServiceEntityRepository
     /**
      * Find trending publications (based on popularity score)
      * Score = (views * 1) + (likes * 3) + (comments * 5)
+     *
      * @return Publication[]
      */
     public function findTrending(int $limit = 10, int $days = 7): array
@@ -153,6 +161,7 @@ class PublicationRepository extends ServiceEntityRepository
 
     /**
      * Find publications by category with stats
+     *
      * @return Publication[]
      */
     public function findTopByCategory(string $category, int $limit = 5): array
@@ -175,7 +184,14 @@ class PublicationRepository extends ServiceEntityRepository
 
     /**
      * Get ranking statistics for all publications
-     * @return array
+     *
+     * @return array{
+     *   totalPublications: int,
+     *   totalViews: int,
+     *   totalLikes: int,
+     *   avgViews: float,
+     *   avgLikes: float
+     * }
      */
     public function getRankingStats(): array
     {
@@ -190,6 +206,7 @@ class PublicationRepository extends ServiceEntityRepository
             ->where('p.statut = :statut')
             ->setParameter('statut', Publication::STATUT_PUBLIE);
 
+        /** @var array<string, string|int|float|null> $result */
         $result = $qb->getQuery()->getSingleResult();
 
         return [
@@ -203,7 +220,15 @@ class PublicationRepository extends ServiceEntityRepository
 
     /**
      * Get top authors by total engagement
-     * @return array
+     *
+     * @return list<array{
+     *   id: int|string,
+     *   nom: string|null,
+     *   prenom: string|null,
+     *   publicationCount: int|string,
+     *   totalViews: int|string|null,
+     *   totalLikes: int|string|null
+     * }>
      */
     public function getTopAuthors(int $limit = 5): array
     {
@@ -226,29 +251,4 @@ class PublicationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getArrayResult();
     }
-
-    //    /**
-    //     * @return Publication[] Returns an array of Publication objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('p.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?Publication
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
 }
