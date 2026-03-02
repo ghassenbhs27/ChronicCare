@@ -10,10 +10,7 @@ use App\Repository\NotificationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-/**
- * Service pour gérer les notifications du forum (likes et commentaires)
- * Séparé du NotificationService existant qui gère les emails RDV/utilisateurs
- */
+
 class ForumNotificationService
 {
     public function __construct(
@@ -23,9 +20,7 @@ class ForumNotificationService
     ) {
     }
 
-    /**
-     * Crée une notification pour un like sur une publication
-     */
+
     public function notifyPublicationLike(Publication $publication, User $liker): void
     {
         // Ne pas notifier si l'auteur like sa propre publication
@@ -59,9 +54,7 @@ class ForumNotificationService
         $this->notificationRepository->save($notification, true);
     }
 
-    /**
-     * Crée une notification pour un like sur un commentaire
-     */
+
     public function notifyCommentaireLike(Commentaire $commentaire, User $liker): void
     {
         // Ne pas notifier si l'auteur like son propre commentaire

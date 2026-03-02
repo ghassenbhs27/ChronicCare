@@ -1,8 +1,4 @@
-/**
- * Translation Manager for Forum
- * Handles individual translate buttons on publications and comments
- * Uses MyMemory API via backend
- */
+
 
 class TranslationManager {
   constructor() {

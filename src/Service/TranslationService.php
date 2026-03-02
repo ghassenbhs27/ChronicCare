@@ -7,7 +7,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Service de traduction utilisant MyMemory Translation API
- * API 100% gratuite : 5000 mots/jour sans clé, 10000 avec clé gratuite
+ * API gratuite : 5000 mots/jour sans clé, 10000 avec clé gratuite
  */
 class TranslationService
 {
