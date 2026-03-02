@@ -31,13 +31,13 @@ class AdminProduitController extends AbstractController
     {
         $queryBuilder = $this->produitRepository->createQueryBuilder('p')
             ->orderBy('p.id', 'DESC');
-        
+
         $pagination = $this->paginator->paginate(
             $queryBuilder,
             $request->query->getInt('page', 1),
             10 // 10 produits par page
         );
-        
+
         return $this->render('admin/produit/list.html.twig', [
             'produits' => $pagination,
         ]);

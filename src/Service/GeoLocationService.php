@@ -24,7 +24,7 @@ class GeoLocationService
     ) {
         $this->isDevMode = ($environment === 'dev');
         $this->apiUrl = $this->isDevMode ? self::API_URL_DEV : self::API_URL_PROD;
-        
+
         if ($this->isDevMode) {
             $this->logger->notice('GeoLocationService: Mode DÉVELOPPEMENT - Utilisation de l\'API mock locale');
         }
@@ -116,7 +116,7 @@ class GeoLocationService
     public function getClientLocation(?string $ipAddress = null): ?array
     {
         $this->logger->info('GeoLocationService: getClientLocation appelé', ['ip' => $ipAddress]);
-        
+
         if (!$ipAddress) {
             // Sans IP fournie, ip-api retournera l'IP du client qui fait la requête
             return $this->getLocationByIp('');
@@ -159,8 +159,8 @@ class GeoLocationService
         $dLon = deg2rad($lon2 - $lon1);
 
         $a = sin($dLat / 2) * sin($dLat / 2) +
-             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-             sin($dLon / 2) * sin($dLon / 2);
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
 
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         $distance = $earthRadius * $c;

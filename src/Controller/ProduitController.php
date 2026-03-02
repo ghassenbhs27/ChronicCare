@@ -82,13 +82,13 @@ class ProduitController extends AbstractController
         $queryBuilder = $this->produitRepository->createQueryBuilder('p')
             ->where('p.isActive = true')
             ->orderBy('p.id', 'DESC');
-        
+
         $pagination = $this->paginator->paginate(
             $queryBuilder,
             $request->query->getInt('page', 1),
             9 // 9 produits par page (grille 3x3)
         );
-        
+
         $categories = $this->produitRepository->findAllCategories();
 
         return $this->render('produit/list.html.twig', [
@@ -124,8 +124,8 @@ class ProduitController extends AbstractController
      */
     #[Route('/{id}/recommend', name: 'recommend_to_patient', methods: ['POST'])]
     public function recommendToPatient(
-        int $id, 
-        Request $request, 
+        int $id,
+        Request $request,
         UserRepository $userRepository,
         \Doctrine\ORM\EntityManagerInterface $em,
         \Symfony\Component\Mailer\MailerInterface $mailer
@@ -133,7 +133,7 @@ class ProduitController extends AbstractController
         if (!$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_COACH')) {
             throw $this->createAccessDeniedException('Accès réservé aux professionnels.');
         }
-        
+
         $produit = $this->produitRepository->find($id);
         if (!$produit) {
             $this->addFlash('error', 'Produit non trouvé.');
@@ -142,7 +142,7 @@ class ProduitController extends AbstractController
 
         $patientId = $request->request->get('patient_id');
         $message = $request->request->get('message', '');
-        
+
         $patient = $userRepository->find($patientId);
         if (!$patient) {
             $this->addFlash('error', 'Patient non trouvé.');
@@ -151,7 +151,7 @@ class ProduitController extends AbstractController
 
         /** @var \App\Entity\User $pro */
         $pro = $this->getUser();
-        
+
         // Envoyer un email au patient
         try {
             $email = (new \Symfony\Component\Mime\Email())
@@ -181,7 +181,7 @@ class ProduitController extends AbstractController
                     $message ? '<p><strong>Message personnalisé :</strong> ' . htmlspecialchars($message) . '</p>' : '',
                     $produit->getId()
                 ));
-            
+
             $mailer->send($email);
             $this->addFlash('success', 'Recommandation envoyée à ' . $patient->getPrenom() . ' ' . $patient->getNom() . ' avec succès !');
         } catch (\Exception $e) {
