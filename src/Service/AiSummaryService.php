@@ -10,12 +10,12 @@ class AiSummaryService
     private const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
     /**
-     * ✅ Models optimized for AI summaries
+     *  Models optimized for AI summaries
      * Order: fast → powerful fallback
      */
     private const MODELS = [
-        'openai/gpt-oss-20b',   // ✅ Primary (fast + cheap)
-        'openai/gpt-oss-120b',  // 🔁 Fallback (strong but heavy)
+        'openai/gpt-oss-20b',   //  Primary (fast + cheap)
+        'openai/gpt-oss-120b',  //  Fallback (strong but heavy)
     ];
 
     private const MAX_CONTENT_LENGTH = 2000;
@@ -49,7 +49,7 @@ class AiSummaryService
             $summary = $this->generateWithGroq($model, $cleanContent, $language);
 
             if ($this->isGoodSummary($summary, $cleanContent)) {
-                $this->logger->info('✅ Summary generated successfully', [
+                $this->logger->info(' Summary generated successfully', [
                     'model' => $model,
                     'language' => $language,
                     'length' => mb_strlen($summary),
@@ -66,7 +66,7 @@ class AiSummaryService
     }
 
     /**
-     * ✅ NEW: Generate fallback summary when API fails
+     *  NEW: Generate fallback summary when API fails
      * Extracts first N sentences from content
      * WARNING: Does NOT translate - returns summary in original text language
      */
@@ -105,7 +105,7 @@ class AiSummaryService
 
         $fallbackSummary = $prefix . $summary;
 
-        $this->logger->warning('⚠️ Fallback summary generated - content is in ORIGINAL language, NOT translated', [
+        $this->logger->warning(' Fallback summary generated - content is in ORIGINAL language, NOT translated', [
             'requested_language' => $language,
             'sentences_used' => count($sentences ?? []),
             'summary_length' => mb_strlen($fallbackSummary),
@@ -173,14 +173,14 @@ class AiSummaryService
 
             return $this->cleanSummary($data['choices'][0]['message']['content']);
 
-        } catch (\Symfony\Contracts\HttpClient\Exception\TimeoutException $e) {
-            $this->logger->error('Groq API timeout', [
-                'model' => $model,
-                'timeout' => self::TIMEOUT,
-                'error' => $e->getMessage(),
-            ]);
-            return null;
-        } catch (\Symfony\Contracts\HttpClient\Exception\TransportException $e) {
+        } catch (\Symfony\Component\HttpClient\Exception\TimeoutException $e) {
+    $this->logger->error('Groq API timeout', [
+        'model' => $model,
+        'timeout' => self::TIMEOUT,
+        'error' => $e->getMessage(),
+    ]);
+    return null;
+} catch (\Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface $e) {
             $this->logger->error('Groq API transport error', [
                 'model' => $model,
                 'error' => $e->getMessage(),
