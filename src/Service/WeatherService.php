@@ -59,7 +59,7 @@ class WeatherService
             $coordinates['longitude'],
             $date,
             $isPast,
-            $coordinates['timezone'] ?? 'auto'
+            $coordinates['timezone']
         );
 
         if ($weather === null) {
@@ -136,7 +136,7 @@ class WeatherService
             }
 
             $data = $response->toArray(false);
-            if (!is_array($data) || !isset($data['results']) || !is_array($data['results'])) {
+            if (!isset($data['results']) || !is_array($data['results'])) {
                 return null;
             }
 
@@ -262,7 +262,7 @@ class WeatherService
                 }
 
                 $data = $response->toArray(false);
-                if (!is_array($data) || !isset($data['daily']) || !is_array($data['daily'])) {
+                if (!isset($data['daily']) || !is_array($data['daily'])) {
                     $item->expiresAfter(900);
                     return null;
                 }

@@ -72,9 +72,7 @@ class AdminDashboardController extends AbstractController
         $totalUsers = $this->userRepository->countAllUsers();
         $usersThisMonth = $this->userRepository->countUsersSince($prevMonth);
         $usersPrevPeriod = max(1, $totalUsers - $usersThisMonth);
-        $usersPercent = $usersPrevPeriod > 0
-            ? round((($totalUsers - $usersPrevPeriod) / $usersPrevPeriod) * 100, 1)
-            : 0;
+        $usersPercent = round((($totalUsers - $usersPrevPeriod) / $usersPrevPeriod) * 100, 1);
 
         // RDV
         $totalRdv = $this->rdvRepository->countAll();
@@ -133,8 +131,7 @@ class AdminDashboardController extends AbstractController
         $activitesByDay = $this->activiteRepository->getCountByDayLastDaysForPatients(7);
         $activitesDayMap = [];
         foreach ($activitesByDay as $row) {
-            $date = $row['date'] ?? null;
-            $key = $date instanceof \DateTimeInterface ? $date->format('Y-m-d') : (string) $date;
+            $key = (string) $row['date'];
             $activitesDayMap[$key] = (int) $row['total'];
         }
         $activitesByDayLabels = [];

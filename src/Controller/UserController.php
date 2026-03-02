@@ -76,7 +76,7 @@ class UserController extends AbstractController
         $activeUsers = $userRepository->countActiveUsers(30);
         $activeRate = $totalUsers > 0 ? (int) round($activeUsers / $totalUsers * 100) : 0;
         $prevMonthTotal = max(1, $totalUsers - $newThisMonth);
-        $totalPercent = $prevMonthTotal > 0 ? round($newThisMonth / $prevMonthTotal * 100, 1) : 0;
+        $totalPercent = round($newThisMonth / $prevMonthTotal * 100, 1);
 
         $since7 = $now->modify('-7 days');
         $byDay = $userRepository->registrationsByDay($since7);

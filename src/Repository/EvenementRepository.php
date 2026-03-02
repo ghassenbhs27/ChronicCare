@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Evenement;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -165,7 +166,11 @@ class EvenementRepository extends ServiceEntityRepository
             LIMIT :limit
         ';
         $limit = max(1, min($limit, 50));
-        $result = $conn->executeQuery($sql, ['valide' => Evenement::STATUT_VALIDE, 'limit' => $limit], ['limit' => \PDO::PARAM_INT]);
+        $result = $conn->executeQuery(
+            $sql,
+            ['valide' => Evenement::STATUT_VALIDE, 'limit' => $limit],
+            ['limit' => ParameterType::INTEGER]
+        );
         $rows = $result->fetchAllAssociative();
         return array_map(function ($r) {
             return ['titre' => $r['titre'], 'total' => (int) $r['total']];
@@ -188,7 +193,7 @@ class EvenementRepository extends ServiceEntityRepository
             GROUP BY DATE(i.created_at)
             ORDER BY date ASC
         ";
-        $result = $conn->executeQuery($sql, ['days' => $days], ['days' => \PDO::PARAM_INT]);
+        $result = $conn->executeQuery($sql, ['days' => $days], ['days' => ParameterType::INTEGER]);
         return $result->fetchAllAssociative();
     }
 

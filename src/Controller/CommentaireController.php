@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Commentaire;
 use App\Entity\Publication;
+use App\Entity\User;
 use App\Repository\CommentaireRepository;
 use App\Repository\PublicationRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -46,8 +47,9 @@ class CommentaireController extends AbstractController
         $commentaire->setPublication($publication);
         $commentaire->setIsAnonymous($request->request->getBoolean('is_anonymous'));
 
-        if ($this->getUser()) {
-            $commentaire->setAuteur($this->getUser());
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $commentaire->setAuteur($user);
         }
 
         $violations = $validator->validate($commentaire);
@@ -79,7 +81,10 @@ class CommentaireController extends AbstractController
             throw $this->createNotFoundException('Commentaire non trouve');
         }
 
-        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur()->getId() === $this->getUser()->getId();
+        $user = $this->getUser();
+        $isAuthor = $user instanceof User
+            && $commentaire->getAuteur() !== null
+            && $commentaire->getAuteur()->getId() === $user->getId();
         if (!$isAuthor && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Vous ne pouvez modifier que vos propres commentaires.');
         }
@@ -132,7 +137,10 @@ class CommentaireController extends AbstractController
             throw $this->createNotFoundException('Commentaire non trouve');
         }
 
-        $isAuthor = $this->getUser() && $commentaire->getAuteur() && $commentaire->getAuteur()->getId() === $this->getUser()->getId();
+        $user = $this->getUser();
+        $isAuthor = $user instanceof User
+            && $commentaire->getAuteur() !== null
+            && $commentaire->getAuteur()->getId() === $user->getId();
         if (!$isAuthor && !$this->isGranted('ROLE_COACH') && !$this->isGranted('ROLE_NUTRITIONNISTE') && !$this->isGranted('ROLE_ADMIN')) {
             throw new AccessDeniedException('Vous ne pouvez supprimer que vos propres commentaires.');
         }

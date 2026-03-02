@@ -93,7 +93,7 @@ class MapGeocodingService
             }
 
             $data = $response->toArray(false);
-            if (!is_array($data) || !isset($data[0]) || !is_array($data[0])) {
+            if (!isset($data[0]) || !is_array($data[0])) {
                 return null;
             }
 
@@ -124,4 +124,3 @@ class MapGeocodingService
         }
     }
 }
-

@@ -158,7 +158,7 @@ final class FrontController extends AbstractController
                 $ticketUrl = $ticketUrlService->generateSignedTicketUrl($existingInscription);
             }
         } else {
-            $ticketFromSession = $request->getSession()?->remove($sessionTicketKey);
+            $ticketFromSession = $request->getSession()->remove($sessionTicketKey);
             if (is_string($ticketFromSession) && $ticketFromSession !== '') {
                 $ticketUrl = $ticketFromSession;
             }
@@ -193,7 +193,7 @@ final class FrontController extends AbstractController
             $inscriptionEvenementMailer->sendConfirmation($inscription, $ticketUrl);
             $this->addFlash('success', 'Votre inscription a bien Ã©tÃ© enregistrÃ©e. Vous recevrez les informations pratiques par email si besoin.');
             if (!$user instanceof User) {
-                $request->getSession()?->set($sessionTicketKey, $ticketUrl);
+                $request->getSession()->set($sessionTicketKey, $ticketUrl);
             }
 
             return $this->redirectToRoute('front_evenement_show', ['id' => $evenement->getId()]);

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Exercice;
+use App\Entity\User;
 use App\Form\ExerciceFormType;
 use App\Repository\EvenementRepository;
 use App\Repository\ExerciceRepository;
@@ -84,7 +85,7 @@ class ExerciceController extends AbstractController
         $perPage = 10;
 
         $result = $exerciceRepository->searchByCoachPaged(
-            $this->getUser(),
+            $this->getAuthenticatedUser(),
             $evenementId,
             $q,
             $sort,
@@ -94,7 +95,7 @@ class ExerciceController extends AbstractController
         );
 
         $evenements = $evenementRepository->findBy(
-            ['coach' => $this->getUser()],
+            ['coach' => $this->getAuthenticatedUser()],
             ['dateDebut' => 'DESC']
         );
 
@@ -117,7 +118,7 @@ class ExerciceController extends AbstractController
         $exercice = new Exercice();
 
         $form = $this->createForm(ExerciceFormType::class, $exercice, [
-            'coach' => $this->getUser(),
+            'coach' => $this->getAuthenticatedUser(),
         ]);
         $form->handleRequest($request);
 
@@ -151,7 +152,7 @@ class ExerciceController extends AbstractController
         $this->assertCoach($exercice);
 
         $form = $this->createForm(ExerciceFormType::class, $exercice, [
-            'coach' => $this->getUser(),
+            'coach' => $this->getAuthenticatedUser(),
         ]);
         $form->handleRequest($request);
 
@@ -187,8 +188,18 @@ class ExerciceController extends AbstractController
     private function assertCoach(Exercice $exercice): void
     {
         $evenement = $exercice->getEvenement();
-        if (!$evenement || $evenement->getCoach() !== $this->getUser()) {
+        if (!$evenement || $evenement->getCoach() !== $this->getAuthenticatedUser()) {
             throw $this->createNotFoundException();
         }
+    }
+
+    private function getAuthenticatedUser(): User
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Publication;
+use App\Entity\User;
 use App\Repository\CommentaireRepository;
 use App\Repository\PublicationRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -142,8 +143,9 @@ class PublicationController extends AbstractController
             $statut = trim((string) $request->request->get('statut', Publication::STATUT_BROUILLON));
             $publication->setStatut(in_array($statut, [Publication::STATUT_BROUILLON, Publication::STATUT_PUBLIE], true) ? $statut : Publication::STATUT_BROUILLON);
 
-            if ($this->getUser()) {
-                $publication->setAuteur($this->getUser());
+            $user = $this->getUser();
+            if ($user instanceof User) {
+                $publication->setAuteur($user);
             }
 
             $violations = $validator->validate($publication);

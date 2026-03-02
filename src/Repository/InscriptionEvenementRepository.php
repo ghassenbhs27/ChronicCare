@@ -52,7 +52,7 @@ class InscriptionEvenementRepository extends ServiceEntityRepository
      */
     public function countByEvenementIds(array $evenementIds): array
     {
-        $evenementIds = array_values(array_filter($evenementIds, static fn ($id) => $id !== null));
+        $evenementIds = array_values(array_map('intval', $evenementIds));
         if ($evenementIds === []) {
             return [];
         }

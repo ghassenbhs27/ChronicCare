@@ -51,8 +51,8 @@ class ActiviteFrontController extends AbstractController
 
         $goalMinutes = 150;
         $goalCalories = 2000;
-        $minutesProgress = $goalMinutes > 0 ? min(100, (int) round(($stats['totalDuree'] / $goalMinutes) * 100)) : 0;
-        $caloriesProgress = $goalCalories > 0 ? min(100, (int) round(($stats['totalCalories'] / $goalCalories) * 100)) : 0;
+        $minutesProgress = min(100, (int) round(($stats['totalDuree'] / $goalMinutes) * 100));
+        $caloriesProgress = min(100, (int) round(($stats['totalCalories'] / $goalCalories) * 100));
 
         return $this->render('front/activite/index.html.twig', [
             'activites' => $activites,

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\CommandeRepository;
 use App\Service\CartService;
 use App\Service\CommandeService;
@@ -28,7 +29,7 @@ class CommandeController extends AbstractController
     public function history(): Response
     {
         $this->denyIfNotPatient();
-        $commandes = $this->commandeService->getUserCommandes($this->getUser());
+        $commandes = $this->commandeService->getUserCommandes($this->getAuthenticatedUser());
 
         return $this->render('commande/history.html.twig', ['commandes' => $commandes]);
     }
@@ -82,7 +83,7 @@ class CommandeController extends AbstractController
 
             if ($this->paymentService->processPayment(null, $paymentData)) {
                 $commande = $this->commandeService->createCommande(
-                    $this->getUser(),
+                    $this->getAuthenticatedUser(),
                     array_values($cart),
                     $adresse
                 );
@@ -155,5 +156,15 @@ class CommandeController extends AbstractController
         if ($this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_COACH') || $this->isGranted('ROLE_NUTRITIONNISTE')) {
             throw $this->createAccessDeniedException('Les commandes sont reservees aux patients.');
         }
+    }
+
+    private function getAuthenticatedUser(): User
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('Utilisateur non authentifie.');
+        }
+
+        return $user;
     }
 }

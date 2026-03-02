@@ -3,6 +3,7 @@
 namespace App\EventSubscriber;
 
 use Doctrine\Common\EventSubscriber;
+use Doctrine\Persistence\Mapping\ClassMetadata as PersistenceClassMetadata;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -36,8 +37,12 @@ class DoctrineSanitizeSubscriber implements EventSubscriber
         }
     }
 
-    private function sanitizeEntity(object $entity, ClassMetadata $metadata): bool
+    private function sanitizeEntity(object $entity, PersistenceClassMetadata $metadata): bool
     {
+        if (!$metadata instanceof ClassMetadata) {
+            return false;
+        }
+
         $hasChanges = false;
 
         foreach ($metadata->getFieldNames() as $field) {

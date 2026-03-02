@@ -5,7 +5,6 @@ namespace App\Controller\Admin;
 use App\Entity\Produit;
 use App\Form\ProduitFormType;
 use App\Repository\ProduitRepository;
-use App\Service\ProduitService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,7 +18,6 @@ class AdminProduitController extends AbstractController
 {
     public function __construct(
         private readonly ProduitRepository $produitRepository,
-        private readonly ProduitService $produitService,
         private readonly EntityManagerInterface $entityManager
     ) {
     }

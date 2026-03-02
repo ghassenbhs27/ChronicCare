@@ -53,26 +53,17 @@ class HolidayService
             $url = sprintf('%s/PublicHolidays/%d/%s', $this->holidayApiBase, $year, $country);
 
             try {
-                $response = null;
-                $lastException = null;
-                for ($attempt = 1; $attempt <= 2; ++$attempt) {
-                    try {
-                        $response = $this->httpClient->request('GET', $url, [
-                            'timeout' => 8,
-                            'max_duration' => 15,
-                        ]);
-                        break;
-                    } catch (\Throwable $exception) {
-                        $lastException = $exception;
-                        if ($attempt === 2) {
-                            throw $exception;
-                        }
-                        usleep(200000);
-                    }
-                }
-
-                if ($response === null && $lastException !== null) {
-                    throw $lastException;
+                try {
+                    $response = $this->httpClient->request('GET', $url, [
+                        'timeout' => 8,
+                        'max_duration' => 15,
+                    ]);
+                } catch (\Throwable) {
+                    usleep(200000);
+                    $response = $this->httpClient->request('GET', $url, [
+                        'timeout' => 8,
+                        'max_duration' => 15,
+                    ]);
                 }
 
                 if ($response->getStatusCode() !== 200) {
@@ -95,11 +86,9 @@ class HolidayService
             }
 
             $map = [];
-            if (is_array($data)) {
-                foreach ($data as $holiday) {
-                    if (is_array($holiday) && isset($holiday['date'])) {
-                        $map[(string) $holiday['date']] = $holiday;
-                    }
+            foreach ($data as $holiday) {
+                if (is_array($holiday) && isset($holiday['date'])) {
+                    $map[(string) $holiday['date']] = $holiday;
                 }
             }
 
