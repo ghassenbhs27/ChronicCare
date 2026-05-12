@@ -98,8 +98,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $securityBlockedUntil = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastSeenAt = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $medicalCondition = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $activityScore = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $isMostActive = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $activityBadge = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $activityReward = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $activityBadgeAwardedAt = null;
 
     /**
      * @var Collection<int, Evenement>
@@ -531,13 +549,74 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getLastSeenAt(): ?\DateTimeImmutable
+    {
+        return $this->lastSeenAt;
+    }
+
+    public function setLastSeenAt(?\DateTimeImmutable $lastSeenAt): self
+    {
+        $this->lastSeenAt = $lastSeenAt;
+        return $this;
+    }
+
     /**
      * Vérifie si l'utilisateur est très actif (pour badge)
      * TODO: Implémenter la logique basée sur les publications/commentaires
      */
     public function isMostActive(): bool
     {
-        return false; // Par défaut, à implémenter selon les critères métier
+        return $this->isMostActive ?? false;
+    }
+
+    public function setIsMostActive(?bool $isMostActive): self
+    {
+        $this->isMostActive = $isMostActive;
+        return $this;
+    }
+
+    public function getActivityScore(): ?int
+    {
+        return $this->activityScore;
+    }
+
+    public function setActivityScore(?int $activityScore): self
+    {
+        $this->activityScore = $activityScore;
+        return $this;
+    }
+
+    public function getActivityBadge(): ?string
+    {
+        return $this->activityBadge;
+    }
+
+    public function setActivityBadge(?string $activityBadge): self
+    {
+        $this->activityBadge = $activityBadge;
+        return $this;
+    }
+
+    public function getActivityReward(): ?string
+    {
+        return $this->activityReward;
+    }
+
+    public function setActivityReward(?string $activityReward): self
+    {
+        $this->activityReward = $activityReward;
+        return $this;
+    }
+
+    public function getActivityBadgeAwardedAt(): ?\DateTimeImmutable
+    {
+        return $this->activityBadgeAwardedAt;
+    }
+
+    public function setActivityBadgeAwardedAt(?\DateTimeImmutable $activityBadgeAwardedAt): self
+    {
+        $this->activityBadgeAwardedAt = $activityBadgeAwardedAt;
+        return $this;
     }
 
     public function getMedicalCondition(): ?string

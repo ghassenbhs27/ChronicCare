@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\CommandeRepository;
-use App\Validator\ValidAddress;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -85,10 +84,13 @@ class Commande
 
     #[ORM\Column(length: 30, options: ['default' => 'card'])]
     #[Assert\Choice(
-        choices: ['card', 'cash_on_delivery', 'stripe'],
+        choices: ['card', 'cash', 'cash_on_delivery', 'stripe'],
         message: "Le mode de paiement '{{ value }}' n'est pas valide."
     )]
     private string $methodePaiement = 'card';
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $motifAnnulation = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $stripeSessionId = null;
@@ -306,7 +308,7 @@ class Commande
 
     public function setMethodePaiement(string $methodePaiement): self
     {
-        $this->methodePaiement = $methodePaiement;
+        $this->methodePaiement = $methodePaiement === 'cash_on_delivery' ? 'cash' : $methodePaiement;
         return $this;
     }
 
@@ -329,6 +331,17 @@ class Commande
     public function setStripePaymentIntentId(?string $stripePaymentIntentId): self
     {
         $this->stripePaymentIntentId = $stripePaymentIntentId;
+        return $this;
+    }
+
+    public function getMotifAnnulation(): ?string
+    {
+        return $this->motifAnnulation;
+    }
+
+    public function setMotifAnnulation(?string $motifAnnulation): self
+    {
+        $this->motifAnnulation = $motifAnnulation;
         return $this;
     }
 }

@@ -62,7 +62,7 @@ class OAuthAuthenticator extends OAuth2Authenticator
     private function loadOrCreateUser(AccessToken $accessToken, string $requestedRole): User
     {
         $oauthUser = $this->clientRegistry->getClient('google_main')->fetchUserFromToken($accessToken);
-        $email = $oauthUser->getEmail();
+        $email = $oauthUser->toArray()['email'] ?? null;
 
         if (!$email) {
             throw new CustomUserMessageAuthenticationException(
@@ -75,9 +75,10 @@ class OAuthAuthenticator extends OAuth2Authenticator
             return $this->synchronizeExistingUserRole($user, $requestedRole);
         }
 
-        $fullName = trim((string) ($oauthUser->getName() ?? ''));
-        $firstName = trim((string) ($oauthUser->getFirstName() ?? ''));
-        $lastName = trim((string) ($oauthUser->getLastName() ?? ''));
+        $data = $oauthUser->toArray();
+        $fullName = trim((string) ($data['name'] ?? ''));
+        $firstName = trim((string) ($data['given_name'] ?? ''));
+        $lastName = trim((string) ($data['family_name'] ?? ''));
 
         if ($firstName === '' || $lastName === '') {
             $parts = preg_split('/\s+/', $fullName) ?: [];
@@ -147,8 +148,8 @@ class OAuthAuthenticator extends OAuth2Authenticator
     private function extractRequestedRole(): string
     {
         $session = $this->requestStack->getSession();
-        $role = (string) ($session?->get('oauth_requested_role', 'ROLE_PATIENT') ?? 'ROLE_PATIENT');
-        $session?->remove('oauth_requested_role');
+        $role = (string) ($session->get('oauth_requested_role', 'ROLE_PATIENT') ?? 'ROLE_PATIENT');
+        $session->remove('oauth_requested_role');
 
         return in_array($role, self::ALLOWED_ROLES, true) ? $role : 'ROLE_PATIENT';
     }

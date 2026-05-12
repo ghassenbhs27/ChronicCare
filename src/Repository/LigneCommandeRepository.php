@@ -20,6 +20,10 @@ class LigneCommandeRepository extends ServiceEntityRepository
      * Obtenir toutes les lignes d'une commande (eager loading)
      * @return LigneCommande[]
      */
+    /**
+     * @param int|string $commande
+     * @return array<int, LigneCommande>
+     */
     public function findByCommande($commande): array
     {
         return $this->createQueryBuilder('l')
@@ -34,6 +38,9 @@ class LigneCommandeRepository extends ServiceEntityRepository
     /**
      * Total des ventes par produit
      */
+    /**
+     * @param int|string $produit
+     */
     public function getTotalVentesByProduit($produit): ?string
     {
         return $this->createQueryBuilder('l')
@@ -47,6 +54,9 @@ class LigneCommandeRepository extends ServiceEntityRepository
     /**
      * Quantité totale vendue par produit
      */
+    /**
+     * @param int|string $produit
+     */
     public function getTotalQuantityByProduit($produit): ?int
     {
         return $this->createQueryBuilder('l')
@@ -59,6 +69,9 @@ class LigneCommandeRepository extends ServiceEntityRepository
 
     /**
      * Produits les plus vendus
+     */
+    /**
+     * @return array<int, array{produit: mixed, totalQty: string}>
      */
     public function getTopSellingProducts(int $limit = 10): array
     {

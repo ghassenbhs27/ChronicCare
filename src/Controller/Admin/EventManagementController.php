@@ -127,7 +127,7 @@ class EventManagementController extends AbstractController
     ): Response {
         $inscriptions = $inscriptionRepository->findForEvenement($evenement);
 
-        $response = new StreamedResponse(function () use ($inscriptions, $evenement) {
+        $response = new StreamedResponse(function () use ($inscriptions) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, ['Prénom', 'Nom', 'Email', 'Téléphone', 'Date inscription']);

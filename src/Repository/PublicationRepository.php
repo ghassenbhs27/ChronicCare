@@ -177,6 +177,9 @@ class PublicationRepository extends ServiceEntityRepository
      * Get ranking statistics for all publications
      * @return array
      */
+    /**
+     * @return array<string, int|float>
+     */
     public function getRankingStats(): array
     {
         $qb = $this->createQueryBuilder('p')
@@ -204,6 +207,9 @@ class PublicationRepository extends ServiceEntityRepository
     /**
      * Get top authors by total engagement
      * @return array
+     */
+    /**
+     * @return array<int, array<string, int|string>>
      */
     public function getTopAuthors(int $limit = 5): array
     {

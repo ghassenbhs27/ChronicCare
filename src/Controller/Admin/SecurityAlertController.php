@@ -124,9 +124,6 @@ class SecurityAlertController extends AbstractController
             }
 
             foreach ($historyEntries as $entry) {
-                if (!is_array($entry)) {
-                    continue;
-                }
 
                 $entryStatus = $this->normalizeStatusValue((string) ($entry['status'] ?? $alert->getAlertStatus()));
                 if ($status !== 'all' && $entryStatus !== $status) {
@@ -175,15 +172,15 @@ class SecurityAlertController extends AbstractController
             $needle = mb_strtolower($search);
             $historyRows = array_values(array_filter($historyRows, static function (array $row) use ($needle): bool {
                 $haystack = mb_strtolower(implode(' ', [
-                    (string) ($row['status'] ?? ''),
-                    (string) ($row['source'] ?? ''),
-                    (string) ($row['note'] ?? ''),
-                    (string) ($row['event_type'] ?? ''),
-                    (string) ($row['alert_type'] ?? ''),
-                    (string) ($row['severity'] ?? ''),
-                    (string) ($row['user_email'] ?? ''),
-                    (string) ($row['ip_address'] ?? ''),
-                    (string) ($row['message'] ?? ''),
+                    (string) $row['status'],
+                    (string) $row['source'],
+                    (string) $row['note'],
+                    (string) $row['event_type'],
+                    (string) $row['alert_type'],
+                    (string) $row['severity'],
+                    (string) $row['user_email'],
+                    (string) $row['ip_address'],
+                    (string) $row['message'],
                 ]));
 
                 return str_contains($haystack, $needle);

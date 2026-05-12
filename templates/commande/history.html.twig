@@ -37,7 +37,7 @@
                 <td>{{ c.createdAt|date('d/m/Y H:i') }}</td>
                 <td>{{ c.total }} €</td>
                 <td>
-                  {% if c.methodePaiement == 'cash_on_delivery' %}
+                  {% if c.methodePaiement in ['cash_on_delivery', 'cash'] %}
                     <span class="badge bg-warning text-dark"><i class="bi bi-cash-coin"></i> Livraison</span>
                   {% else %}
                     <span class="badge bg-success"><i class="bi bi-credit-card"></i> Carte</span>

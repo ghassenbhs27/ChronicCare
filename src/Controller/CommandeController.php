@@ -64,16 +64,17 @@ class CommandeController extends AbstractController
         if ($request->isMethod('POST') && $this->isCsrfTokenValid('checkout', (string) $request->request->get('_token'))) {
             // Récupérer l'IP du client
             $clientIp = $request->getClientIp();
-            
+
             // Déterminer le mode de paiement
             $paymentMethod = $request->request->get('paymentMethod', 'stripe');
-            
+            $isCashPayment = in_array($paymentMethod, ['cash', 'cash_on_delivery'], true);
+
             // Créer la commande avec géolocalisation automatique
             $commande = $this->commandeService->createCommande(
                 $this->getUser(),
                 array_values($cart),
                 $clientIp,
-                $paymentMethod === 'cash_on_delivery' ? 'cash_on_delivery' : 'stripe'
+                $isCashPayment ? 'cash' : 'stripe'
             );
 
             if (!$commande) {
@@ -82,7 +83,7 @@ class CommandeController extends AbstractController
             }
 
             // Paiement à la livraison : pas besoin de Stripe
-            if ($paymentMethod === 'cash_on_delivery') {
+            if ($isCashPayment) {
                 $this->cartService->clearCart();
                 $this->addFlash('success', 'Commande créée avec succès ! Paiement à la livraison.');
                 return $this->redirectToRoute('commande_show', ['id' => $commande->getId()]);
@@ -91,7 +92,7 @@ class CommandeController extends AbstractController
             // Paiement Stripe : créer une session Checkout
             try {
                 $session = $this->stripePaymentService->createCheckoutSession($commande, array_values($cart));
-                
+
                 // Sauvegarder l'ID de session Stripe dans la commande
                 $commande->setStripeSessionId($session->id);
                 $this->entityManager->flush();
@@ -123,13 +124,13 @@ class CommandeController extends AbstractController
     {
         $this->denyIfNotPatient();
         $commande = $this->commandeService->getCommandeById($id);
-        
+
         if (!$commande || $commande->getUtilisateur() !== $this->getUser()) {
             throw $this->createNotFoundException('Commande non trouvée');
         }
 
         $sessionId = $request->query->get('session_id');
-        
+
         if ($sessionId && $commande->getStripeSessionId() === $sessionId) {
             // Vérifier le paiement auprès de Stripe
             if ($this->stripePaymentService->isPaymentSuccessful($sessionId)) {
@@ -137,7 +138,7 @@ class CommandeController extends AbstractController
                 try {
                     $session = $this->stripePaymentService->retrieveSession($sessionId);
                     $commande->setStripePaymentIntentId($session->payment_intent);
-                    
+
                     // Valider automatiquement la commande
                     if ($commande->getStatut() === 'en_attente') {
                         $this->commandeService->applyTransition($commande, 'valider');
@@ -166,7 +167,7 @@ class CommandeController extends AbstractController
     {
         $this->denyIfNotPatient();
         $commande = $this->commandeService->getCommandeById($id);
-        
+
         if (!$commande || $commande->getUtilisateur() !== $this->getUser()) {
             throw $this->createNotFoundException('Commande non trouvée');
         }

@@ -42,8 +42,8 @@
             <div class="card-body">
               <h5>Total: {{ commande.total }} €</h5>
               <p class="mt-2 mb-1">
-                <i class="bi {{ commande.methodePaiement == 'cash_on_delivery' ? 'bi-cash-coin' : 'bi-credit-card' }}"></i>
-                {% if commande.methodePaiement == 'cash_on_delivery' %}
+                <i class="bi {{ commande.methodePaiement in ['cash_on_delivery', 'cash'] ? 'bi-cash-coin' : 'bi-credit-card' }}"></i>
+                {% if commande.methodePaiement in ['cash_on_delivery', 'cash'] %}
                   <span class="badge bg-warning text-dark">Paiement à la livraison</span>
                 {% elseif commande.methodePaiement == 'stripe' %}
                   <span class="badge bg-info">Payé par Stripe</span>

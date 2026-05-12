@@ -165,7 +165,7 @@ class EvenementRepository extends ServiceEntityRepository
             LIMIT :limit
         ';
         $limit = max(1, min($limit, 50));
-        $result = $conn->executeQuery($sql, ['valide' => Evenement::STATUT_VALIDE, 'limit' => $limit], ['limit' => \PDO::PARAM_INT]);
+        $result = $conn->executeQuery($sql, ['valide' => Evenement::STATUT_VALIDE, 'limit' => $limit]);
         $rows = $result->fetchAllAssociative();
         return array_map(function ($r) {
             return ['titre' => $r['titre'], 'total' => (int) $r['total']];
@@ -176,6 +176,9 @@ class EvenementRepository extends ServiceEntityRepository
      * Inscriptions par jour sur les N derniers jours (pour courbe).
      *
      * @return array<array{date: string, total: int}>
+     */
+    /**
+     * @return array<int, array{date: string, total: int}>
      */
     public function getInscriptionsByDay(int $days = 30): array
     {
@@ -188,7 +191,7 @@ class EvenementRepository extends ServiceEntityRepository
             GROUP BY DATE(i.created_at)
             ORDER BY date ASC
         ";
-        $result = $conn->executeQuery($sql, ['days' => $days], ['days' => \PDO::PARAM_INT]);
+        $result = $conn->executeQuery($sql, ['days' => $days]);
         return $result->fetchAllAssociative();
     }
 

@@ -20,7 +20,6 @@ class AdminProduitController extends AbstractController
 {
     public function __construct(
         private readonly ProduitRepository $produitRepository,
-        private readonly ProduitService $produitService,
         private readonly EntityManagerInterface $entityManager,
         private readonly PaginatorInterface $paginator
     ) {

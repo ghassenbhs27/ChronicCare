@@ -33,6 +33,8 @@ class CommentaireLikeRepository extends ServiceEntityRepository
 
     /**
      * Returns an array of commentaire IDs that the user has liked.
+     * @param array<int> $commentaireIds
+     * @return array<int>
      */
     public function findLikedCommentaireIds(User $user, array $commentaireIds): array
     {

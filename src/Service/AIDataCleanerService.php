@@ -11,6 +11,9 @@ use Psr\Log\LoggerInterface;
 class AIDataCleanerService
 {
     private ?object $client = null;
+    /**
+     * @var string[]
+     */
     private array $existingCategories = [];
     
     public function __construct(
@@ -33,6 +36,9 @@ class AIDataCleanerService
     /**
      * Définir les catégories existantes pour la normalisation
      */
+    /**
+     * @param string[] $categories
+     */
     public function setExistingCategories(array $categories): void
     {
         $this->existingCategories = $categories;
@@ -42,6 +48,10 @@ class AIDataCleanerService
      * Nettoie et corrige un lot de produits
      * @param array $products Tableau de produits bruts
      * @return array Produits nettoyés avec détails des modifications
+     */
+    /**
+     * @param array<int, array<string, mixed>> $products
+     * @return array<int, array<string, mixed>>
      */
     public function cleanProducts(array $products): array
     {
@@ -70,6 +80,10 @@ class AIDataCleanerService
 
     /**
      * Nettoie un seul produit
+     */
+    /**
+     * @param array<string, mixed> $product
+     * @return array<string, mixed>
      */
     private function cleanSingleProduct(array $product, int $index): array
     {
@@ -289,6 +303,10 @@ Règles:
     /**
      * Analyse un lot de produits et suggère des améliorations
      */
+    /**
+     * @param array<int, array<string, mixed>> $products
+     * @return array<int, array<string, mixed>>
+     */
     public function analyzeAndSuggest(array $products): array
     {
         $suggestions = [];
@@ -353,6 +371,9 @@ Règles:
 
     /**
      * Teste la connexion à l'API OpenAI
+     */
+    /**
+     * @return array{success: bool, message: string}
      */
     public function testConnection(): array
     {

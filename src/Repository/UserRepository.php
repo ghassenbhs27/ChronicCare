@@ -47,6 +47,9 @@ class UserRepository extends ServiceEntityRepository
     }
 
     // Inscriptions par jour sur les N derniers jours
+    /**
+     * @return array<int, array{y: int, m: int, d: int, total: int}>
+     */
     public function registrationsByDay(\DateTimeImmutable $since): array
 {
     return $this->createQueryBuilder('u')
@@ -62,6 +65,9 @@ class UserRepository extends ServiceEntityRepository
 }
 
     // Répartition par genre
+    /**
+     * @return array<int, array{genre: string, total: int}>
+     */
     public function countByGenre(): array
     {
         // Returns: [ ['genre' => 'Homme', 'total' => 10], ... ]
@@ -174,6 +180,9 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return User[]
+     */
     public function findAllSorted(string $sort = 'createdAt', string $order = 'DESC'): array
     {
     $allowedSorts = ['nom', 'prenom', 'createdAt'];
@@ -191,6 +200,9 @@ class UserRepository extends ServiceEntityRepository
     }
 
 
+    /**
+     * @return User[]
+     */
     public function findAllSortedAndFiltered(
         ?string $search,
         string $sort = 'createdAt',
@@ -275,6 +287,12 @@ class UserRepository extends ServiceEntityRepository
     }
 
     // Répartition par rôle principal (le 1er rôle stocké dans roles[])
+    /**
+     * @return array<string, int>
+     */
+    /**
+     * @return array<int, array{role: string, total: int}>
+     */
     public function countByMainRole(): array
     {
         // roles est un JSON/array. On fait simple: on récupère tout et on calcule en PHP (portable DB).

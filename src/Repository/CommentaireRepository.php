@@ -131,6 +131,7 @@ class CommentaireRepository extends ServiceEntityRepository
 
     /**
      * Get statistics about comments and replies for admin
+     * @return array{total: int, topLevel: int, replies: int}
      */
     public function getCommentStats(): array
     {

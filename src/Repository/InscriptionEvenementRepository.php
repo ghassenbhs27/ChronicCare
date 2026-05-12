@@ -50,6 +50,13 @@ class InscriptionEvenementRepository extends ServiceEntityRepository
      * @param int[] $evenementIds
      * @return array<int, int>
      */
+    /**
+     * @return array<int, int>
+     */
+    /**
+     * @param array<int> $evenementIds
+     * @return array<int, int>
+     */
     public function countByEvenementIds(array $evenementIds): array
     {
         $evenementIds = array_values(array_filter($evenementIds, static fn ($id) => $id !== null));

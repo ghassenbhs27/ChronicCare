@@ -26,6 +26,9 @@ class EtatRepository extends ServiceEntityRepository
         $qb->andWhere($aliasUser . '.roles LIKE :rolePatient')->setParameter('rolePatient', self::ROLE_PATIENT_LIKE);
     }
 
+    /**
+     * @return array<int, Etat>
+     */
     public function searchAndSort(?string $q, string $sort = 'dateReleve', string $dir = 'DESC', bool $patientsOnly = true): array
     {
         $allowedSort = ['id', 'type', 'valeur', 'unite', 'dateReleve'];
@@ -47,6 +50,9 @@ class EtatRepository extends ServiceEntityRepository
         return $qb->orderBy('e.' . $sort, $dir)->getQuery()->getResult();
     }
 
+    /**
+     * @return array<int, Etat>
+     */
     public function findByUserWithSearchSort(User $user, ?string $q, string $sort = 'dateReleve', string $dir = 'DESC'): array
     {
         $allowedSort = ['id', 'type', 'valeur', 'unite', 'dateReleve'];
@@ -83,6 +89,9 @@ class EtatRepository extends ServiceEntityRepository
     }
 
     /** Stats globales sur les relevés des patients uniquement. */
+    /**
+     * @return array{totalEtats: int, moyenneValeur: float, nbTypes: int}
+     */
     public function getGlobalStats(): array
     {
         $qb = $this->createQueryBuilder('e')
@@ -101,6 +110,9 @@ class EtatRepository extends ServiceEntityRepository
     }
 
     /** Répartition par type, patients uniquement. */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getTrendByType(): array
     {
         $qb = $this->createQueryBuilder('e')
@@ -117,6 +129,9 @@ class EtatRepository extends ServiceEntityRepository
     }
 
     /** Comparaison par utilisateur : patients uniquement. */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getUserComparison(): array
     {
         $qb = $this->createQueryBuilder('e')
@@ -133,6 +148,9 @@ class EtatRepository extends ServiceEntityRepository
     }
 
     /** Patients (ROLE_PATIENT) sans relevé récent. */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getInactivityAnomalies(int $days = 7): array
     {
         $cutoff = (new \DateTimeImmutable('today'))->modify('-' . $days . ' days');
@@ -154,6 +172,9 @@ class EtatRepository extends ServiceEntityRepository
     }
 
     /** Anomalies de valeurs, relevés des patients uniquement. */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getValueAnomalies(): array
     {
         $qb = $this->createQueryBuilder('e')
@@ -245,6 +266,9 @@ class EtatRepository extends ServiceEntityRepository
     /**
      * Derniers relevés par patient (un dernier relevé par type par utilisateur).
      * Retourne pour chaque user les derniers etats groupés par type.
+     */
+    /**
+     * @return array<int, array<string, mixed>>
      */
     public function getDerniersRelevesParPatient(int $limitTypes = 5): array
     {

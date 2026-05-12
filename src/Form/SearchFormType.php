@@ -12,8 +12,14 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class SearchFormType extends AbstractType
 {
-    private $categories = [];
+    /**
+     * @var array<int, string>
+     */
+    private array $categories = [];
 
+    /**
+     * @param array<int, string> $categories
+     */
     public function __construct(array $categories = [])
     {
         $this->categories = $categories;

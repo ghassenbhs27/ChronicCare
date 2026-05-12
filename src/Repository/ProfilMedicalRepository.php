@@ -46,6 +46,9 @@ class ProfilMedicalRepository extends ServiceEntityRepository
     /**
      * Trouve les patients avec une condition chronique spécifique
      */
+    /**
+     * @return array<int, ProfilMedical>
+     */
     public function findByCondition(string $condition): array
     {
         return $this->createQueryBuilder('p')
@@ -58,6 +61,9 @@ class ProfilMedicalRepository extends ServiceEntityRepository
     /**
      * Trouve les patients avec une allergie spécifique
      */
+    /**
+     * @return array<int, ProfilMedical>
+     */
     public function findByAllergie(string $allergie): array
     {
         return $this->createQueryBuilder('p')
@@ -69,6 +75,9 @@ class ProfilMedicalRepository extends ServiceEntityRepository
 
     /**
      * Trouve les patients avec un objectif santé similaire
+     */
+    /**
+     * @return array<int, ProfilMedical>
      */
     public function findByObjectif(string $objectif): array
     {

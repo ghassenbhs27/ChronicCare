@@ -2,89 +2,165 @@
 
 namespace App\Service;
 
+use App\Entity\Panier;
 use App\Entity\Produit;
-use Symfony\Component\HttpFoundation\RequestStack;
+use App\Entity\User;
+use App\Repository\PanierRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class CartService
 {
-    private const CART_SESSION_KEY = 'cart';
-
-    public function __construct(private readonly RequestStack $requestStack)
-    {
+    public function __construct(
+        private readonly PanierRepository $panierRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly Security $security
+    ) {
     }
 
-    private function initCart(): void
+    private function getAuthenticatedUser(): ?User
     {
-        $session = $this->requestStack->getSession();
-        if (!$session->has(self::CART_SESSION_KEY)) {
-            $session->set(self::CART_SESSION_KEY, []);
-        }
+        $user = $this->security->getUser();
+
+        return $user instanceof User ? $user : null;
+    }
+
+    private function buildImagePath(string $productName): string
+    {
+        $imageName = strtolower(str_replace([' ', 'é', 'è', 'ê', 'à'], ['-', 'e', 'e', 'e', 'a'], $productName)) . '.jpg';
+
+        return '/assets/img/products/' . $imageName;
     }
 
     public function addToCart(Produit $produit, int $quantity = 1): void
     {
-        $this->initCart();
-        $session = $this->requestStack->getSession();
-        $cart = $session->get(self::CART_SESSION_KEY);
-
-        $productId = $produit->getId();
-        $imageName = strtolower(str_replace([' ', 'é', 'è', 'ê', 'à'], ['-', 'e', 'e', 'e', 'a'], $produit->getNom())) . '.jpg';
-
-        if (isset($cart[$productId])) {
-            $cart[$productId]['quantity'] += $quantity;
-        } else {
-            $cart[$productId] = [
-                'id' => $productId,
-                'nom' => $produit->getNom(),
-                'prix' => $produit->getPrix(),
-                'quantity' => $quantity,
-                'categorie' => $produit->getCategorie(),
-                'image' => '/assets/img/products/' . $imageName,
-            ];
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return;
         }
 
-        $session->set(self::CART_SESSION_KEY, $cart);
+        $productId = $produit->getId();
+        if (!$productId) {
+            return;
+        }
+
+        $quantity = max(1, $quantity);
+        $panierItem = $this->panierRepository->findOneBy([
+            'utilisateur' => $user,
+            'produit' => $produit,
+        ]);
+
+        if ($panierItem) {
+            $panierItem->setQuantite($panierItem->getQuantite() + $quantity);
+        } else {
+            $panierItem = new Panier();
+            $panierItem->setUtilisateur($user);
+            $panierItem->setProduit($produit);
+            $panierItem->setQuantite($quantity);
+            $panierItem->setPrixUnitaire($produit->getPrix());
+            $this->entityManager->persist($panierItem);
+        }
+
+        $panierItem->setPrixUnitaire($produit->getPrix());
+        $this->entityManager->flush();
     }
 
     public function removeFromCart(int $productId): void
     {
-        $this->initCart();
-        $session = $this->requestStack->getSession();
-        $cart = $session->get(self::CART_SESSION_KEY);
-
-        if (isset($cart[$productId])) {
-            unset($cart[$productId]);
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return;
         }
 
-        $session->set(self::CART_SESSION_KEY, $cart);
+        $items = $this->panierRepository->findBy([
+            'utilisateur' => $user,
+            'produit' => $productId,
+        ]);
+
+        if ($items === []) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            $this->entityManager->remove($item);
+        }
+
+        $this->entityManager->flush();
     }
 
     public function updateQuantity(int $productId, int $quantity): void
     {
-        $this->initCart();
-        $session = $this->requestStack->getSession();
-        $cart = $session->get(self::CART_SESSION_KEY);
-
-        if (isset($cart[$productId])) {
-            if ($quantity <= 0) {
-                $this->removeFromCart($productId);
-            } else {
-                $cart[$productId]['quantity'] = $quantity;
-            }
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return;
         }
 
-        $session->set(self::CART_SESSION_KEY, $cart);
+        if ($quantity <= 0) {
+            $this->removeFromCart($productId);
+
+            return;
+        }
+
+        $panierItem = $this->panierRepository->findOneBy([
+            'utilisateur' => $user,
+            'produit' => $productId,
+        ]);
+
+        if (!$panierItem) {
+            return;
+        }
+
+        $panierItem->setQuantite($quantity);
+        $this->entityManager->flush();
     }
 
     public function clearCart(): void
     {
-        $this->requestStack->getSession()->set(self::CART_SESSION_KEY, []);
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return;
+        }
+
+        $items = $this->panierRepository->findBy(['utilisateur' => $user]);
+        if ($items === []) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            $this->entityManager->remove($item);
+        }
+
+        $this->entityManager->flush();
     }
 
     public function getCart(): array
     {
-        $this->initCart();
-        return $this->requestStack->getSession()->get(self::CART_SESSION_KEY, []);
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return [];
+        }
+
+        $items = $this->panierRepository->findBy(['utilisateur' => $user]);
+        $cart = [];
+
+        foreach ($items as $item) {
+            $produit = $item->getProduit();
+            $productId = $produit->getId();
+            if (!$productId) {
+                continue;
+            }
+
+            $cart[$productId] = [
+                'id' => $productId,
+                'nom' => $produit->getNom(),
+                'prix' => $item->getPrixUnitaire(),
+                'quantity' => $item->getQuantite(),
+                'categorie' => $produit->getCategorie(),
+                'image' => $this->buildImagePath($produit->getNom()),
+            ];
+        }
+
+        return $cart;
     }
 
     public function getCartCount(): int

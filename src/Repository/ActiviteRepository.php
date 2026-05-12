@@ -17,6 +17,9 @@ class ActiviteRepository extends ServiceEntityRepository
         parent::__construct($registry, Activite::class);
     }
 
+    /**
+     * @return array<int, Activite>
+     */
     public function searchAndSort(?string $q, string $sort = 'dateActivite', string $dir = 'DESC'): array
     {
         $allowedSort = ['id', 'type', 'duree', 'calories', 'dateActivite', 'createdAt'];
@@ -37,6 +40,9 @@ class ActiviteRepository extends ServiceEntityRepository
         return $qb->orderBy('a.' . $sort, $dir)->getQuery()->getResult();
     }
 
+    /**
+     * @return array<int, Activite>
+     */
     public function findByUserWithSearchSort(User $user, ?string $q, string $sort = 'dateActivite', string $dir = 'DESC'): array
     {
         $allowedSort = ['id', 'type', 'duree', 'calories', 'dateActivite', 'createdAt'];
@@ -98,6 +104,9 @@ class ActiviteRepository extends ServiceEntityRepository
             ->getArrayResult();
     }
 
+    /**
+     * @return array{totalActivites: int, moyenneDuree: float, moyenneCalories: float, totalCalories: int}
+     */
     public function getGlobalStats(): array
     {
         $row = $this->createQueryBuilder('a')
@@ -116,6 +125,9 @@ class ActiviteRepository extends ServiceEntityRepository
         ];
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getTrendByType(): array
     {
         return $this->createQueryBuilder('a')
@@ -129,6 +141,9 @@ class ActiviteRepository extends ServiceEntityRepository
             ->getArrayResult();
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getUserComparison(): array
     {
         return $this->createQueryBuilder('a')
@@ -146,6 +161,9 @@ class ActiviteRepository extends ServiceEntityRepository
             ->getArrayResult();
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getInactivityAnomalies(int $days = 7): array
     {
         $cutoff = (new \DateTimeImmutable('today'))->modify('-' . $days . ' days');
@@ -165,6 +183,9 @@ class ActiviteRepository extends ServiceEntityRepository
             ->getArrayResult();
     }
 
+    /**
+     * @return array<string, int|float>
+     */
     public function getPersonalStats(User $user): array
     {
         $row = $this->createQueryBuilder('a')
